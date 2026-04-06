@@ -15,7 +15,7 @@ const Home = ({ properties, reviews }: Props) => {
       {/* Hero */}
       <section className="relative min-h-[90vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=1920&q=80')] bg-cover bg-center" />
-        <div className="absolute inset-0 bg-gradient-to-br from-ocean-700/85 via-ocean-600/70 to-ocean-500/50" />
+        <div className="absolute inset-0 bg-gradient-to-r from-ocean-900/95 via-ocean-800/85 to-ocean-700/70" />
 
         <div className="relative max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-32">
           <div className="max-w-2xl">
