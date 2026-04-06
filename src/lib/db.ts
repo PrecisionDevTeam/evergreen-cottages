@@ -61,7 +61,7 @@ export async function getCalendar(propertyId: number, days: number = 60) {
 export async function getReviews(limit: number = 10) {
   const reviews = await prisma.review.findMany({
     where: {
-      rating: { not: null },
+      rating: { gte: 4 }, // only show 4+ star reviews on marketing site
       review_content: { not: null },
       reviewer_name: { not: null },
     },
