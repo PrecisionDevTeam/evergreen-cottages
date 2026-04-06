@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useMemo } from "react";
 import Layout from "../../components/Layout";
+import AvailabilityCalendar from "../../components/AvailabilityCalendar";
 import { getProperty, getCalendar } from "../../lib/db";
 import { Property, CalendarDay } from "../../types";
 
@@ -326,6 +327,46 @@ const PropertyDetail = ({ property, calendar }: Props) => {
                 </div>
               </div>
             </div>
+
+            {/* Availability Calendar */}
+            <AvailabilityCalendar
+              calendar={calendar}
+              checkIn={checkIn}
+              checkOut={checkOut}
+              onDateSelect={(date) => {
+                if (!checkIn || (checkIn && checkOut)) {
+                  setCheckIn(date);
+                  setCheckOut("");
+                } else {
+                  if (date > checkIn) {
+                    setCheckOut(date);
+                  } else {
+                    setCheckIn(date);
+                    setCheckOut("");
+                  }
+                }
+              }}
+            />
+
+            {/* Location Map */}
+            {property.lat && property.lng && (
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold mb-4">Location</h2>
+                <div className="rounded-2xl overflow-hidden border border-sand-200">
+                  <iframe
+                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${(property.lng - 0.01).toFixed(4)}%2C${(property.lat - 0.008).toFixed(4)}%2C${(property.lng + 0.01).toFixed(4)}%2C${(property.lat + 0.008).toFixed(4)}&layer=mapnik&marker=${property.lat.toFixed(4)}%2C${property.lng.toFixed(4)}`}
+                    width="100%"
+                    height="280"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    title="Property location"
+                  />
+                </div>
+                <p className="text-xs text-sand-400 mt-2">
+                  {property.address || "3801 Mobile Hwy, Pensacola, FL 32505"}
+                </p>
+              </div>
+            )}
 
             {/* Cancellation */}
             <div className="mb-8 p-6 bg-evergreen-50 rounded-xl">

@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Property } from "../types";
+import ImageCarousel from "./ImageCarousel";
 
 type Props = {
   property: Property;
@@ -14,22 +14,13 @@ export default function PropertyCard({ property, priority = false }: Props) {
       className="group block card-lift fade-in-up"
     >
       <div className="aspect-[3/2] bg-sand-200 relative overflow-hidden rounded-2xl">
-        {property.images[0] ? (
-          <Image
-            src={property.images[0]}
-            alt={property.name}
-            fill
-            className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            priority={priority}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-sand-400 font-serif text-lg">
-            No photo
-          </div>
-        )}
+        <ImageCarousel
+          images={property.images.slice(0, 8)}
+          alt={property.name}
+          priority={priority}
+        />
         {/* Gradient overlay at bottom */}
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/40 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
 
         {/* Price badge */}
         <div className="absolute bottom-3 left-3 text-white">
