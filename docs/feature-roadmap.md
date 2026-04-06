@@ -15,11 +15,9 @@
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 19 | Blog / area guide | NOT STARTED | "Top 10 things to do in Pensacola", "Best beaches near NAS" |
 | 20 | Google Analytics + Meta Pixel | NOT STARTED | Track traffic, conversions, ad performance |
-| 22 | Schema.org markup | NOT STARTED | Rich snippets in Google search results (price, rating, availability) |
 
-## Completed (56 features)
+## Completed (62 features)
 
 | # | Feature | Date |
 |---|---------|------|
@@ -85,3 +83,10 @@
 | ✅ | Search bar on properties page (name, description, address) | Apr 6 |
 | ✅ | Breadcrumbs on all inner pages | Apr 6 |
 | ✅ | 4 code review passes — all CRITICAL + HIGH resolved | Apr 6 |
+| ✅ | Area guide page (6 categories, 25+ places, distances) | Apr 6 |
+| ✅ | Schema.org JSON-LD markup (homepage LodgingBusiness + property VacationRental) | Apr 6 |
+| ✅ | Floating SMS chat button on every page | Apr 6 |
+| ✅ | Area Guide added to footer nav | Apr 6 |
+| ✅ | Pricing uses actual calendar rates (not flat base_price) | Apr 6 |
+| ✅ | "from $X/night" on all price displays | Apr 6 |
+| ✅ | 5 code review passes — all CRITICAL + HIGH resolved | Apr 6 |
