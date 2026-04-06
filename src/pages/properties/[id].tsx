@@ -97,6 +97,7 @@ const PropertyDetail = ({ property, calendar }: Props) => {
   const [currentImage, setCurrentImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
+  const [amenitiesExpanded, setAmenitiesExpanded] = useState(false);
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState(1);
@@ -263,16 +264,43 @@ const PropertyDetail = ({ property, calendar }: Props) => {
             {/* Amenities */}
             <div className="mb-8">
               <h2 className="text-xl font-semibold mb-4">Amenities</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {property.amenityList.map((amenity) => (
-                  <div key={amenity} className="flex items-center text-gray-600 text-sm">
-                    <svg className="w-4 h-4 mr-2 text-evergreen-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    {amenity}
-                  </div>
-                ))}
-              </div>
+              {(() => {
+                // Deduplicate similar amenities
+                const dupes = new Set(["Wireless", "wireless", "Internet"]);
+                const cleaned = property.amenityList
+                  .filter((a) => !dupes.has(a))
+                  .map((a) => {
+                    if (a === "Internet" || a === "Wireless") return "WiFi";
+                    return a;
+                  });
+                // Deduplicate
+                const unique = Array.from(new Set(cleaned));
+                const shown = amenitiesExpanded ? unique : unique.slice(0, 9);
+                const remaining = unique.length - 9;
+
+                return (
+                  <>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {shown.map((amenity) => (
+                        <div key={amenity} className="flex items-center text-sand-600 text-sm">
+                          <svg className="w-4 h-4 mr-2 text-evergreen-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          {amenity}
+                        </div>
+                      ))}
+                    </div>
+                    {remaining > 0 && (
+                      <button
+                        onClick={() => setAmenitiesExpanded(!amenitiesExpanded)}
+                        className="text-ocean-500 font-medium text-sm mt-4 hover:text-coral-500 transition-colors"
+                      >
+                        {amenitiesExpanded ? "Show less" : `Show all ${unique.length} amenities`}
+                      </button>
+                    )}
+                  </>
+                );
+              })()}
             </div>
 
             {/* Check-in Info */}
