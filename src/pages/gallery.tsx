@@ -121,7 +121,7 @@ export default function Gallery({ images }: Props) {
   );
 }
 
-export const getStaticProps = async () => {
+export const getServerSideProps = async () => {
   const properties = await getProperties("Pensacola");
 
   const images: GalleryImage[] = properties.flatMap((p) =>

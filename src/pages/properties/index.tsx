@@ -250,7 +250,7 @@ const Properties = ({ properties, popularIds }: Props) => {
 
 export default Properties;
 
-export const getStaticProps = async () => {
+export const getServerSideProps = async () => {
   const [properties, bookingCounts] = await Promise.all([
     getProperties("Pensacola"),
     getRecentBookingCounts(),

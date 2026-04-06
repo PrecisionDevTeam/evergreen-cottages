@@ -50,7 +50,7 @@ export default function About({ reviewCount, avgRating }: Props) {
   );
 }
 
-export const getStaticProps = async () => {
+export const getServerSideProps = async () => {
   const { prisma } = await import("../lib/db");
   const stats = await prisma.review.aggregate({
     _avg: { rating: true },
