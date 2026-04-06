@@ -178,17 +178,16 @@ const Home = ({ properties, reviews, reviewCount, avgRating }: Props) => {
       )}
 
       {/* Services CTA */}
-      <section className="relative py-24 overflow-hidden">
-        <div className="absolute inset-0 bg-coral-500" />
-        <div className="relative max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 text-center">
-          <p className="text-white/70 text-xs uppercase tracking-[0.2em] font-semibold mb-3">Extras</p>
-          <h2 className="text-4xl md:text-5xl font-serif text-white mb-5">Add-on Services</h2>
-          <p className="text-white/60 mb-10 max-w-xl mx-auto leading-relaxed">
+      <section className="py-24 border-t border-sand-200">
+        <div className="max-w-2xl mx-auto px-5 sm:px-8 lg:px-10 text-center">
+          <p className="text-coral-500 text-xs uppercase tracking-[0.2em] font-semibold mb-3">Extras</p>
+          <h2 className="text-4xl md:text-5xl font-serif text-ocean-500 mb-5">Add-on Services</h2>
+          <p className="text-sand-500 mb-10 leading-relaxed">
             Airport shuttle, early check-in, late checkout, pet accommodations, and more.
           </p>
           <Link
             href="/services"
-            className="inline-block bg-white text-coral-600 px-8 py-4 rounded-full font-semibold hover:bg-sand-100 transition-all shadow-xl"
+            className="inline-block bg-ocean-500 text-white px-8 py-4 rounded-full font-semibold hover:bg-ocean-600 transition-all shadow-lg"
           >
             View Services
           </Link>
