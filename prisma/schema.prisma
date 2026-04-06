@@ -35,7 +35,6 @@ model Property {
   created_at          DateTime? @default(now())
 
   reservations    Reservation[]
-  calendar        CalendarDay[]
   knowledge       PropertyKnowledge[]
 
   @@map("properties")
@@ -86,9 +85,6 @@ model CalendarDay {
   is_available          Int?
   price                 Float?
   notes                 String?
-
-  property_id           Int?
-  property              Property? @relation(fields: [property_id], references: [id])
 
   @@map("hostaway_calendar")
 }
