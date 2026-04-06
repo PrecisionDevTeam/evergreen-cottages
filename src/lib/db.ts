@@ -73,6 +73,8 @@ export async function getReviews(limit: number = 10) {
   return reviews
     .filter((r) => {
       const content = (r.review_content || "").toLowerCase();
+      // Skip empty reviews
+      if (!content || content.length < 5) return false;
       // Skip host reviews that contain template placeholders
       if (content.includes("{{guest_name}}") || content.includes("{{")) return false;
       // Skip generic host reviews about the guest
