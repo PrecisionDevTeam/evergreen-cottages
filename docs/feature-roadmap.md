@@ -17,7 +17,7 @@
 |---|---------|--------|-------|
 | 20 | Google Analytics + Meta Pixel | NOT STARTED | Track traffic, conversions, ad performance |
 
-## Completed (62 features)
+## Completed (66 features)
 
 | # | Feature | Date |
 |---|---------|------|
@@ -90,3 +90,7 @@
 | ✅ | Pricing uses actual calendar rates (not flat base_price) | Apr 6 |
 | ✅ | "from $X/night" on all price displays | Apr 6 |
 | ✅ | 5 code review passes — all CRITICAL + HIGH resolved | Apr 6 |
+| ✅ | Logo image in nav + footer (replaced text) | Apr 6 |
+| ✅ | OG image for social sharing (beach sunset banner) | Apr 6 |
+| ✅ | Favicon source image | Apr 6 |
+| ✅ | Base prices synced to lowest available calendar rate per property | Apr 6 |
