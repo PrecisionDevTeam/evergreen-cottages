@@ -1,135 +1,117 @@
-import Head from "next/head";
-import Link from "next/link";
+import { useState, useMemo } from "react";
+import Layout from "../../components/Layout";
+import PropertyCard from "../../components/PropertyCard";
 import { getProperties } from "../../lib/db";
-
-type Property = {
-  id: number;
-  name: string;
-  person_capacity: number | null;
-  bedrooms_number: number | null;
-  bathrooms_number: number | null;
-  base_price: number | null;
-  cleaning_fee: number | null;
-  pets_allowed: boolean | null;
-  images: string[];
-  amenityList: string[];
-  description: string | null;
-  address: string | null;
-};
+import { Property } from "../../types";
 
 type Props = {
   properties: Property[];
 };
 
 const Properties = ({ properties }: Props) => {
+  const [filter, setFilter] = useState("all");
+  const [sort, setSort] = useState("name");
+
+  const filtered = useMemo(() => {
+    let result = [...properties];
+
+    // Filter
+    if (filter === "pets") result = result.filter((p) => p.pets_allowed);
+    if (filter === "4+") result = result.filter((p) => (p.person_capacity || 2) >= 4);
+    if (filter === "bedroom") result = result.filter((p) => (p.bedrooms_number || 0) >= 1);
+
+    // Sort
+    if (sort === "price-low") result.sort((a, b) => (a.base_price || 0) - (b.base_price || 0));
+    if (sort === "price-high") result.sort((a, b) => (b.base_price || 0) - (a.base_price || 0));
+    if (sort === "guests") result.sort((a, b) => (b.person_capacity || 0) - (a.person_capacity || 0));
+    if (sort === "name") result.sort((a, b) => a.name.localeCompare(b.name));
+
+    return result;
+  }, [properties, filter, sort]);
+
+  const filters = [
+    { key: "all", label: "All" },
+    { key: "pets", label: "Pets OK" },
+    { key: "4+", label: "4+ Guests" },
+    { key: "bedroom", label: "1+ Bedroom" },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Head>
-        <title>Properties — Evergreen Cottages</title>
-      </Head>
-
-      {/* Nav */}
-      <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="text-xl font-bold text-evergreen-700">
-              Evergreen Cottages
-            </Link>
-            <div className="hidden md:flex items-center space-x-8">
-              <Link href="/properties" className="text-evergreen-700 text-sm font-semibold">Properties</Link>
-              <Link href="/services" className="text-gray-600 hover:text-evergreen-700 text-sm font-medium">Services</Link>
-              <Link href="/about" className="text-gray-600 hover:text-evergreen-700 text-sm font-medium">About</Link>
-              <Link href="/contact" className="text-gray-600 hover:text-evergreen-700 text-sm font-medium">Contact</Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
+    <Layout title="Properties" description="Browse 17 vacation rentals in Pensacola, FL. Studios, 1-bedrooms, pet-friendly options.">
       {/* Header */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <h1 className="text-3xl font-bold text-gray-900">All Properties</h1>
-          <p className="text-gray-500 mt-1">{properties.length} vacation rentals in Pensacola, FL</p>
+          <p className="text-gray-500 mt-1">{filtered.length} vacation rentals in Pensacola, FL</p>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white border-b sticky top-16 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {filters.map((f) => (
+                <button
+                  key={f.key}
+                  onClick={() => setFilter(f.key)}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                    filter === f.key
+                      ? "bg-evergreen-600 text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-600"
+              aria-label="Sort properties"
+            >
+              <option value="name">Sort: Name</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+              <option value="guests">Most Guests</option>
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {properties.map((property) => (
-            <Link
-              key={property.id}
-              href={`/properties/${property.id}`}
-              className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+        {filtered.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-gray-400 text-lg">No properties match your filters.</p>
+            <button
+              onClick={() => setFilter("all")}
+              className="text-evergreen-600 font-medium mt-2 hover:underline"
             >
-              <div className="aspect-[4/3] bg-gray-200 relative">
-                {property.images[0] && (
-                  <img
-                    src={property.images[0]}
-                    alt={property.name}
-                    className="w-full h-full object-cover"
-                  />
-                )}
-                {property.pets_allowed && (
-                  <span className="absolute top-3 left-3 bg-evergreen-600 text-white text-xs px-2 py-1 rounded-full">
-                    Pets OK
-                  </span>
-                )}
-                <span className="absolute top-3 right-3 bg-white/90 text-gray-900 text-xs px-2 py-1 rounded-full font-medium">
-                  From ${property.base_price || 65}/night
-                </span>
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900 mb-1">{property.name}</h3>
-                <div className="flex items-center text-sm text-gray-500 mb-3">
-                  <span>{property.person_capacity || 2} guests</span>
-                  <span className="mx-1">&middot;</span>
-                  <span>{property.bathrooms_number || 1} bath</span>
-                  {property.bedrooms_number ? (
-                    <>
-                      <span className="mx-1">&middot;</span>
-                      <span>{property.bedrooms_number} bed</span>
-                    </>
-                  ) : null}
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {property.amenityList.slice(0, 5).map((amenity) => (
-                    <span
-                      key={amenity}
-                      className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full"
-                    >
-                      {amenity}
-                    </span>
-                  ))}
-                  {property.amenityList.length > 5 && (
-                    <span className="text-xs text-gray-400">
-                      +{property.amenityList.length - 5} more
-                    </span>
-                  )}
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+              Clear filters
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map((property, i) => (
+              <PropertyCard key={property.id} property={property} priority={i < 6} />
+            ))}
+          </div>
+        )}
       </div>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-8 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm">
-          &copy; {new Date().getFullYear()} Evergreen Cottages. All rights reserved.
-        </div>
-      </footer>
-    </div>
+    </Layout>
   );
 };
 
 export default Properties;
 
-export const getServerSideProps = async () => {
+export const getStaticProps = async () => {
   const properties = await getProperties("Pensacola");
   return {
     props: {
       properties: JSON.parse(JSON.stringify(properties)),
     },
+    revalidate: 3600,
   };
 };

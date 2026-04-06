@@ -6,12 +6,8 @@ module.exports = {
   },
   images: {
     domains: [
-      "t1.gstatic.com",
-      "t2.gstatic.com",
-      "t3.gstatic.com",
-      "upload.wikimedia.org",
-      "links.papareact.com",
-      "images.trvl-media.com",
+      "hostaway-platform.s3.us-west-2.amazonaws.com",
+      "images.unsplash.com",
     ],
   },
 };
