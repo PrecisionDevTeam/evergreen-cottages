@@ -169,19 +169,35 @@ export default function Layout({ children, title, description, dark }: Props) {
       {/* Footer */}
       <footer className="bg-ocean-500 text-white/80 pt-16 pb-8">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-10">
-            <div className="md:col-span-1">
-              <h3 className="font-serif text-xl text-white mb-4">Evergreen<br />Cottages</h3>
-              <p className="text-sm leading-relaxed">
-                17 vacation rentals in Pensacola, Florida. Book direct for the best rates.
-              </p>
-            </div>
+          {/* Top section — brand + CTA */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 pb-10 border-b border-white/10">
             <div>
-              <h4 className="text-white text-xs font-semibold uppercase tracking-widest mb-4">Navigate</h4>
+              <h3 className="font-serif text-2xl text-white mb-1">Evergreen Cottages</h3>
+              <p className="text-sm">17 vacation rentals in Pensacola, FL. Book direct and save.</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link href="/properties" className="bg-white text-ocean-600 px-6 py-3 rounded-full font-semibold text-sm text-center hover:bg-sand-100 transition-all">
+                Browse Properties
+              </Link>
+              <a href="tel:+15108227060" className="border border-white/40 text-white px-6 py-3 rounded-full font-semibold text-sm text-center hover:bg-white/10 transition-all">
+                (510) 822-7060
+              </a>
+            </div>
+          </div>
+
+          {/* Link columns */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-10">
+            <div>
+              <h4 className="text-white text-xs font-semibold uppercase tracking-widest mb-4">Explore</h4>
               <div className="flex flex-col space-y-2.5 text-sm">
                 <Link href="/properties" className="hover:text-white transition-colors">Properties</Link>
                 <Link href="/gallery" className="hover:text-white transition-colors">Gallery</Link>
                 <Link href="/services" className="hover:text-white transition-colors">Services</Link>
+              </div>
+            </div>
+            <div>
+              <h4 className="text-white text-xs font-semibold uppercase tracking-widest mb-4">Help</h4>
+              <div className="flex flex-col space-y-2.5 text-sm">
                 <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>
                 <Link href="/about" className="hover:text-white transition-colors">About</Link>
                 <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
@@ -196,6 +212,7 @@ export default function Layout({ children, title, description, dark }: Props) {
                 <a href="mailto:hello@staywithprecision.com" className="block hover:text-white transition-colors">
                   hello@staywithprecision.com
                 </a>
+                <p className="text-white/50 text-xs mt-1">Call or text 24/7</p>
               </div>
             </div>
             <div>
@@ -204,8 +221,11 @@ export default function Layout({ children, title, description, dark }: Props) {
                 3801 Mobile Highway<br />
                 Pensacola, FL 32505
               </p>
+              <p className="text-white/50 text-xs mt-2">Minutes from the beach</p>
             </div>
           </div>
+
+          {/* Bottom bar */}
           <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row justify-between items-center text-xs">
             <span>&copy; {new Date().getFullYear()} Evergreen Cottages</span>
             <span className="mt-2 sm:mt-0">Managed by Precision Management</span>
