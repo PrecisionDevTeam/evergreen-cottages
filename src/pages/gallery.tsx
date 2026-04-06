@@ -124,7 +124,7 @@ export default function Gallery({ images }: Props) {
 export const getServerSideProps = async () => {
   const properties = await getProperties("Pensacola");
 
-  const images: GalleryImage[] = properties.flatMap((p) =>
+  const images: GalleryImage[] = properties.flatMap((p: any) =>
     p.images.slice(0, 5).map((src: string) => ({
       src,
       propertyName: p.name,
@@ -153,6 +153,5 @@ export const getServerSideProps = async () => {
 
   return {
     props: { images: interleaved },
-    revalidate: 86400,
   };
 };

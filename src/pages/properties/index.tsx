@@ -264,6 +264,5 @@ export const getServerSideProps = async () => {
       properties: JSON.parse(JSON.stringify(properties)),
       popularIds,
     },
-    revalidate: 3600,
   };
 };

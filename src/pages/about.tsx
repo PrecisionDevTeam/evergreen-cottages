@@ -62,6 +62,5 @@ export const getServerSideProps = async () => {
       reviewCount: stats._count.id || 0,
       avgRating: stats._avg.rating || 4.9,
     },
-    revalidate: 86400,
   };
 };
