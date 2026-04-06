@@ -173,7 +173,7 @@ export default function Layout({ children, title, description, dark, schema }: P
       {/* Floating SMS button */}
       <a
         href="sms:+15108227060"
-        className="fixed bottom-20 right-5 lg:bottom-8 lg:right-8 w-14 h-14 bg-ocean-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-ocean-600 transition-all hover:scale-105 z-30"
+        className="fixed bottom-20 right-5 lg:bottom-8 lg:right-8 w-14 h-14 bg-evergreen-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-evergreen-600 transition-all hover:scale-105 z-30"
         aria-label="Text us"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
