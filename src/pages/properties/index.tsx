@@ -259,9 +259,17 @@ export const getServerSideProps = async () => {
   const popularIds = Object.entries(bookingCounts)
     .filter(([, count]) => count >= 2)
     .map(([id]) => Number(id));
+  // Trim heavy fields — listing page only needs card data, not full descriptions/images
+  const trimmed = properties.map((p: any) => ({
+    ...p,
+    images: p.images.slice(0, 8),
+    description: p.description ? p.description.slice(0, 200) : null,
+    listing_images: undefined,
+    amenities: undefined,
+  }));
   return {
     props: {
-      properties: JSON.parse(JSON.stringify(properties)),
+      properties: JSON.parse(JSON.stringify(trimmed)),
       popularIds,
     },
   };
