@@ -246,7 +246,7 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
 
   return (
     <Layout title={property.name} description={property.description ? stripEmojis(property.description).slice(0, 160) : undefined}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-20 lg:pb-6">
         <Breadcrumbs items={[
           { label: "Properties", href: "/properties" },
           { label: property.name },
@@ -414,7 +414,7 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sand-500">Check-out</span>
-                  <span className="font-medium">{property.check_out_time || 11}:00 AM</span>
+                  <span className="font-medium">{property.check_out_time != null ? `${property.check_out_time % 12 || 12}:00 ${property.check_out_time >= 12 ? "PM" : "AM"}` : "11:00 AM"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sand-500">Address</span>
