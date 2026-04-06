@@ -1,11 +1,12 @@
 import { GetServerSideProps } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Layout from "../../components/Layout";
 import AvailabilityCalendar from "../../components/AvailabilityCalendar";
 import { getProperty, getCalendar, getPropertyReviews } from "../../lib/db";
 import { Property, CalendarDay, Review } from "../../types";
+import { useRecentlyViewed } from "../../lib/localStorage";
 
 type Props = {
   property: Property & { knowledgeMap: Record<string, string | null> };
@@ -154,6 +155,14 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState(1);
 
+  const { recentlyViewed, addViewed } = useRecentlyViewed();
+
+  useEffect(() => {
+    addViewed(property);
+  }, [property.id, addViewed]);
+
+  const otherRecent = recentlyViewed.filter((r) => r.id !== property.id);
+
   const images = property.images || [];
 
   // Calculate price
@@ -181,6 +190,27 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
   }, [calendar]);
 
   const today = new Date().toISOString().split("T")[0];
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    const text = `Check out ${property.name} — $${property.base_price || 65}/night in Pensacola, FL`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: property.name, text, url });
+      } catch {
+        // user cancelled share dialog
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        // clipboard not available (HTTP, iframe, denied)
+      }
+    }
+  };
 
   const handleBookNow = () => {
     if (!checkIn || !checkOut) return;
@@ -205,7 +235,19 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
         </Link>
 
         {/* Title */}
-        <h1 className="text-2xl md:text-3xl font-bold text-ocean-800 mt-3 mb-1">{property.name}</h1>
+        <div className="flex items-start justify-between mt-3 mb-1">
+          <h1 className="text-2xl md:text-3xl font-bold text-ocean-800">{property.name}</h1>
+          <button
+            onClick={handleShare}
+            className="flex-shrink-0 ml-4 mt-1 flex items-center gap-1.5 text-sm text-sand-500 hover:text-ocean-500 transition-colors"
+            aria-label="Share property"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+            {copied ? "Copied!" : "Share"}
+          </button>
+        </div>
         <p className="text-sand-500 mb-6">{property.address || "3801 Mobile Highway, Pensacola, FL 32505"}</p>
 
         {/* Image Gallery */}
@@ -552,6 +594,26 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
         </div>
       </div>
 
+      {/* Recently Viewed */}
+      {otherRecent.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+          <h2 className="text-xl font-semibold mb-4">Recently Viewed</h2>
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {otherRecent.slice(0, 4).map((item) => (
+              <Link key={item.id} href={`/properties/${item.id}`} className="flex-shrink-0 w-48 group">
+                <div className="aspect-[3/2] bg-sand-200 rounded-xl overflow-hidden relative mb-2">
+                  {item.image && (
+                    <Image src={item.image} alt={item.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="192px" />
+                  )}
+                </div>
+                <p className="text-sm font-medium text-ocean-600 group-hover:text-coral-500 transition-colors truncate">{item.name}</p>
+                <p className="text-xs text-sand-400">${item.price}/night</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Mobile sticky booking bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-sand-200 px-4 py-3 flex items-center justify-between lg:hidden z-40 shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
         <div>
@@ -584,8 +646,8 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   if (!property) return { notFound: true };
 
   const [calendar, reviews] = await Promise.all([
-    getCalendar(property.hostaway_property_id, 180),
-    getPropertyReviews(property.hostaway_property_id, 6),
+    getCalendar(property.hostaway_property_id, 180).catch(() => []),
+    getPropertyReviews(property.hostaway_property_id, 6).catch(() => []),
   ]);
 
   return {

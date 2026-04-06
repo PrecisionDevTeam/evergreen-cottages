@@ -3,6 +3,7 @@ import Layout from "../../components/Layout";
 import PropertyCard from "../../components/PropertyCard";
 import { getProperties } from "../../lib/db";
 import { Property } from "../../types";
+import { useFavorites } from "../../lib/localStorage";
 
 type Props = { properties: Property[] };
 
@@ -21,6 +22,7 @@ const Properties = ({ properties }: Props) => {
   const [priceRange, setPriceRange] = useState("any");
   const [compareIds, setCompareIds] = useState<number[]>([]);
   const [showCompare, setShowCompare] = useState(false);
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   const toggleCompare = useCallback((id: number) => {
     setCompareIds((prev) =>
@@ -133,6 +135,8 @@ const Properties = ({ properties }: Props) => {
                 priority={i < 6}
                 comparing={compareIds.includes(property.id)}
                 onToggleCompare={toggleCompare}
+                isFavorite={isFavorite(property.id)}
+                onToggleFavorite={toggleFavorite}
               />
             ))}
           </div>

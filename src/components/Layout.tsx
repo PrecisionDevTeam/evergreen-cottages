@@ -14,6 +14,7 @@ const navLinks = [
   { href: "/properties", label: "Properties" },
   { href: "/services", label: "Services" },
   { href: "/about", label: "About" },
+  { href: "/faq", label: "FAQ" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -46,7 +47,16 @@ export default function Layout({ children, title, description, dark }: Props) {
         <meta property="og:title" content={pageTitle} />
         {description && <meta property="og:description" content={description} />}
         <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Evergreen Cottages" />
+        <meta property="og:locale" content="en_US" />
+        <meta property="og:image" content="https://evergreencottages.com/og-image.jpg" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        {description && <meta name="twitter:description" content={description} />}
+        <meta name="twitter:image" content="https://evergreencottages.com/og-image.jpg" />
+        <meta name="theme-color" content="#1a3a4a" />
         <link rel="icon" href="/favicon.ico" />
+        <link rel="canonical" href={`https://evergreencottages.com${router.asPath.split("?")[0]}`} />
       </Head>
 
       {/* Navigation */}
@@ -170,7 +180,9 @@ export default function Layout({ children, title, description, dark }: Props) {
               <h4 className="text-white text-xs font-semibold uppercase tracking-widest mb-4">Navigate</h4>
               <div className="flex flex-col space-y-2.5 text-sm">
                 <Link href="/properties" className="hover:text-white transition-colors">Properties</Link>
+                <Link href="/gallery" className="hover:text-white transition-colors">Gallery</Link>
                 <Link href="/services" className="hover:text-white transition-colors">Services</Link>
+                <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>
                 <Link href="/about" className="hover:text-white transition-colors">About</Link>
                 <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
               </div>
