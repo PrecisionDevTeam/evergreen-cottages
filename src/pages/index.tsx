@@ -178,16 +178,18 @@ const Home = ({ properties, reviews, reviewCount, avgRating }: Props) => {
       )}
 
       {/* Services CTA */}
-      <section className="py-24">
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 text-center">
-          <p className="text-coral-500 text-xs uppercase tracking-[0.2em] font-semibold mb-3">Extras</p>
-          <h2 className="text-4xl md:text-5xl font-serif text-ocean-500 mb-5">Add-on Services</h2>
-          <p className="text-sand-500 mb-10 max-w-xl mx-auto leading-relaxed">
+      <section className="relative py-24 overflow-hidden">
+        <div className="absolute inset-0 bg-ocean-500" />
+        <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml,%3Csvg width=60 height=60 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.15%22%3E%3Cpath d=%22M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]" />
+        <div className="relative max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 text-center">
+          <p className="text-coral-400 text-xs uppercase tracking-[0.2em] font-semibold mb-3">Extras</p>
+          <h2 className="text-4xl md:text-5xl font-serif text-white mb-5">Add-on Services</h2>
+          <p className="text-white/60 mb-10 max-w-xl mx-auto leading-relaxed">
             Airport shuttle, early check-in, late checkout, pet accommodations, and more.
           </p>
           <Link
             href="/services"
-            className="inline-block bg-ocean-500 text-white px-8 py-4 rounded-full font-semibold hover:bg-ocean-600 transition-all shadow-lg"
+            className="inline-block bg-white text-ocean-600 px-8 py-4 rounded-full font-semibold hover:bg-sand-100 transition-all shadow-xl"
           >
             View Services
           </Link>
