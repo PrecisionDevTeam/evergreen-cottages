@@ -163,10 +163,10 @@ const Properties = ({ properties }: Props) => {
 
       {/* Compare modal */}
       {showCompare && compareProperties.length >= 2 && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowCompare(false)}>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="compare-title" onClick={() => setShowCompare(false)}>
           <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[85vh] overflow-auto p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-serif text-ocean-500">Compare Properties</h2>
+              <h2 id="compare-title" className="text-xl font-serif text-ocean-500">Compare Properties</h2>
               <button onClick={() => setShowCompare(false)} className="text-sand-400 hover:text-sand-600 text-2xl" aria-label="Close comparison">&times;</button>
             </div>
             <div className="overflow-x-auto">

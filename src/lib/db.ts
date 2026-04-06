@@ -61,30 +61,38 @@ const HOST_REVIEW_PHRASES = [
   "left everything in excellent", "{{",
 ];
 
-const NEGATIVE_PHRASES = [
-  "ants", "bugs", "cockroach", "roach", "mice", "mouse", "rat",
-  "dirty", "filthy", "disgusting", "gross", "mold", "mildew", "stain",
+// Multi-word phrases use substring match; single words use word-boundary regex
+// to avoid false positives like "smelled like fresh flowers"
+const NEGATIVE_PHRASES_EXACT = [
   "not clean", "wasn't clean", "halfway cleaned", "wasn't cleaned",
-  "didn't feel safe", "unsafe", "sketchy", "dangerous", "scary",
-  "wouldn't recommend", "would not recommend", "don't recommend", "do not recommend",
-  "not worth", "waste of money", "rip off", "ripoff", "scam",
-  "nothing special", "super cheap", "not what we expected",
-  "inconsiderate", "rude", "unprofessional", "unresponsive", "no response",
-  "broken", "didn't work", "doesn't work", "not working", "out of order",
-  "smell", "smelled", "stink", "stunk", "odor",
-  "noisy", "loud", "noise", "couldn't sleep",
-  "bed bugs", "bedbug",
-  "worst", "terrible", "horrible", "awful", "nightmare",
-  "never again", "never staying", "never coming back", "never return",
-  "not a fan", "wasn't a fan", "disappointed", "disappointing",
-  "uncomfortable", "uncomfy",
+  "didn't feel safe", "wouldn't recommend", "would not recommend",
+  "don't recommend", "do not recommend", "not worth", "waste of money",
+  "rip off", "nothing special", "super cheap", "not what we expected",
+  "no response", "didn't work", "doesn't work", "not working", "out of order",
+  "couldn't sleep", "bed bugs", "never again", "never staying",
+  "never coming back", "never return", "not a fan", "wasn't a fan",
 ];
+
+const NEGATIVE_WORDS_BOUNDARY = [
+  "ants", "bugs", "cockroach", "roach", "mice", "mouse", "rat",
+  "dirty", "filthy", "disgusting", "gross", "mold", "mildew",
+  "unsafe", "sketchy", "dangerous", "scary", "ripoff", "scam",
+  "inconsiderate", "rude", "unprofessional", "unresponsive",
+  "broken", "stink", "stunk", "odor", "noisy", "bedbug",
+  "worst", "terrible", "horrible", "awful", "nightmare",
+  "disappointed", "disappointing", "uncomfortable",
+];
+
+const negativeWordPatterns = NEGATIVE_WORDS_BOUNDARY.map(
+  (w) => new RegExp(`\\b${w}\\b`, "i")
+);
 
 function isGuestReview(r: { review_content: string | null }): boolean {
   const content = (r.review_content || "").toLowerCase();
   if (!content || content.length < 5) return false;
   if (HOST_REVIEW_PHRASES.some((phrase) => content.includes(phrase))) return false;
-  if (NEGATIVE_PHRASES.some((phrase) => content.includes(phrase))) return false;
+  if (NEGATIVE_PHRASES_EXACT.some((phrase) => content.includes(phrase))) return false;
+  if (negativeWordPatterns.some((pattern) => pattern.test(content))) return false;
   return true;
 }
 
@@ -153,7 +161,7 @@ export async function getStayByToken(token: string) {
         AND status = 'active'
       LIMIT 1
     `;
-    doorCode = result[0]?.code || null;
+    doorCode = typeof result[0]?.code === "string" ? result[0].code : null;
   } catch (err) {
     console.error("seam_access_codes query failed:", err);
   }

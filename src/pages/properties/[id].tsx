@@ -22,21 +22,31 @@ function stripEmojis(text: string): string {
     .trim();
 }
 
+// Sections that don't belong on a marketing page
+const HIDDEN_SECTION_KEYWORDS = [
+  "reminder", "disclaimer", "note", "a few notes", "please be advised",
+  "neighborhood", "bug", "insect", "pest", "florida's warm",
+];
+
+function isSectionHidden(title: string): boolean {
+  const lower = title.toLowerCase();
+  return HIDDEN_SECTION_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
 function formatDescription(raw: string): { intro: string; sections: { title: string; items: string[] }[] } {
   const cleaned = stripEmojis(raw);
   const lines = cleaned.split("\n").map((l) => l.trim()).filter(Boolean);
 
   const intro: string[] = [];
-  const sections: { title: string; items: string[] }[] = [];
+  const allSections: { title: string; items: string[] }[] = [];
   let currentSection: { title: string; items: string[] } | null = null;
 
   for (const line of lines) {
-    // Detect section headers (short lines, no dash prefix, title-case-ish)
     const isHeader = line.length < 50 && !line.startsWith("–") && !line.startsWith("-") &&
       /^[A-Z]/.test(line) && !line.includes("–") && line.split(" ").length <= 6;
 
-    if (isHeader && (intro.length > 0 || sections.length > 0)) {
-      if (currentSection) sections.push(currentSection);
+    if (isHeader && (intro.length > 0 || allSections.length > 0)) {
+      if (currentSection) allSections.push(currentSection);
       currentSection = { title: line, items: [] };
     } else if (currentSection) {
       currentSection.items.push(line.replace(/^[-–]\s*/, ""));
@@ -44,52 +54,90 @@ function formatDescription(raw: string): { intro: string; sections: { title: str
       intro.push(line);
     }
   }
-  if (currentSection) sections.push(currentSection);
+  if (currentSection) allSections.push(currentSection);
+
+  const sections = allSections.filter((s) => !isSectionHidden(s.title));
 
   return { intro: intro.join("\n\n"), sections };
 }
 
+const VISIBLE_SECTIONS = 2;
+
+function SectionBlock({ section }: { section: { title: string; items: string[] } }) {
+  return (
+    <div className="mb-5">
+      <h3 className="text-sm font-semibold text-ocean-500 uppercase tracking-wide mb-2">
+        {section.title}
+      </h3>
+      <ul className="space-y-1.5">
+        {section.items.map((item, j) => (
+          <li key={j} className="text-sand-600 text-sm flex items-start">
+            <span className="text-sand-300 mr-2 mt-1.5 flex-shrink-0">
+              <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 8 8">
+                <circle cx="4" cy="4" r="3" />
+              </svg>
+            </span>
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function Description({ raw, expanded, onToggle }: { raw: string; expanded: boolean; onToggle: () => void }) {
   const desc = formatDescription(raw);
-  const isLong = raw.length > 400;
+  const hasMore = desc.sections.length > VISIBLE_SECTIONS;
+  const visibleSections = expanded ? desc.sections : desc.sections.slice(0, VISIBLE_SECTIONS);
 
   return (
     <div className="mb-8">
       <h2 className="text-xl font-semibold mb-4">About this property</h2>
-      <div className="relative">
-        <div className={expanded || !isLong ? "" : "max-h-48 overflow-hidden"}>
-          <div className="text-sand-600 leading-relaxed text-sm space-y-3 mb-6">
-            {desc.intro.split("\n\n").map((p, i) => (
-              <p key={i}>{p}</p>
-            ))}
-          </div>
-          {desc.sections.map((section, i) => (
-            <div key={i} className="mb-5">
-              <h3 className="text-sm font-semibold text-ocean-500 uppercase tracking-wide mb-2">
-                {section.title}
-              </h3>
-              <ul className="space-y-1.5">
-                {section.items.map((item, j) => (
-                  <li key={j} className="text-sand-600 text-sm flex items-start">
-                    <span className="text-sand-300 mr-2 mt-1.5 flex-shrink-0">
-                      <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 8 8">
-                        <circle cx="4" cy="4" r="3" />
-                      </svg>
-                    </span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-        {!expanded && isLong && (
-          <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-sand-50 to-transparent" />
-        )}
+      <div className="text-sand-600 leading-relaxed text-sm space-y-3 mb-6">
+        {desc.intro.split("\n\n").map((p, i) => (
+          <p key={i}>{p}</p>
+        ))}
       </div>
-      {isLong && (
-        <button onClick={onToggle} className="text-ocean-500 font-medium text-sm mt-3 hover:text-coral-500 transition-colors">
-          {expanded ? "Show less" : "Read more"}
+      {visibleSections.map((section, i) => (
+        <SectionBlock key={i} section={section} />
+      ))}
+      {hasMore && (
+        <button onClick={onToggle} className="text-ocean-500 font-medium text-sm hover:text-coral-500 transition-colors">
+          {expanded ? "Show less" : `Read more (${desc.sections.length - VISIBLE_SECTIONS} more sections)`}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function AmenitiesSection({ amenityList, expanded, onToggle }: { amenityList: string[]; expanded: boolean; onToggle: () => void }) {
+  const unique = useMemo(() => {
+    const dupes = new Set(["Wireless", "wireless", "Internet"]);
+    const cleaned = amenityList
+      .filter((a) => !dupes.has(a))
+      .map((a) => (a === "Internet" || a === "Wireless") ? "WiFi" : a);
+    return Array.from(new Set(cleaned));
+  }, [amenityList]);
+
+  const shown = expanded ? unique : unique.slice(0, 9);
+  const remaining = unique.length - 9;
+
+  return (
+    <div className="mb-8">
+      <h2 className="text-xl font-semibold mb-4">Amenities</h2>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {shown.map((amenity) => (
+          <div key={amenity} className="flex items-center text-sand-600 text-sm">
+            <svg className="w-4 h-4 mr-2 text-evergreen-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            {amenity}
+          </div>
+        ))}
+      </div>
+      {remaining > 0 && (
+        <button onClick={onToggle} className="text-ocean-500 font-medium text-sm mt-4 hover:text-coral-500 transition-colors">
+          {expanded ? "Show less" : `Show all ${unique.length} amenities`}
         </button>
       )}
     </div>
@@ -101,6 +149,7 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
   const [amenitiesExpanded, setAmenitiesExpanded] = useState(false);
+  const [reviewsExpanded, setReviewsExpanded] = useState(false);
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState(1);
@@ -156,13 +205,13 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
         </Link>
 
         {/* Title */}
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mt-3 mb-1">{property.name}</h1>
-        <p className="text-gray-500 mb-6">{property.address || "3801 Mobile Highway, Pensacola, FL 32505"}</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-ocean-800 mt-3 mb-1">{property.name}</h1>
+        <p className="text-sand-500 mb-6">{property.address || "3801 Mobile Highway, Pensacola, FL 32505"}</p>
 
         {/* Image Gallery */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8 rounded-2xl overflow-hidden">
           <div
-            className="aspect-[4/3] bg-gray-200 relative cursor-pointer group"
+            className="aspect-[4/3] bg-sand-200 relative cursor-pointer group"
             onClick={() => setLightboxOpen(true)}
           >
             {images[currentImage] && (
@@ -183,7 +232,7 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
                   onClick={(e) => { e.stopPropagation(); setCurrentImage((p) => (p > 0 ? p - 1 : images.length - 1)); }}
                   aria-label="Previous image"
                 >
-                  <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-ocean-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
@@ -192,7 +241,7 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
                   onClick={(e) => { e.stopPropagation(); setCurrentImage((p) => (p < images.length - 1 ? p + 1 : 0)); }}
                   aria-label="Next image"
                 >
-                  <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-ocean-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
@@ -206,7 +255,7 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
             {images.slice(1, 5).map((img, i) => (
               <div
                 key={i}
-                className="aspect-[4/3] bg-gray-200 relative cursor-pointer hover:opacity-90 transition-opacity"
+                className="aspect-[4/3] bg-sand-200 relative cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={() => { setCurrentImage(i + 1); setLightboxOpen(true); }}
               >
                 <Image src={img} alt={`${property.name} photo ${i + 2}`} fill className="object-cover" sizes="25vw" />
@@ -218,7 +267,7 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
         {/* Lightbox */}
         {lightboxOpen && (
           <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center" onClick={() => setLightboxOpen(false)}>
-            <button className="absolute top-4 right-4 text-white text-3xl z-50" onClick={() => setLightboxOpen(false)} aria-label="Close gallery">&times;</button>
+            <button className="absolute top-4 right-4 text-white text-3xl z-50 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors" onClick={() => setLightboxOpen(false)} aria-label="Close gallery">&times;</button>
             <button
               className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl z-50 hover:opacity-70"
               onClick={(e) => { e.stopPropagation(); setCurrentImage((p) => (p > 0 ? p - 1 : images.length - 1)); }}
@@ -289,65 +338,30 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
             />
 
             {/* Amenities */}
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">Amenities</h2>
-              {(() => {
-                // Deduplicate similar amenities
-                const dupes = new Set(["Wireless", "wireless", "Internet"]);
-                const cleaned = property.amenityList
-                  .filter((a) => !dupes.has(a))
-                  .map((a) => {
-                    if (a === "Internet" || a === "Wireless") return "WiFi";
-                    return a;
-                  });
-                // Deduplicate
-                const unique = Array.from(new Set(cleaned));
-                const shown = amenitiesExpanded ? unique : unique.slice(0, 9);
-                const remaining = unique.length - 9;
-
-                return (
-                  <>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {shown.map((amenity) => (
-                        <div key={amenity} className="flex items-center text-sand-600 text-sm">
-                          <svg className="w-4 h-4 mr-2 text-evergreen-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          {amenity}
-                        </div>
-                      ))}
-                    </div>
-                    {remaining > 0 && (
-                      <button
-                        onClick={() => setAmenitiesExpanded(!amenitiesExpanded)}
-                        className="text-ocean-500 font-medium text-sm mt-4 hover:text-coral-500 transition-colors"
-                      >
-                        {amenitiesExpanded ? "Show less" : `Show all ${unique.length} amenities`}
-                      </button>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
+            <AmenitiesSection
+              amenityList={property.amenityList}
+              expanded={amenitiesExpanded}
+              onToggle={() => setAmenitiesExpanded(!amenitiesExpanded)}
+            />
 
             {/* Check-in Info */}
             <div className="mb-8">
               <h2 className="text-xl font-semibold mb-4">Check-in Details</h2>
-              <div className="bg-gray-50 rounded-xl p-6 space-y-3 text-sm">
+              <div className="bg-sand-50 rounded-xl p-6 space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Check-in</span>
-                  <span className="font-medium">4:00 PM</span>
+                  <span className="text-sand-500">Check-in</span>
+                  <span className="font-medium">{property.check_in_time != null ? `${property.check_in_time % 12 || 12}:00 ${property.check_in_time >= 12 ? "PM" : "AM"}` : "4:00 PM"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Check-out</span>
+                  <span className="text-sand-500">Check-out</span>
                   <span className="font-medium">{property.check_out_time || 11}:00 AM</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Address</span>
+                  <span className="text-sand-500">Address</span>
                   <span className="font-medium text-right">{property.address || "3801 Mobile Highway, Pensacola, FL"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Smart Lock</span>
+                  <span className="text-sand-500">Smart Lock</span>
                   <span className="font-medium">Keyless entry — code sent before arrival</span>
                 </div>
               </div>
@@ -383,7 +397,7 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
                   </span>
                 </h2>
                 <div className="space-y-4">
-                  {reviews.map((review) => (
+                  {(reviewsExpanded ? reviews : reviews.slice(0, 3)).map((review) => (
                     <div key={review.id} className="border border-sand-100 rounded-xl p-5">
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-medium text-sm text-ocean-600">{review.reviewer_name}</span>
@@ -409,6 +423,14 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
                     </div>
                   ))}
                 </div>
+                {reviews.length > 3 && (
+                  <button
+                    onClick={() => setReviewsExpanded(!reviewsExpanded)}
+                    className="text-ocean-500 font-medium text-sm mt-4 hover:text-coral-500 transition-colors"
+                  >
+                    {reviewsExpanded ? "Show less" : `Show all ${reviews.length} reviews`}
+                  </button>
+                )}
               </div>
             )}
 
@@ -563,7 +585,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
 
   const [calendar, reviews] = await Promise.all([
     getCalendar(property.hostaway_property_id, 180),
-    getPropertyReviews(property.hostaway_property_id, 8),
+    getPropertyReviews(property.hostaway_property_id, 6),
   ]);
 
   return {

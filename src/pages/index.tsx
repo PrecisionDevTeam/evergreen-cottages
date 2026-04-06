@@ -7,9 +7,11 @@ import { Property, Review } from "../types";
 type Props = {
   properties: Property[];
   reviews: Review[];
+  reviewCount: number;
+  avgRating: number;
 };
 
-const Home = ({ properties, reviews }: Props) => {
+const Home = ({ properties, reviews, reviewCount, avgRating }: Props) => {
   return (
     <Layout dark description="17 professionally managed vacation rentals in Pensacola, Florida. Book direct and save 10-15%.">
       {/* Hero */}
@@ -58,17 +60,17 @@ const Home = ({ properties, reviews }: Props) => {
       <section className="max-w-5xl mx-auto px-5 sm:px-8 -mt-2 mb-16">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-16 text-center py-6">
           <div>
-            <div className="text-3xl font-serif text-ocean-500">17</div>
+            <div className="text-3xl font-serif text-ocean-500">{properties.length}</div>
             <div className="text-xs text-sand-500 uppercase tracking-widest mt-0.5">Properties</div>
           </div>
           <div className="hidden sm:block w-px h-8 bg-sand-300" />
           <div>
-            <div className="text-3xl font-serif text-ocean-500">4.9</div>
+            <div className="text-3xl font-serif text-ocean-500">{avgRating.toFixed(1)}</div>
             <div className="text-xs text-sand-500 uppercase tracking-widest mt-0.5">Avg Rating</div>
           </div>
           <div className="hidden sm:block w-px h-8 bg-sand-300" />
           <div>
-            <div className="text-3xl font-serif text-ocean-500">1,200+</div>
+            <div className="text-3xl font-serif text-ocean-500">{reviewCount.toLocaleString()}+</div>
             <div className="text-xs text-sand-500 uppercase tracking-widest mt-0.5">Reviews</div>
           </div>
           <div className="hidden sm:block w-px h-8 bg-sand-300" />
@@ -148,8 +150,12 @@ const Home = ({ properties, reviews }: Props) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 stagger">
               {reviews.slice(0, 6).map((review) => (
                 <div key={review.id} className="bg-white rounded-2xl p-7 card-lift border border-sand-100 fade-in-up">
-                  <div className="text-coral-400 text-sm tracking-wide mb-3">
-                    {"★".repeat(Math.round(review.rating || 5))}
+                  <div className="flex items-center gap-0.5 mb-3">
+                    {Array.from({ length: 5 }, (_, i) => (
+                      <svg key={i} className={`w-4 h-4 ${i < Math.round(review.rating || 5) ? "text-yellow-400" : "text-sand-200"}`} fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
                   </div>
                   <p className="text-ocean-600 text-sm leading-relaxed mb-5 line-clamp-4 italic">
                     &ldquo;{review.review_content}&rdquo;
@@ -202,13 +208,13 @@ const Home = ({ properties, reviews }: Props) => {
               href="tel:+15108227060"
               className="bg-ocean-500 text-white px-8 py-4 rounded-full font-semibold hover:bg-ocean-600 transition-all shadow-lg"
             >
-              Call (510) 822-7060
+              Call or Text (510) 822-7060
             </a>
             <Link
               href="/contact"
               className="border-2 border-sand-300 text-ocean-500 px-8 py-4 rounded-full font-semibold hover:border-ocean-500 transition-all"
             >
-              Send a Message
+              Contact Us
             </Link>
           </div>
         </div>
@@ -220,13 +226,23 @@ const Home = ({ properties, reviews }: Props) => {
 export default Home;
 
 export const getStaticProps = async () => {
-  const properties = await getProperties("Pensacola");
-  const reviews = await getReviews(6);
+  const { prisma } = await import("../lib/db");
+  const [properties, reviews, stats] = await Promise.all([
+    getProperties("Pensacola"),
+    getReviews(6),
+    prisma.review.aggregate({
+      _avg: { rating: true },
+      _count: { id: true },
+      where: { rating: { not: null }, review_content: { not: null } },
+    }),
+  ]);
 
   return {
     props: {
       properties: JSON.parse(JSON.stringify(properties)),
       reviews: JSON.parse(JSON.stringify(reviews)),
+      reviewCount: stats._count.id || 0,
+      avgRating: stats._avg.rating || 4.9,
     },
     revalidate: 3600,
   };
