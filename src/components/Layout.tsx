@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import Head from "next/head";
@@ -50,11 +51,11 @@ export default function Layout({ children, title, description, dark, schema }: P
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="Evergreen Cottages" />
         <meta property="og:locale" content="en_US" />
-        <meta property="og:image" content="https://evergreencottages.com/og-image.jpg" />
+        <meta property="og:image" content="https://evergreencottages.com/og-image.png" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={pageTitle} />
         {description && <meta name="twitter:description" content={description} />}
-        <meta name="twitter:image" content="https://evergreencottages.com/og-image.jpg" />
+        <meta name="twitter:image" content="https://evergreencottages.com/og-image.png" />
         <meta name="theme-color" content="#1a3a4a" />
         <link rel="icon" href="/favicon.ico" />
         {schema && (
@@ -75,13 +76,15 @@ export default function Layout({ children, title, description, dark, schema }: P
       >
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="flex justify-between items-center h-18 py-4">
-            <Link
-              href="/"
-              className={`text-xl font-serif tracking-tight transition-colors ${
-                scrolled || !dark ? "text-ocean-500" : "text-white"
-              }`}
-            >
-              Evergreen Cottages
+            <Link href="/" className="flex-shrink-0">
+              <Image
+                src="/images/logo.png"
+                alt="Evergreen Cottages"
+                width={160}
+                height={48}
+                className="h-10 w-auto"
+                priority
+              />
             </Link>
 
             {/* Desktop nav */}
@@ -187,7 +190,7 @@ export default function Layout({ children, title, description, dark, schema }: P
           {/* Top section — brand + CTA */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 pb-10 border-b border-white/10">
             <div>
-              <h3 className="font-serif text-2xl text-white mb-1">Evergreen Cottages</h3>
+              <Image src="/images/logo.png" alt="Evergreen Cottages" width={140} height={42} className="h-10 w-auto mb-2 brightness-0 invert" />
               <p className="text-sm">17 vacation rentals in Pensacola, FL. Book direct and save.</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
