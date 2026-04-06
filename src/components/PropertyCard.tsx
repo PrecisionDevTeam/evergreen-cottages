@@ -13,7 +13,7 @@ export default function PropertyCard({ property, priority = false }: Props) {
       href={`/properties/${property.id}`}
       className="group block card-lift fade-in-up"
     >
-      <div className="aspect-[4/3] bg-sand-200 relative overflow-hidden rounded-2xl">
+      <div className="aspect-[3/2] bg-sand-200 relative overflow-hidden rounded-2xl">
         {property.images[0] ? (
           <Image
             src={property.images[0]}
@@ -52,11 +52,11 @@ export default function PropertyCard({ property, priority = false }: Props) {
         </div>
       </div>
 
-      <div className="pt-3.5 pb-1">
-        <h3 className="font-serif text-lg text-ocean-500 group-hover:text-coral-500 transition-colors line-clamp-1">
+      <div className="pt-4 pb-2">
+        <h3 className="font-serif text-lg text-ocean-500 group-hover:text-coral-500 transition-colors leading-snug mb-2">
           {property.name}
         </h3>
-        <div className="flex items-center text-sm text-sand-500 mt-1">
+        <div className="flex items-center text-sm text-sand-500">
           <span>{property.person_capacity || 2} guests</span>
           <span className="mx-2 text-sand-300">&bull;</span>
           <span>{property.bathrooms_number || 1} bath</span>
