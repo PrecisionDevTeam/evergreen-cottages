@@ -1,5 +1,6 @@
 import { GetServerSideProps } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { useState, useMemo } from "react";
 import Layout from "../../components/Layout";
 import { getProperty, getCalendar } from "../../lib/db";
@@ -144,12 +145,12 @@ const PropertyDetail = ({ property, calendar }: Props) => {
     <Layout title={property.name} description={property.description ? stripEmojis(property.description).slice(0, 160) : undefined}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Back */}
-        <a href="/properties" className="text-evergreen-600 text-sm mb-4 inline-flex items-center hover:underline">
+        <Link href="/properties" className="text-ocean-500 text-sm mb-4 inline-flex items-center hover:text-coral-500 transition-colors">
           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           All Properties
-        </a>
+        </Link>
 
         {/* Title */}
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mt-3 mb-1">{property.name}</h1>
