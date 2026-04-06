@@ -166,19 +166,39 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
 
   const images = property.images || [];
 
-  // Calculate price
+  // Build calendar price lookup
+  const calendarPrices = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const day of calendar) {
+      if (day.date && day.price) {
+        map[day.date.split("T")[0]] = day.price;
+      }
+    }
+    return map;
+  }, [calendar]);
+
+  // Calculate price using actual calendar rates per night
   const priceCalc = useMemo(() => {
     if (!checkIn || !checkOut) return null;
     const start = new Date(checkIn);
     const end = new Date(checkOut);
     const nights = Math.ceil((end.getTime() - start.getTime()) / 86400000);
     if (nights <= 0) return null;
-    const nightly = property.base_price || 65;
+    const fallback = property.base_price || 65;
     const cleaning = property.cleaning_fee || 65;
-    const subtotal = nights * nightly;
+
+    // Sum actual nightly prices from calendar
+    let subtotal = 0;
+    for (let i = 0; i < nights; i++) {
+      const d = new Date(start);
+      d.setDate(d.getDate() + i);
+      const key = d.toISOString().split("T")[0];
+      subtotal += calendarPrices[key] || fallback;
+    }
+    const nightly = Math.round(subtotal / nights);
     const total = subtotal + cleaning;
     return { nights, nightly, cleaning, subtotal, total };
-  }, [checkIn, checkOut, property.base_price, property.cleaning_fee]);
+  }, [checkIn, checkOut, calendarPrices, property.base_price, property.cleaning_fee]);
 
   // Blocked dates
   const blockedDates = useMemo(() => {
@@ -505,7 +525,10 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
           <div className="lg:col-span-1">
             <div className="bg-white border border-sand-200 rounded-2xl p-5 sticky top-24 shadow-sm">
               <div className="text-2xl font-bold text-ocean-500 mb-0.5 font-serif">
-                ${property.base_price || 65}<span className="text-base font-normal text-sand-400">/night</span>
+                {priceCalc
+                  ? <>${Math.round(priceCalc.nightly)}<span className="text-base font-normal text-sand-400">/night</span></>
+                  : <><span className="text-base font-normal text-sand-400">from </span>${property.base_price || 65}<span className="text-base font-normal text-sand-400">/night</span></>
+                }
               </div>
               <p className="text-xs text-sand-400 mb-4">+ ${property.cleaning_fee || 65} cleaning fee</p>
 
@@ -635,8 +658,18 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
       {/* Mobile sticky booking bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-sand-200 px-4 py-3 flex items-center justify-between lg:hidden z-40 shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
         <div>
-          <span className="text-lg font-bold text-ocean-500 font-serif">${property.base_price || 65}</span>
-          <span className="text-sand-400 text-sm">/night</span>
+          {priceCalc ? (
+            <>
+              <span className="text-lg font-bold text-ocean-500 font-serif">${Math.round(priceCalc.nightly)}</span>
+              <span className="text-sand-400 text-sm">/night</span>
+            </>
+          ) : (
+            <>
+              <span className="text-sand-400 text-xs">from </span>
+              <span className="text-lg font-bold text-ocean-500 font-serif">${property.base_price || 65}</span>
+              <span className="text-sand-400 text-sm">/night</span>
+            </>
+          )}
         </div>
         <button
           onClick={handleBookNow}
