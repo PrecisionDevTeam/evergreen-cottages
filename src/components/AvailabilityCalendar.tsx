@@ -84,9 +84,8 @@ export default function AvailabilityCalendar({ calendar, onDateSelect, checkIn, 
   }
 
   return (
-    <div className="mb-8">
-      <h2 className="text-xl font-semibold mb-4">Availability</h2>
-      <div className="bg-white border border-sand-200 rounded-2xl p-5">
+    <div className="mb-4">
+      <div className="rounded-xl p-1">
         {/* Month nav */}
         <div className="flex items-center justify-between mb-4">
           <button

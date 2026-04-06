@@ -328,26 +328,6 @@ const PropertyDetail = ({ property, calendar }: Props) => {
               </div>
             </div>
 
-            {/* Availability Calendar */}
-            <AvailabilityCalendar
-              calendar={calendar}
-              checkIn={checkIn}
-              checkOut={checkOut}
-              onDateSelect={(date) => {
-                if (!checkIn || (checkIn && checkOut)) {
-                  setCheckIn(date);
-                  setCheckOut("");
-                } else {
-                  if (date > checkIn) {
-                    setCheckOut(date);
-                  } else {
-                    setCheckIn(date);
-                    setCheckOut("");
-                  }
-                }
-              }}
-            />
-
             {/* Location Map */}
             {property.lat && property.lng && (
               <div className="mb-8">
@@ -377,59 +357,72 @@ const PropertyDetail = ({ property, calendar }: Props) => {
 
           {/* Right — Booking Card */}
           <div className="lg:col-span-1">
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 sticky top-24 shadow-sm">
-              <div className="text-2xl font-bold text-gray-900 mb-0.5">
-                ${property.base_price || 65}<span className="text-base font-normal text-gray-500">/night</span>
+            <div className="bg-white border border-sand-200 rounded-2xl p-5 sticky top-24 shadow-sm">
+              <div className="text-2xl font-bold text-ocean-500 mb-0.5 font-serif">
+                ${property.base_price || 65}<span className="text-base font-normal text-sand-400">/night</span>
               </div>
-              <p className="text-xs text-gray-400 mb-6">+ ${property.cleaning_fee || 65} cleaning fee</p>
+              <p className="text-xs text-sand-400 mb-4">+ ${property.cleaning_fee || 65} cleaning fee</p>
 
-              <div className="space-y-4 mb-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1">Check-in</label>
-                  <input
-                    type="date"
-                    min={today}
-                    value={checkIn}
-                    onChange={(e) => setCheckIn(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-evergreen-500 focus:border-evergreen-500 outline-none"
-                  />
+              {/* Calendar */}
+              <AvailabilityCalendar
+                calendar={calendar}
+                checkIn={checkIn}
+                checkOut={checkOut}
+                onDateSelect={(date) => {
+                  if (!checkIn || (checkIn && checkOut)) {
+                    setCheckIn(date);
+                    setCheckOut("");
+                  } else {
+                    if (date > checkIn) {
+                      setCheckOut(date);
+                    } else {
+                      setCheckIn(date);
+                      setCheckOut("");
+                    }
+                  }
+                }}
+              />
+
+              {/* Selected dates summary */}
+              {(checkIn || checkOut) && (
+                <div className="flex gap-2 mb-3 text-xs">
+                  <div className={`flex-1 rounded-lg p-2.5 border ${checkIn ? "border-ocean-500 bg-ocean-50" : "border-sand-200"}`}>
+                    <div className="text-sand-400 mb-0.5">Check-in</div>
+                    <div className="font-medium text-ocean-600">{checkIn ? new Date(checkIn + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Select"}</div>
+                  </div>
+                  <div className={`flex-1 rounded-lg p-2.5 border ${checkOut ? "border-ocean-500 bg-ocean-50" : "border-sand-200"}`}>
+                    <div className="text-sand-400 mb-0.5">Check-out</div>
+                    <div className="font-medium text-ocean-600">{checkOut ? new Date(checkOut + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Select"}</div>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1">Check-out</label>
-                  <input
-                    type="date"
-                    min={checkIn || today}
-                    value={checkOut}
-                    onChange={(e) => setCheckOut(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-evergreen-500 focus:border-evergreen-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1">Guests</label>
-                  <select
-                    value={guests}
-                    onChange={(e) => setGuests(parseInt(e.target.value))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-evergreen-500 focus:border-evergreen-500 outline-none"
-                  >
-                    {Array.from({ length: property.person_capacity || 2 }, (_, i) => (
-                      <option key={i + 1} value={i + 1}>{i + 1} guest{i > 0 ? "s" : ""}</option>
-                    ))}
-                  </select>
-                </div>
+              )}
+
+              {/* Guests */}
+              <div className="mb-4">
+                <select
+                  value={guests}
+                  onChange={(e) => setGuests(parseInt(e.target.value))}
+                  className="w-full border border-sand-200 rounded-lg px-3 py-2.5 text-sm text-sand-600 bg-sand-50 focus:ring-2 focus:ring-ocean-500 focus:border-ocean-500 outline-none"
+                  aria-label="Number of guests"
+                >
+                  {Array.from({ length: property.person_capacity || 2 }, (_, i) => (
+                    <option key={i + 1} value={i + 1}>{i + 1} guest{i > 0 ? "s" : ""}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Price breakdown */}
               {priceCalc && (
-                <div className="border-t border-gray-100 pt-4 mb-4 space-y-2 text-sm">
-                  <div className="flex justify-between text-gray-600">
+                <div className="border-t border-sand-100 pt-3 mb-4 space-y-2 text-sm">
+                  <div className="flex justify-between text-sand-500">
                     <span>${priceCalc.nightly} x {priceCalc.nights} night{priceCalc.nights > 1 ? "s" : ""}</span>
                     <span>${priceCalc.subtotal}</span>
                   </div>
-                  <div className="flex justify-between text-gray-600">
+                  <div className="flex justify-between text-sand-500">
                     <span>Cleaning fee</span>
                     <span>${priceCalc.cleaning}</span>
                   </div>
-                  <div className="flex justify-between font-semibold text-gray-900 pt-2 border-t border-gray-100">
+                  <div className="flex justify-between font-semibold text-ocean-500 pt-2 border-t border-sand-100">
                     <span>Total</span>
                     <span>${priceCalc.total}</span>
                   </div>
@@ -438,16 +431,16 @@ const PropertyDetail = ({ property, calendar }: Props) => {
 
               <button
                 onClick={handleBookNow}
-                className="w-full bg-evergreen-600 text-white py-3 rounded-lg font-semibold hover:bg-evergreen-700 transition-colors mb-2"
+                className="w-full bg-ocean-500 text-white py-3.5 rounded-xl font-semibold hover:bg-ocean-600 transition-colors mb-2"
               >
-                {priceCalc ? `Book Now — $${priceCalc.total}` : "Book Now"}
+                {priceCalc ? `Book Now — $${priceCalc.total}` : "Select dates to book"}
               </button>
-              <p className="text-center text-xs text-gray-400">Book direct &amp; save 10-15% vs Airbnb</p>
+              <p className="text-center text-xs text-sand-400">Book direct &amp; save 10-15% vs Airbnb</p>
 
-              <div className="mt-4 pt-4 border-t border-gray-100">
+              <div className="mt-4 pt-4 border-t border-sand-100">
                 <a
                   href="tel:+15108227060"
-                  className="flex items-center justify-center text-sm text-evergreen-600 font-medium hover:text-evergreen-700"
+                  className="flex items-center justify-center text-sm text-ocean-500 font-medium hover:text-coral-500 transition-colors"
                 >
                   <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
