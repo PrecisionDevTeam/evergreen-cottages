@@ -22,6 +22,7 @@ function stripEmojis(text: string): string {
 const PropertyDetail = ({ property, calendar }: Props) => {
   const [currentImage, setCurrentImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState(1);
@@ -181,9 +182,24 @@ const PropertyDetail = ({ property, calendar }: Props) => {
             {/* Description */}
             <div className="mb-8">
               <h2 className="text-xl font-semibold mb-3">About this property</h2>
-              <p className="text-gray-600 leading-relaxed whitespace-pre-line text-sm">
-                {stripEmojis(property.description || "A comfortable vacation rental in Pensacola, FL.")}
-              </p>
+              <div className="relative">
+                <p className={`text-sand-600 leading-relaxed whitespace-pre-line text-sm ${
+                  descExpanded ? "" : "max-h-40 overflow-hidden"
+                }`}>
+                  {stripEmojis(property.description || "A comfortable vacation rental in Pensacola, FL.")}
+                </p>
+                {!descExpanded && (property.description || "").length > 400 && (
+                  <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-sand-50 to-transparent" />
+                )}
+              </div>
+              {(property.description || "").length > 400 && (
+                <button
+                  onClick={() => setDescExpanded(!descExpanded)}
+                  className="text-ocean-500 font-medium text-sm mt-2 hover:text-coral-500 transition-colors"
+                >
+                  {descExpanded ? "Show less" : "Read more"}
+                </button>
+              )}
             </div>
 
             {/* Amenities */}
