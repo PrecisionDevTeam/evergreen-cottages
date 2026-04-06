@@ -141,7 +141,7 @@ const Home = ({ properties, reviews, reviewCount, avgRating }: Props) => {
 
       {/* Reviews */}
       {reviews.length > 0 && (
-        <section className="py-24">
+        <section className="py-24 bg-sand-50">
           <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
             <div className="text-center mb-14">
               <p className="text-coral-500 text-xs uppercase tracking-[0.2em] font-semibold mb-2">Testimonials</p>
@@ -178,7 +178,7 @@ const Home = ({ properties, reviews, reviewCount, avgRating }: Props) => {
       )}
 
       {/* Services CTA */}
-      <section className="py-24 bg-sand-50">
+      <section className="py-24">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 text-center">
           <p className="text-coral-500 text-xs uppercase tracking-[0.2em] font-semibold mb-3">Extras</p>
           <h2 className="text-4xl md:text-5xl font-serif text-ocean-500 mb-5">Add-on Services</h2>
