@@ -13,7 +13,38 @@ type Props = {
 
 const Home = ({ properties, reviews, reviewCount, avgRating }: Props) => {
   return (
-    <Layout dark description="17 professionally managed vacation rentals in Pensacola, Florida. Book direct and save 10-15%.">
+    <Layout
+      dark
+      description="17 professionally managed vacation rentals in Pensacola, Florida. Book direct and save 10-15%."
+      schema={{
+        "@context": "https://schema.org",
+        "@type": "LodgingBusiness",
+        name: "Evergreen Cottages",
+        description: "17 professionally managed vacation rentals in Pensacola, Florida.",
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: "3801 Mobile Highway",
+          addressLocality: "Pensacola",
+          addressRegion: "FL",
+          postalCode: "32505",
+          addressCountry: "US",
+        },
+        telephone: "+15108227060",
+        email: "hello@staywithprecision.com",
+        url: "https://evergreencottages.com",
+        priceRange: "$$",
+        ...(reviewCount > 0 ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: avgRating.toFixed(1),
+            reviewCount,
+            bestRating: 5,
+          },
+        } : {}),
+        numberOfRooms: properties.length,
+        petsAllowed: true,
+      }}
+    >
       {/* Hero */}
       <section className="relative min-h-[90vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=1920&q=80')] bg-cover bg-center" />

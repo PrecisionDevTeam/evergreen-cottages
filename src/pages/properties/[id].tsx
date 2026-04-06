@@ -245,7 +245,51 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
   };
 
   return (
-    <Layout title={property.name} description={property.description ? stripEmojis(property.description).slice(0, 160) : undefined}>
+    <Layout
+      title={property.name}
+      description={property.description ? stripEmojis(property.description).slice(0, 160) : undefined}
+      schema={(() => {
+        const avgRating = reviews.length > 0
+          ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length
+          : 0;
+        return {
+          "@context": "https://schema.org",
+          "@type": "VacationRental",
+          name: property.name,
+          description: property.description ? stripEmojis(property.description).slice(0, 300) : undefined,
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: property.address || "3801 Mobile Highway",
+            addressLocality: "Pensacola",
+            addressRegion: "FL",
+            postalCode: "32505",
+            addressCountry: "US",
+          },
+          ...(property.lat && property.lng ? {
+            geo: { "@type": "GeoCoordinates", latitude: property.lat, longitude: property.lng },
+          } : {}),
+          image: images[0] || undefined,
+          priceRange: `$${property.base_price || 65}/night`,
+          telephone: "+15108227060",
+          url: `https://evergreencottages.com/properties/${property.id}`,
+          ...(avgRating > 0 ? {
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: avgRating.toFixed(1),
+              reviewCount: reviews.length,
+              bestRating: 5,
+            },
+          } : {}),
+          amenityFeature: property.amenityList.slice(0, 10).map((a) => ({
+            "@type": "LocationFeatureSpecification",
+            name: a,
+            value: true,
+          })),
+          numberOfRooms: property.bedrooms_number || 1,
+          petsAllowed: property.pets_allowed || false,
+        };
+      })()}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-20 lg:pb-6">
         <Breadcrumbs items={[
           { label: "Properties", href: "/properties" },
@@ -691,7 +735,7 @@ export default PropertyDetail;
 
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const id = parseInt(params?.id as string);
-  if (isNaN(id)) return { notFound: true };
+  if (isNaN(id) || id <= 0 || id > 2_147_483_647) return { notFound: true };
 
   const property = await getProperty(id);
   if (!property) return { notFound: true };
