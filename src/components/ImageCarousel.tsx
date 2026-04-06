@@ -9,6 +9,7 @@ type Props = {
 
 export default function ImageCarousel({ images, alt, priority = false }: Props) {
   const [current, setCurrent] = useState(0);
+  const [loaded, setLoaded] = useState(false);
   const total = images.length;
 
   if (total === 0) {
@@ -22,24 +23,31 @@ export default function ImageCarousel({ images, alt, priority = false }: Props) 
   const prev = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setLoaded(false);
     setCurrent((c) => (c > 0 ? c - 1 : total - 1));
   };
 
   const next = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setLoaded(false);
     setCurrent((c) => (c < total - 1 ? c + 1 : 0));
   };
 
   return (
     <div className="relative w-full h-full group">
+      {/* Skeleton shimmer */}
+      {!loaded && (
+        <div className="absolute inset-0 bg-sand-200 animate-pulse" />
+      )}
       <Image
         src={images[current]}
         alt={`${alt} — photo ${current + 1}`}
         fill
-        className="object-cover"
+        className={`object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
         priority={priority && current === 0}
+        onLoad={() => setLoaded(true)}
       />
 
       {/* Arrows — visible on hover */}

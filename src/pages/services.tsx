@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Layout from "../components/Layout";
 
 const services = [
@@ -67,9 +68,14 @@ export default function Services() {
         <div className="text-center mt-16 bg-white rounded-2xl p-12 border border-sand-100">
           <h2 className="text-2xl font-serif text-ocean-500 mb-3">Interested?</h2>
           <p className="text-sand-500 mb-8">Call or text us and we&apos;ll handle everything.</p>
-          <a href="tel:+15108227060" className="bg-ocean-500 text-white px-8 py-3.5 rounded-full font-semibold hover:bg-ocean-600 transition-all inline-block">
-            (510) 822-7060
-          </a>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="tel:+15108227060" className="bg-ocean-500 text-white px-8 py-3.5 rounded-full font-semibold hover:bg-ocean-600 transition-all inline-block">
+              (510) 822-7060
+            </a>
+            <Link href="/properties" className="border-2 border-ocean-500 text-ocean-500 px-8 py-3.5 rounded-full font-semibold hover:bg-ocean-50 transition-all inline-block">
+              Browse Properties
+            </Link>
+          </div>
         </div>
       </div>
     </Layout>

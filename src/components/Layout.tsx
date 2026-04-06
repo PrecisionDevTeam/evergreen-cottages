@@ -157,7 +157,7 @@ export default function Layout({ children, title, description, dark }: Props) {
       <main className="flex-1">{children}</main>
 
       {/* Footer */}
-      <footer className="bg-ocean-500 text-white/60 pt-16 pb-8">
+      <footer className="bg-ocean-500 text-white/80 pt-16 pb-8">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-10">
             <div className="md:col-span-1">

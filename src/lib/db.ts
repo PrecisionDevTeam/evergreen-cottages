@@ -29,7 +29,7 @@ export async function getProperty(id: number) {
   if (!property) return null;
   return {
     ...property,
-    images: property.listing_images ? JSON.parse(property.listing_images) : [],
+    images: (() => { try { return property.listing_images ? JSON.parse(property.listing_images) : []; } catch { return []; } })(),
     amenityList: property.amenities
       ? property.amenities.split(", ").filter(Boolean)
       : [],
@@ -55,36 +55,68 @@ export async function getCalendar(hostawayListingId: string | null, days: number
   });
 }
 
+const HOST_REVIEW_PHRASES = [
+  "was a great guest", "respectful of the space", "recommend them to other hosts",
+  "followed all house rules", "happy to host them again", "left the space clean",
+  "left everything in excellent", "{{",
+];
+
+const NEGATIVE_PHRASES = [
+  "ants", "bugs", "cockroach", "roach", "mice", "mouse", "rat",
+  "dirty", "filthy", "disgusting", "gross", "mold", "mildew", "stain",
+  "not clean", "wasn't clean", "halfway cleaned", "wasn't cleaned",
+  "didn't feel safe", "unsafe", "sketchy", "dangerous", "scary",
+  "wouldn't recommend", "would not recommend", "don't recommend", "do not recommend",
+  "not worth", "waste of money", "rip off", "ripoff", "scam",
+  "nothing special", "super cheap", "not what we expected",
+  "inconsiderate", "rude", "unprofessional", "unresponsive", "no response",
+  "broken", "didn't work", "doesn't work", "not working", "out of order",
+  "smell", "smelled", "stink", "stunk", "odor",
+  "noisy", "loud", "noise", "couldn't sleep",
+  "bed bugs", "bedbug",
+  "worst", "terrible", "horrible", "awful", "nightmare",
+  "never again", "never staying", "never coming back", "never return",
+  "not a fan", "wasn't a fan", "disappointed", "disappointing",
+  "uncomfortable", "uncomfy",
+];
+
+function isGuestReview(r: { review_content: string | null }): boolean {
+  const content = (r.review_content || "").toLowerCase();
+  if (!content || content.length < 5) return false;
+  if (HOST_REVIEW_PHRASES.some((phrase) => content.includes(phrase))) return false;
+  if (NEGATIVE_PHRASES.some((phrase) => content.includes(phrase))) return false;
+  return true;
+}
+
 export async function getReviews(limit: number = 10) {
   const reviews = await prisma.review.findMany({
     where: {
-      rating: { gte: 4 }, // only show 4+ star reviews on marketing site
+      rating: { gte: 4 },
       review_content: { not: null },
       reviewer_name: { not: null },
     },
     orderBy: { submitted_at: "desc" },
-    take: limit * 3, // fetch extra to filter out host reviews
+    take: limit * 3,
   });
 
-  // Filter out host-written reviews (templates with {{guest_name}} or generic host praise)
-  return reviews
-    .filter((r) => {
-      const content = (r.review_content || "").toLowerCase();
-      // Skip empty reviews
-      if (!content || content.length < 5) return false;
-      // Skip host reviews that contain template placeholders
-      if (content.includes("{{guest_name}}") || content.includes("{{")) return false;
-      // Skip generic host reviews about the guest
-      if (content.includes("was a great guest")) return false;
-      if (content.includes("respectful of the space")) return false;
-      if (content.includes("recommend them to other hosts")) return false;
-      if (content.includes("followed all house rules")) return false;
-      if (content.includes("happy to host them again")) return false;
-      if (content.includes("left the space clean")) return false;
-      if (content.includes("left everything in excellent")) return false;
-      return true;
-    })
-    .slice(0, limit);
+  return reviews.filter(isGuestReview).slice(0, limit);
+}
+
+export async function getPropertyReviews(hostawayListingId: string | null, limit: number = 10) {
+  if (!hostawayListingId) return [];
+
+  const reviews = await prisma.review.findMany({
+    where: {
+      hostaway_listing_id: hostawayListingId,
+      rating: { gte: 4 },
+      review_content: { not: null },
+      reviewer_name: { not: null },
+    },
+    orderBy: { submitted_at: "desc" },
+    take: limit * 3,
+  });
+
+  return reviews.filter(isGuestReview).slice(0, limit);
 }
 
 export async function getStayByToken(token: string) {

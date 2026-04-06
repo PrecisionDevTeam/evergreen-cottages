@@ -130,11 +130,17 @@ export default function AvailabilityCalendar({ calendar, onDateSelect, checkIn, 
 
             const { day, dateStr, available, price, isPast, isCheckIn, isCheckOut, isInRange } = cell;
 
+            const ariaLabel = `${MONTHS[viewMonth]} ${day}, ${viewYear}${
+              isCheckIn ? " — check-in" : isCheckOut ? " — check-out" : ""
+            }${!available ? ", unavailable" : price > 0 ? `, $${price} per night` : ""}`;
+
             return (
               <button
                 key={dateStr}
                 disabled={!available}
                 onClick={() => available && onDateSelect?.(dateStr)}
+                aria-label={ariaLabel}
+                aria-selected={isCheckIn || isCheckOut}
                 className={`aspect-square flex flex-col items-center justify-center text-xs rounded-lg transition-all relative ${
                   isCheckIn || isCheckOut
                     ? "bg-ocean-500 text-white font-semibold"

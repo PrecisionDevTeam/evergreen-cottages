@@ -5,9 +5,11 @@ import ImageCarousel from "./ImageCarousel";
 type Props = {
   property: Property;
   priority?: boolean;
+  comparing?: boolean;
+  onToggleCompare?: (id: number) => void;
 };
 
-export default function PropertyCard({ property, priority = false }: Props) {
+export default function PropertyCard({ property, priority = false, comparing, onToggleCompare }: Props) {
   return (
     <Link
       href={`/properties/${property.id}`}
@@ -41,6 +43,29 @@ export default function PropertyCard({ property, priority = false }: Props) {
             </span>
           )}
         </div>
+
+        {/* Compare checkbox */}
+        {onToggleCompare && (
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleCompare(property.id); }}
+            className={`absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center transition-all shadow-sm z-10 ${
+              comparing
+                ? "bg-ocean-500 text-white"
+                : "bg-white/80 text-sand-400 backdrop-blur-sm hover:bg-white"
+            }`}
+            aria-label={comparing ? "Remove from comparison" : "Add to comparison"}
+          >
+            {comparing ? (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            )}
+          </button>
+        )}
       </div>
 
       <div className="pt-4 pb-2">

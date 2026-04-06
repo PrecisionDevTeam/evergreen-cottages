@@ -7,6 +7,7 @@ export type Property = {
   zipcode: string | null;
   lat: number | null;
   lng: number | null;
+  hostaway_property_id: string | null;
   person_capacity: number | null;
   bedrooms_number: number | null;
   bathrooms_number: number | null;

@@ -62,7 +62,7 @@ const MyStay = ({ data }: Props) => {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Address</span>
-              <span className="font-medium text-right">{property?.address || "3801 Mobile Hwy, Pensacola, FL"}</span>
+              <span className="font-medium text-right">{property?.address || "3801 Mobile Highway, Pensacola, FL"}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Check-in</span>

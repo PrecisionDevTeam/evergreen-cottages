@@ -4,12 +4,13 @@ import Link from "next/link";
 import { useState, useMemo } from "react";
 import Layout from "../../components/Layout";
 import AvailabilityCalendar from "../../components/AvailabilityCalendar";
-import { getProperty, getCalendar } from "../../lib/db";
-import { Property, CalendarDay } from "../../types";
+import { getProperty, getCalendar, getPropertyReviews } from "../../lib/db";
+import { Property, CalendarDay, Review } from "../../types";
 
 type Props = {
   property: Property & { knowledgeMap: Record<string, string | null> };
   calendar: CalendarDay[];
+  reviews: Review[];
 };
 
 function stripEmojis(text: string): string {
@@ -95,7 +96,7 @@ function Description({ raw, expanded, onToggle }: { raw: string; expanded: boole
   );
 }
 
-const PropertyDetail = ({ property, calendar }: Props) => {
+const PropertyDetail = ({ property, calendar, reviews }: Props) => {
   const [currentImage, setCurrentImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
@@ -156,12 +157,12 @@ const PropertyDetail = ({ property, calendar }: Props) => {
 
         {/* Title */}
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mt-3 mb-1">{property.name}</h1>
-        <p className="text-gray-500 mb-6">{property.address || "3801 Mobile Hwy, Pensacola, FL 32505"}</p>
+        <p className="text-gray-500 mb-6">{property.address || "3801 Mobile Highway, Pensacola, FL 32505"}</p>
 
         {/* Image Gallery */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8 rounded-2xl overflow-hidden">
           <div
-            className="aspect-[4/3] bg-gray-200 relative cursor-pointer"
+            className="aspect-[4/3] bg-gray-200 relative cursor-pointer group"
             onClick={() => setLightboxOpen(true)}
           >
             {images[currentImage] && (
@@ -174,11 +175,34 @@ const PropertyDetail = ({ property, calendar }: Props) => {
                 priority
               />
             )}
+            {/* Prev/Next arrows — always visible on mobile, hover on desktop */}
+            {images.length > 1 && (
+              <>
+                <button
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-white shadow-md z-10"
+                  onClick={(e) => { e.stopPropagation(); setCurrentImage((p) => (p > 0 ? p - 1 : images.length - 1)); }}
+                  aria-label="Previous image"
+                >
+                  <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-white shadow-md z-10"
+                  onClick={(e) => { e.stopPropagation(); setCurrentImage((p) => (p < images.length - 1 ? p + 1 : 0)); }}
+                  aria-label="Next image"
+                >
+                  <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </>
+            )}
             <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-3 py-1.5 rounded-full">
               {currentImage + 1} / {images.length}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="hidden md:grid grid-cols-2 gap-2">
             {images.slice(1, 5).map((img, i) => (
               <div
                 key={i}
@@ -320,7 +344,7 @@ const PropertyDetail = ({ property, calendar }: Props) => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Address</span>
-                  <span className="font-medium text-right">{property.address || "3801 Mobile Hwy, Pensacola, FL"}</span>
+                  <span className="font-medium text-right">{property.address || "3801 Mobile Highway, Pensacola, FL"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Smart Lock</span>
@@ -344,8 +368,47 @@ const PropertyDetail = ({ property, calendar }: Props) => {
                   />
                 </div>
                 <p className="text-xs text-sand-400 mt-2">
-                  {property.address || "3801 Mobile Hwy, Pensacola, FL 32505"}
+                  {property.address || "3801 Mobile Highway, Pensacola, FL 32505"}
                 </p>
+              </div>
+            )}
+
+            {/* Guest Reviews */}
+            {reviews.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold mb-4">
+                  Guest Reviews
+                  <span className="ml-2 text-base font-normal text-sand-400">
+                    ({reviews.length})
+                  </span>
+                </h2>
+                <div className="space-y-4">
+                  {reviews.map((review) => (
+                    <div key={review.id} className="border border-sand-100 rounded-xl p-5">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-sm text-ocean-600">{review.reviewer_name}</span>
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: 5 }, (_, i) => (
+                            <svg
+                              key={i}
+                              className={`w-4 h-4 ${i < (review.rating || 0) ? "text-yellow-400" : "text-sand-200"}`}
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-sand-600 text-sm leading-relaxed">{review.review_content}</p>
+                      {review.submitted_at && (
+                        <p className="text-sand-400 text-xs mt-2">
+                          {new Date(review.submitted_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -375,7 +438,15 @@ const PropertyDetail = ({ property, calendar }: Props) => {
                     setCheckOut("");
                   } else {
                     if (date > checkIn) {
-                      setCheckOut(date);
+                      const hasBlockedInRange = Array.from(blockedDates).some(
+                        (d) => d && d > checkIn && d < date
+                      );
+                      if (hasBlockedInRange) {
+                        setCheckIn(date);
+                        setCheckOut("");
+                      } else {
+                        setCheckOut(date);
+                      }
                     } else {
                       setCheckIn(date);
                       setCheckOut("");
@@ -458,6 +529,25 @@ const PropertyDetail = ({ property, calendar }: Props) => {
           </div>
         </div>
       </div>
+
+      {/* Mobile sticky booking bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-sand-200 px-4 py-3 flex items-center justify-between lg:hidden z-40 shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
+        <div>
+          <span className="text-lg font-bold text-ocean-500 font-serif">${property.base_price || 65}</span>
+          <span className="text-sand-400 text-sm">/night</span>
+        </div>
+        <button
+          onClick={handleBookNow}
+          disabled={!checkIn || !checkOut}
+          className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors ${
+            checkIn && checkOut
+              ? "bg-ocean-500 text-white hover:bg-ocean-600"
+              : "bg-sand-200 text-sand-400 cursor-not-allowed"
+          }`}
+        >
+          {priceCalc ? `Book — $${priceCalc.total}` : "Select dates"}
+        </button>
+      </div>
     </Layout>
   );
 };
@@ -471,12 +561,16 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const property = await getProperty(id);
   if (!property) return { notFound: true };
 
-  const calendar = await getCalendar(property.hostaway_property_id, 180);
+  const [calendar, reviews] = await Promise.all([
+    getCalendar(property.hostaway_property_id, 180),
+    getPropertyReviews(property.hostaway_property_id, 8),
+  ]);
 
   return {
     props: {
       property: JSON.parse(JSON.stringify(property)),
       calendar: JSON.parse(JSON.stringify(calendar)),
+      reviews: JSON.parse(JSON.stringify(reviews)),
     },
   };
 };
