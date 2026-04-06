@@ -1,5 +1,4 @@
 import Layout from "../components/Layout";
-import { getReviews } from "../lib/db";
 
 type Props = { reviewCount: number; avgRating: number };
 
@@ -50,8 +49,17 @@ export default function About({ reviewCount, avgRating }: Props) {
 }
 
 export const getStaticProps = async () => {
-  const reviews = await getReviews(999);
-  const rated = reviews.filter((r) => r.rating);
-  const avgRating = rated.length > 0 ? rated.reduce((sum, r) => sum + (r.rating || 0), 0) / rated.length : 4.9;
-  return { props: { reviewCount: reviews.length, avgRating }, revalidate: 86400 };
+  const { prisma } = await import("../lib/db");
+  const stats = await prisma.review.aggregate({
+    _avg: { rating: true },
+    _count: { id: true },
+    where: { rating: { not: null }, review_content: { not: null } },
+  });
+  return {
+    props: {
+      reviewCount: stats._count.id || 0,
+      avgRating: stats._avg.rating || 4.9,
+    },
+    revalidate: 86400,
+  };
 };

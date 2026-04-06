@@ -14,7 +14,7 @@ export async function getProperties(city?: string) {
   });
   return properties.map((p) => ({
     ...p,
-    images: p.listing_images ? JSON.parse(p.listing_images) : [],
+    images: (() => { try { return p.listing_images ? JSON.parse(p.listing_images) : []; } catch { return []; } })(),
     amenityList: p.amenities ? p.amenities.split(", ").filter(Boolean) : [],
   }));
 }
@@ -39,11 +39,8 @@ export async function getProperty(id: number) {
   };
 }
 
-export async function getCalendar(propertyId: number, days: number = 60) {
-  const property = await prisma.property.findUnique({
-    where: { id: propertyId },
-  });
-  if (!property?.hostaway_property_id) return [];
+export async function getCalendar(hostawayListingId: string | null, days: number = 60) {
+  if (!hostawayListingId) return [];
 
   const today = new Date();
   const end = new Date();
@@ -51,7 +48,7 @@ export async function getCalendar(propertyId: number, days: number = 60) {
 
   return prisma.calendarDay.findMany({
     where: {
-      hostaway_listing_id: property.hostaway_property_id,
+      hostaway_listing_id: hostawayListingId,
       date: { gte: today, lte: end },
     },
     orderBy: { date: "asc" },
@@ -125,8 +122,8 @@ export async function getStayByToken(token: string) {
       LIMIT 1
     `;
     doorCode = result[0]?.code || null;
-  } catch {
-    // Table might not exist
+  } catch (err) {
+    console.error("seam_access_codes query failed:", err);
   }
 
   return {

@@ -133,6 +133,7 @@ const PropertyDetail = ({ property, calendar }: Props) => {
   const today = new Date().toISOString().split("T")[0];
 
   const handleBookNow = () => {
+    if (!checkIn || !checkOut) return;
     const subject = encodeURIComponent(
       `Booking Request: ${property.name} | ${checkIn || "TBD"} to ${checkOut || "TBD"} | ${guests} guest(s)`
     );
@@ -431,7 +432,12 @@ const PropertyDetail = ({ property, calendar }: Props) => {
 
               <button
                 onClick={handleBookNow}
-                className="w-full bg-ocean-500 text-white py-3.5 rounded-xl font-semibold hover:bg-ocean-600 transition-colors mb-2"
+                disabled={!checkIn || !checkOut}
+                className={`w-full py-3.5 rounded-xl font-semibold transition-colors mb-2 ${
+                  checkIn && checkOut
+                    ? "bg-ocean-500 text-white hover:bg-ocean-600 cursor-pointer"
+                    : "bg-sand-200 text-sand-400 cursor-not-allowed"
+                }`}
               >
                 {priceCalc ? `Book Now — $${priceCalc.total}` : "Select dates to book"}
               </button>
@@ -465,7 +471,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const property = await getProperty(id);
   if (!property) return { notFound: true };
 
-  const calendar = await getCalendar(id, 180);
+  const calendar = await getCalendar(property.hostaway_property_id, 180);
 
   return {
     props: {

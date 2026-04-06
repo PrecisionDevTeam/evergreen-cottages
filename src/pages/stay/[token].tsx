@@ -18,7 +18,7 @@ const MyStay = ({ data }: Props) => {
   const guestName = guest?.first_name || "Guest";
 
   const checkIn = reservation.check_in
-    ? new Date(reservation.check_in).toLocaleDateString("en-US", {
+    ? new Date(reservation.check_in + "T12:00:00").toLocaleDateString("en-US", {
         weekday: "short",
         month: "short",
         day: "numeric",
@@ -26,7 +26,7 @@ const MyStay = ({ data }: Props) => {
       })
     : "";
   const checkOut = reservation.check_out
-    ? new Date(reservation.check_out).toLocaleDateString("en-US", {
+    ? new Date(reservation.check_out + "T12:00:00").toLocaleDateString("en-US", {
         weekday: "short",
         month: "short",
         day: "numeric",
