@@ -10,6 +10,15 @@ type Props = {
   calendar: CalendarDay[];
 };
 
+function stripEmojis(text: string): string {
+  return text
+    .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, "")
+    .replace(/[•●◦▪▸►]/g, "–")
+    .replace(/\s{3,}/g, "\n\n")
+    .replace(/^\s+/gm, "")
+    .trim();
+}
+
 const PropertyDetail = ({ property, calendar }: Props) => {
   const [currentImage, setCurrentImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -56,7 +65,7 @@ const PropertyDetail = ({ property, calendar }: Props) => {
   };
 
   return (
-    <Layout title={property.name} description={property.description?.slice(0, 160) || undefined}>
+    <Layout title={property.name} description={property.description ? stripEmojis(property.description).slice(0, 160) : undefined}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Back */}
         <a href="/properties" className="text-evergreen-600 text-sm mb-4 inline-flex items-center hover:underline">
@@ -150,12 +159,16 @@ const PropertyDetail = ({ property, calendar }: Props) => {
                 </div>
               ) : null}
               <div className="flex items-center text-gray-600 text-sm">
-                <span className="mr-1.5 text-gray-400">🚿</span>
+                <svg className="w-5 h-5 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
                 {property.bathrooms_number || 1} bath
               </div>
               {property.pets_allowed && (
                 <div className="flex items-center text-evergreen-600 text-sm font-medium">
-                  <span className="mr-1.5">🐾</span>
+                  <svg className="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
                   Pets allowed ($50 fee)
                 </div>
               )}
@@ -165,7 +178,7 @@ const PropertyDetail = ({ property, calendar }: Props) => {
             <div className="mb-8">
               <h2 className="text-xl font-semibold mb-3">About this property</h2>
               <p className="text-gray-600 leading-relaxed whitespace-pre-line text-sm">
-                {property.description || "A comfortable vacation rental in Pensacola, FL."}
+                {stripEmojis(property.description || "A comfortable vacation rental in Pensacola, FL.")}
               </p>
             </div>
 
