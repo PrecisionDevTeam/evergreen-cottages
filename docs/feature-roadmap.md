@@ -6,25 +6,16 @@
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 1 | Mobile swipe on photos | NOT STARTED | Touch gestures for property card carousel + detail gallery |
-| 2 | FAQ section | NOT STARTED | Parking, WiFi, pets, check-in, checkout, smart lock, gate code |
-| 3 | Reviews per property | NOT STARTED | Show unit-specific reviews on detail page (match by listing ID) |
-| 4 | Sitemap.xml + robots.txt | NOT STARTED | For Google indexing |
-| 5 | 404 page | NOT STARTED | Custom not-found page instead of default Next.js error |
 | 6 | My Stay page working | NOT STARTED | Generate stay_tokens in hostaway-data-hub on booking confirmation |
 
 ## Good to Have
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 7 | Property comparison | NOT STARTED | Compare 2-3 units side by side (capacity, price, amenities) |
-| 8 | Photo fullscreen on mobile | NOT STARTED | Swipe through all photos in fullscreen mode |
 | 9 | Guest count on cards | NOT STARTED | "Booked 3 times this week" — social proof |
 | 10 | Nearby places on map | NOT STARTED | Restaurants, beach, NAS, airport markers on property map |
 | 11 | Search bar | NOT STARTED | Search by date range, guests, pet-friendly |
 | 12 | Breadcrumbs | NOT STARTED | Home > Properties > Unit 17 |
-| 13 | Share button | NOT STARTED | Share property link via text, email, copy link |
-| 14 | Favorites/wishlist | NOT STARTED | Save properties to favorites (localStorage, no login) |
 
 ## Revenue Features (Needs Stripe Keys)
 
@@ -41,7 +32,6 @@
 |---|---------|--------|-------|
 | 19 | Blog / area guide | NOT STARTED | "Top 10 things to do in Pensacola", "Best beaches near NAS" |
 | 20 | Google Analytics + Meta Pixel | NOT STARTED | Track traffic, conversions, ad performance |
-| 21 | OpenGraph images | NOT STARTED | Property photo as social share preview on Facebook/iMessage |
 | 22 | Schema.org markup | NOT STARTED | Rich snippets in Google search results (price, rating, availability) |
 
 ## Completed
@@ -70,3 +60,40 @@
 | ✅ | Review filtering (4+ stars only, no host reviews, no empty) | Apr 6 |
 | ✅ | Amenity deduplication + Show all toggle | Apr 6 |
 | ✅ | Code review — 2 CRITICAL + 6 HIGH issues resolved | Apr 6 |
+| ✅ | Reviews per property (positive only, negative sentiment filtered) | Apr 6 |
+| ✅ | Mobile carousel arrows always visible on touch devices | Apr 6 |
+| ✅ | Mobile sticky booking bar (price + Book Now) | Apr 6 |
+| ✅ | Services page CTA back to Properties | Apr 6 |
+| ✅ | Address consistency (Mobile Highway everywhere) | Apr 6 |
+| ✅ | Image skeleton loading state | Apr 6 |
+| ✅ | Footer contrast improved | Apr 6 |
+| ✅ | Calendar accessibility (aria-labels on date buttons) | Apr 6 |
+| ✅ | Price range filter on properties page | Apr 6 |
+| ✅ | Property comparison (up to 3, side-by-side modal) | Apr 6 |
+| ✅ | Blocked date range validation | Apr 6 |
+| ✅ | Unified sand/ocean palette (no gray-* on detail/stay pages) | Apr 6 |
+| ✅ | Dynamic homepage stats from DB (properties, rating, reviews) | Apr 6 |
+| ✅ | Dynamic check-in time from property data | Apr 6 |
+| ✅ | SVG star ratings (replaced Unicode) | Apr 6 |
+| ✅ | Lightbox close button enlarged for mobile | Apr 6 |
+| ✅ | Amenities dedup wrapped in useMemo | Apr 6 |
+| ✅ | Stay page unified to ocean brand colors | Apr 6 |
+| ✅ | Emoji accessibility (aria-hidden on stay page) | Apr 6 |
+| ✅ | CTA wording standardized across all pages | Apr 6 |
+| ✅ | Description decluttered (disclaimers hidden, 2 sections visible) | Apr 6 |
+| ✅ | Reviews capped at 3 with "Show all" expand | Apr 6 |
+| ✅ | Semi-transparent nav with backdrop blur | Apr 6 |
+| ✅ | Negative review word-boundary filter | Apr 6 |
+| ✅ | FAQ page (6 sections, 20 questions, accordion UI) | Apr 6 |
+| ✅ | Photo gallery page (masonry layout, lightbox) | Apr 6 |
+| ✅ | Favorites/wishlist (heart icon, localStorage) | Apr 6 |
+| ✅ | Recently viewed properties (localStorage, property detail) | Apr 6 |
+| ✅ | Share property (native share + clipboard fallback) | Apr 6 |
+| ✅ | Custom 404 page | Apr 6 |
+| ✅ | sitemap.xml (dynamic, all pages) | Apr 6 |
+| ✅ | robots.txt | Apr 6 |
+| ✅ | OG image + Twitter card meta tags | Apr 6 |
+| ✅ | Canonical URLs on every page | Apr 6 |
+| ✅ | FAQ + Gallery added to nav/footer | Apr 6 |
+| ✅ | Graceful degradation for DB errors on property detail | Apr 6 |
+| ✅ | 3 code review passes — all CRITICAL + HIGH resolved | Apr 6 |
