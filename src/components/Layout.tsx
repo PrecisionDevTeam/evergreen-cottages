@@ -80,9 +80,9 @@ export default function Layout({ children, title, description, dark, schema }: P
               <Image
                 src="/images/logo.png"
                 alt="Evergreen Cottages"
-                width={120}
-                height={65}
-                className="h-14 w-auto"
+                width={48}
+                height={48}
+                className="h-12 w-12 rounded-full object-cover border-2 border-sand-200"
                 priority
               />
             </Link>

@@ -44,15 +44,12 @@ const services = [
 export default function Services() {
   return (
     <Layout title="Services" description="Airport shuttle, early check-in, pet accommodations, and more.">
-      <div className="bg-ocean-500 text-white py-20">
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 text-center">
-          <p className="text-coral-400 text-xs uppercase tracking-[0.2em] font-semibold mb-3">Extras</p>
-          <h1 className="text-4xl md:text-5xl font-serif mb-3">Services & Add-ons</h1>
-          <p className="text-white/60 max-w-lg mx-auto">Make your stay even better.</p>
-        </div>
-      </div>
-      <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-16">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-20">
         <Breadcrumbs items={[{ label: "Services" }]} />
+        <p className="text-coral-500 text-xs uppercase tracking-[0.2em] font-semibold mb-3">Extras</p>
+        <h1 className="text-4xl md:text-5xl font-serif text-ocean-500 mb-3">Services & Add-ons</h1>
+        <p className="text-sand-500 mb-12">Make your stay even better.</p>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger">
           {services.map((s) => (
             <div key={s.title} className="bg-white border border-sand-100 rounded-2xl p-7 card-lift fade-in-up">
