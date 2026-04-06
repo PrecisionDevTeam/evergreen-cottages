@@ -1,0 +1,133 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Maps to existing Railway Postgres tables from hostaway-data-hub
+
+model Property {
+  id                  Int       @id @default(autoincrement())
+  name                String
+  address             String?
+  city                String?
+  state               String?
+  zipcode             String?
+  lat                 Float?
+  lng                 Float?
+  hostaway_property_id String?
+  person_capacity     Int?
+  bedrooms_number     Int?
+  bathrooms_number    Float?
+  description         String?
+  amenities           String?
+  listing_images      String?
+  cleaning_fee        Float?
+  base_price          Float?
+  check_in_time       Int?
+  check_out_time      Int?
+  bathroom_type       String?
+  pets_allowed        Boolean?  @default(false)
+  include_in_cleaning Boolean?  @default(true)
+  created_at          DateTime? @default(now())
+
+  reservations    Reservation[]
+  calendar        CalendarDay[]
+  knowledge       PropertyKnowledge[]
+
+  @@map("properties")
+}
+
+model Reservation {
+  id                        Int       @id @default(autoincrement())
+  hostaway_reservation_id   String?   @unique
+  guest_id                  Int?
+  property_id               Int?
+  hostaway_listing_id       String?
+  check_in                  DateTime? @db.Date
+  check_out                 DateTime? @db.Date
+  status                    String?
+  channel                   String?
+  adults                    Int?
+  children                  Int?
+  pets                      Int?
+  total_price               Float?
+  base_rate                 Float?
+  cleaning_fee              Float?
+  created_at                DateTime? @default(now())
+
+  property Property? @relation(fields: [property_id], references: [id])
+  guest    Guest?    @relation(fields: [guest_id], references: [id])
+
+  @@map("reservations")
+}
+
+model Guest {
+  id               Int       @id @default(autoincrement())
+  first_name       String?
+  last_name        String?
+  primary_email    String?
+  primary_phone    String?
+  hostaway_guest_id Int?
+  created_at       DateTime? @default(now())
+
+  reservations Reservation[]
+
+  @@map("guests")
+}
+
+model CalendarDay {
+  id                    Int       @id @default(autoincrement())
+  hostaway_listing_id   String?
+  date                  DateTime? @db.Date
+  is_available          Int?
+  price                 Float?
+  minimum_stay          Int?
+  notes                 String?
+
+  property_id           Int?
+  property              Property? @relation(fields: [property_id], references: [id])
+
+  @@map("hostaway_calendar")
+}
+
+model PropertyKnowledge {
+  id          Int       @id @default(autoincrement())
+  property_id Int
+  field_name  String
+  field_value String?
+  updated_at  DateTime? @default(now())
+
+  property Property @relation(fields: [property_id], references: [id])
+
+  @@map("property_knowledge")
+}
+
+model Review {
+  id                    Int       @id @default(autoincrement())
+  hostaway_review_id    String?
+  hostaway_listing_id   String?
+  rating                Float?
+  review_content        String?
+  reviewer_name         String?
+  check_in_date         DateTime? @db.Date
+  check_out_date        DateTime? @db.Date
+  submitted_at          DateTime?
+  created_at            DateTime? @default(now())
+
+  @@map("hostaway_reviews")
+}
+
+// Guest stay tokens for My Stay page
+model StayToken {
+  id              Int       @id @default(autoincrement())
+  token           String    @unique
+  reservation_id  Int
+  expires_at      DateTime?
+  created_at      DateTime  @default(now())
+
+  @@map("stay_tokens")
+}
