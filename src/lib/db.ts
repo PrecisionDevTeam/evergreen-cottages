@@ -59,14 +59,33 @@ export async function getCalendar(propertyId: number, days: number = 60) {
 }
 
 export async function getReviews(limit: number = 10) {
-  return prisma.review.findMany({
+  const reviews = await prisma.review.findMany({
     where: {
       rating: { not: null },
       review_content: { not: null },
+      reviewer_name: { not: null },
     },
     orderBy: { submitted_at: "desc" },
-    take: limit,
+    take: limit * 3, // fetch extra to filter out host reviews
   });
+
+  // Filter out host-written reviews (templates with {{guest_name}} or generic host praise)
+  return reviews
+    .filter((r) => {
+      const content = (r.review_content || "").toLowerCase();
+      // Skip host reviews that contain template placeholders
+      if (content.includes("{{guest_name}}") || content.includes("{{")) return false;
+      // Skip generic host reviews about the guest
+      if (content.includes("was a great guest")) return false;
+      if (content.includes("respectful of the space")) return false;
+      if (content.includes("recommend them to other hosts")) return false;
+      if (content.includes("followed all house rules")) return false;
+      if (content.includes("happy to host them again")) return false;
+      if (content.includes("left the space clean")) return false;
+      if (content.includes("left everything in excellent")) return false;
+      return true;
+    })
+    .slice(0, limit);
 }
 
 export async function getStayByToken(token: string) {
