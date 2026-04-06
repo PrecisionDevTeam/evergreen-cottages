@@ -91,7 +91,7 @@ export default function AvailabilityCalendar({ calendar, onDateSelect, checkIn, 
           <button
             onClick={prevMonth}
             disabled={!canGoPrev}
-            className="p-1.5 rounded-lg hover:bg-sand-100 disabled:opacity-30 disabled:cursor-default transition-colors"
+            className="p-2.5 rounded-lg hover:bg-sand-100 disabled:opacity-30 disabled:cursor-default transition-colors"
             aria-label="Previous month"
           >
             <svg className="w-5 h-5 text-ocean-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

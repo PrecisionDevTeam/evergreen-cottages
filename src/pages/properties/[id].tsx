@@ -288,7 +288,7 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
             {images.length > 1 && (
               <>
                 <button
-                  className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-white shadow-md z-10"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-white shadow-md z-10"
                   onClick={(e) => { e.stopPropagation(); setCurrentImage((p) => (p > 0 ? p - 1 : images.length - 1)); }}
                   aria-label="Previous image"
                 >
@@ -297,7 +297,7 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
                   </svg>
                 </button>
                 <button
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-white shadow-md z-10"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-white shadow-md z-10"
                   onClick={(e) => { e.stopPropagation(); setCurrentImage((p) => (p < images.length - 1 ? p + 1 : 0)); }}
                   aria-label="Next image"
                 >
@@ -329,14 +329,14 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
           <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center" onClick={() => setLightboxOpen(false)}>
             <button className="absolute top-4 right-4 text-white text-3xl z-50 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors" onClick={() => setLightboxOpen(false)} aria-label="Close gallery">&times;</button>
             <button
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl z-50 hover:opacity-70"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl z-50 hover:opacity-70 w-12 h-12 flex items-center justify-center rounded-full bg-white/10"
               onClick={(e) => { e.stopPropagation(); setCurrentImage((p) => (p > 0 ? p - 1 : images.length - 1)); }}
               aria-label="Previous image"
             >
               &#8249;
             </button>
             <button
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-white text-4xl z-50 hover:opacity-70"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white text-4xl z-50 hover:opacity-70 w-12 h-12 flex items-center justify-center rounded-full bg-white/10"
               onClick={(e) => { e.stopPropagation(); setCurrentImage((p) => (p < images.length - 1 ? p + 1 : 0)); }}
               aria-label="Next image"
             >

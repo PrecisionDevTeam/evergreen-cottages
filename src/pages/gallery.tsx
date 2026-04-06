@@ -90,14 +90,14 @@ export default function Gallery({ images }: Props) {
             &times;
           </button>
           <button
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl z-50 hover:opacity-70"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl z-50 hover:opacity-70 w-12 h-12 flex items-center justify-center rounded-full bg-white/10"
             onClick={(e) => { e.stopPropagation(); goTo(lightboxIndex - 1); }}
             aria-label="Previous image"
           >
             &#8249;
           </button>
           <button
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-white text-4xl z-50 hover:opacity-70"
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-white text-4xl z-50 hover:opacity-70 w-12 h-12 flex items-center justify-center rounded-full bg-white/10"
             onClick={(e) => { e.stopPropagation(); goTo(lightboxIndex + 1); }}
             aria-label="Next image"
           >

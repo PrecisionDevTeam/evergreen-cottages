@@ -29,6 +29,7 @@ export default function PropertyCard({ property, priority = false, comparing, on
 
         {/* Price badge */}
         <div className="absolute bottom-3 left-3 text-white">
+          <span className="text-xs text-white/70">from </span>
           <span className="text-lg font-serif">${property.base_price || 65}</span>
           <span className="text-xs text-white/70 ml-0.5">/night</span>
         </div>
