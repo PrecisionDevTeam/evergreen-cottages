@@ -36,7 +36,6 @@ export type CalendarDay = {
   date: string;
   is_available: number | null;
   price: number | null;
-  minimum_stay: number | null;
 };
 
 export type StayData = {

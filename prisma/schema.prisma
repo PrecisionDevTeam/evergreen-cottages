@@ -85,7 +85,6 @@ model CalendarDay {
   date                  DateTime? @db.Date
   is_available          Int?
   price                 Float?
-  minimum_stay          Int?
   notes                 String?
 
   property_id           Int?
