@@ -85,7 +85,7 @@ const Properties = ({ properties, popularIds }: Props) => {
         </div>
       </div>
 
-      <div className="bg-white border-b border-sand-100 sticky top-16 z-40">
+      <div className="bg-white border-b border-sand-100 sticky top-20 z-40">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-3 space-y-3">
           {/* Search bar */}
           <div className="relative">
