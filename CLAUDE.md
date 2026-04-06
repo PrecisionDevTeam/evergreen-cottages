@@ -20,27 +20,37 @@ Guest-facing vacation rental booking website for Evergreen Cottages in Pensacola
 evergreen-cottages/
 ├── src/
 │   ├── pages/
-│   │   ├── index.tsx              # Home page (hero, properties, reviews)
+│   │   ├── index.tsx              # Home page (hero, dynamic stats, properties, reviews)
 │   │   ├── properties/
-│   │   │   ├── index.tsx          # All properties with filters + sort
-│   │   │   └── [id].tsx           # Property detail with gallery + booking
+│   │   │   ├── index.tsx          # All properties with search, filters, sort, price range, compare
+│   │   │   └── [id].tsx           # Property detail with gallery, booking, reviews, share, nearby, recently viewed
 │   │   ├── stay/
 │   │   │   └── [token].tsx        # My Stay — private guest reservation page
 │   │   ├── services.tsx           # Add-on services
 │   │   ├── about.tsx              # About page (stats from DB)
 │   │   ├── contact.tsx            # Contact form
+│   │   ├── faq.tsx                # FAQ page (6 sections, 20 questions, accordion)
+│   │   ├── gallery.tsx            # Photo gallery (masonry layout, lightbox)
+│   │   ├── 404.tsx                # Custom branded 404 page
+│   │   ├── sitemap.xml.tsx        # Dynamic XML sitemap
 │   │   └── _app.tsx               # App wrapper (progress bar)
 │   ├── components/
-│   │   ├── Layout.tsx             # Shared nav + footer + SEO meta
-│   │   └── PropertyCard.tsx       # Reusable property card
+│   │   ├── Layout.tsx             # Shared nav + footer + SEO meta + OG/Twitter cards
+│   │   ├── PropertyCard.tsx       # Property card (carousel, favorites, compare, social proof)
+│   │   ├── ImageCarousel.tsx      # Image carousel with skeleton loading
+│   │   ├── AvailabilityCalendar.tsx # Calendar picker with accessibility
+│   │   └── Breadcrumbs.tsx        # Reusable breadcrumb navigation
 │   ├── lib/
-│   │   └── db.ts                  # Prisma queries (properties, calendar, reviews, stay tokens)
+│   │   ├── db.ts                  # Prisma queries (properties, calendar, reviews, booking counts, stay tokens)
+│   │   └── localStorage.ts       # Client-side hooks (recently viewed, favorites)
 │   ├── types/
 │   │   └── index.ts               # Shared TypeScript types
 │   └── styles/
 │       └── globals.css            # Tailwind + Google Fonts + animations + grain overlay
 ├── prisma/
 │   └── schema.prisma              # Mapped to existing Railway Postgres tables
+├── public/
+│   └── robots.txt                 # Search engine crawling rules
 ├── tailwind.config.js             # Coastal palette (sand, ocean, coral, evergreen)
 ├── next.config.js                 # Image domains, Stripe env
 └── .env.local                     # DATABASE_URL + Stripe keys

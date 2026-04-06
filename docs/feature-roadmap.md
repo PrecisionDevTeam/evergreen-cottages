@@ -2,26 +2,11 @@
 
 **Last updated:** April 6, 2026
 
-## Must-Have Before Launch
-
-| # | Feature | Status | Notes |
-|---|---------|--------|-------|
-| 6 | My Stay page working | NOT STARTED | Generate stay_tokens in hostaway-data-hub on booking confirmation |
-
-## Good to Have
-
-| # | Feature | Status | Notes |
-|---|---------|--------|-------|
-| 9 | Guest count on cards | NOT STARTED | "Booked 3 times this week" — social proof |
-| 10 | Nearby places on map | NOT STARTED | Restaurants, beach, NAS, airport markers on property map |
-| 11 | Search bar | NOT STARTED | Search by date range, guests, pet-friendly |
-| 12 | Breadcrumbs | NOT STARTED | Home > Properties > Unit 17 |
-
 ## Revenue Features (Needs Stripe Keys)
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 15 | Direct checkout | BLOCKED | Full booking + Stripe payment on site. Needs sk_live/sk_test. |
+| 15 | Direct checkout | BLOCKED | Full booking + Stripe payment on site. Needs sk_live/sk_test from Noah. |
 | 16 | Services checkout | BLOCKED | Pay for airport pickup, pet fee, extension, early check-in online |
 | 17 | Gift cards | NOT STARTED | Buy a stay as a gift |
 | 18 | Promo codes | NOT STARTED | Discount codes for direct bookings |
@@ -34,7 +19,7 @@
 | 20 | Google Analytics + Meta Pixel | NOT STARTED | Track traffic, conversions, ad performance |
 | 22 | Schema.org markup | NOT STARTED | Rich snippets in Google search results (price, rating, availability) |
 
-## Completed
+## Completed (56 features)
 
 | # | Feature | Date |
 |---|---------|------|
@@ -91,9 +76,12 @@
 | ✅ | Share property (native share + clipboard fallback) | Apr 6 |
 | ✅ | Custom 404 page | Apr 6 |
 | ✅ | sitemap.xml (dynamic, all pages) | Apr 6 |
-| ✅ | robots.txt | Apr 6 |
-| ✅ | OG image + Twitter card meta tags | Apr 6 |
-| ✅ | Canonical URLs on every page | Apr 6 |
+| ✅ | robots.txt + OG image + Twitter card + canonical URLs | Apr 6 |
 | ✅ | FAQ + Gallery added to nav/footer | Apr 6 |
 | ✅ | Graceful degradation for DB errors on property detail | Apr 6 |
-| ✅ | 3 code review passes — all CRITICAL + HIGH resolved | Apr 6 |
+| ✅ | My Stay token auto-generation on booking confirmation (hostaway-data-hub) | Apr 6 |
+| ✅ | Social proof badge ("Popular this month") on property cards | Apr 6 |
+| ✅ | Nearby places grid below property map | Apr 6 |
+| ✅ | Search bar on properties page (name, description, address) | Apr 6 |
+| ✅ | Breadcrumbs on all inner pages | Apr 6 |
+| ✅ | 4 code review passes — all CRITICAL + HIGH resolved | Apr 6 |
