@@ -255,9 +255,11 @@ export const getServerSideProps = async () => {
     getProperties("Pensacola"),
     getRecentBookingCounts(),
   ]);
-  // Only expose which properties are popular (>= 2 bookings), not raw counts
+  // Only badge the top 3 most-booked units
   const popularIds = Object.entries(bookingCounts)
-    .filter(([, count]) => count >= 2)
+    .filter(([, count]) => count >= 1)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3)
     .map(([id]) => Number(id));
   // Trim heavy fields — listing page only needs card data, not full descriptions/images
   const trimmed = properties.map((p: any) => ({
