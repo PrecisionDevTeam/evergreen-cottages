@@ -19,6 +19,33 @@ function stripEmojis(text: string): string {
     .trim();
 }
 
+function formatDescription(raw: string): { intro: string; sections: { title: string; items: string[] }[] } {
+  const cleaned = stripEmojis(raw);
+  const lines = cleaned.split("\n").map((l) => l.trim()).filter(Boolean);
+
+  const intro: string[] = [];
+  const sections: { title: string; items: string[] }[] = [];
+  let currentSection: { title: string; items: string[] } | null = null;
+
+  for (const line of lines) {
+    // Detect section headers (short lines, no dash prefix, title-case-ish)
+    const isHeader = line.length < 50 && !line.startsWith("–") && !line.startsWith("-") &&
+      /^[A-Z]/.test(line) && !line.includes("–") && line.split(" ").length <= 6;
+
+    if (isHeader && (intro.length > 0 || sections.length > 0)) {
+      if (currentSection) sections.push(currentSection);
+      currentSection = { title: line, items: [] };
+    } else if (currentSection) {
+      currentSection.items.push(line.replace(/^[-–]\s*/, ""));
+    } else {
+      intro.push(line);
+    }
+  }
+  if (currentSection) sections.push(currentSection);
+
+  return { intro: intro.join("\n\n"), sections };
+}
+
 const PropertyDetail = ({ property, calendar }: Props) => {
   const [currentImage, setCurrentImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -181,25 +208,56 @@ const PropertyDetail = ({ property, calendar }: Props) => {
 
             {/* Description */}
             <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-3">About this property</h2>
-              <div className="relative">
-                <p className={`text-sand-600 leading-relaxed whitespace-pre-line text-sm ${
-                  descExpanded ? "" : "max-h-40 overflow-hidden"
-                }`}>
-                  {stripEmojis(property.description || "A comfortable vacation rental in Pensacola, FL.")}
-                </p>
-                {!descExpanded && (property.description || "").length > 400 && (
-                  <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-sand-50 to-transparent" />
-                )}
-              </div>
-              {(property.description || "").length > 400 && (
-                <button
-                  onClick={() => setDescExpanded(!descExpanded)}
-                  className="text-ocean-500 font-medium text-sm mt-2 hover:text-coral-500 transition-colors"
-                >
-                  {descExpanded ? "Show less" : "Read more"}
-                </button>
-              )}
+              <h2 className="text-xl font-semibold mb-4">About this property</h2>
+              {(() => {
+                const desc = formatDescription(property.description || "A comfortable vacation rental in Pensacola, FL.");
+                return (
+                  <div className="relative">
+                    <div className={descExpanded ? "" : "max-h-48 overflow-hidden"}>
+                      {/* Intro paragraphs */}
+                      <div className="text-sand-600 leading-relaxed text-sm space-y-3 mb-6">
+                        {desc.intro.split("\n\n").map((p, i) => (
+                          <p key={i}>{p}</p>
+                        ))}
+                      </div>
+
+                      {/* Structured sections */}
+                      {desc.sections.map((section, i) => (
+                        <div key={i} className="mb-5">
+                          <h3 className="text-sm font-semibold text-ocean-500 uppercase tracking-wide mb-2">
+                            {section.title}
+                          </h3>
+                          <ul className="space-y-1.5">
+                            {section.items.map((item, j) => (
+                              <li key={j} className="text-sand-600 text-sm flex items-start">
+                                <span className="text-sand-300 mr-2 mt-1 flex-shrink-0">
+                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 8 8">
+                                    <circle cx="4" cy="4" r="3" />
+                                  </svg>
+                                </span>
+                                {item}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+
+                    {!descExpanded && (property.description || "").length > 400 && (
+                      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-sand-50 to-transparent" />
+                    )}
+
+                    {(property.description || "").length > 400 && (
+                      <button
+                        onClick={() => setDescExpanded(!descExpanded)}
+                        className="text-ocean-500 font-medium text-sm mt-3 hover:text-coral-500 transition-colors"
+                      >
+                        {descExpanded ? "Show less" : "Read more"}
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Amenities */}
