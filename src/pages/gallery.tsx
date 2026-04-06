@@ -14,8 +14,14 @@ type Props = {
   images: GalleryImage[];
 };
 
+const BATCH_SIZE = 18;
+
 export default function Gallery({ images }: Props) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+
+  const visible = images.slice(0, visibleCount);
+  const hasMore = visibleCount < images.length;
 
   const goTo = (index: number) => {
     setLightboxIndex(((index % images.length) + images.length) % images.length);
@@ -27,10 +33,10 @@ export default function Gallery({ images }: Props) {
         <Breadcrumbs items={[{ label: "Gallery" }]} />
         <p className="text-coral-500 text-xs uppercase tracking-[0.2em] font-semibold mb-3">Photos</p>
         <h1 className="text-4xl md:text-5xl font-serif text-ocean-500 mb-4">Property Gallery</h1>
-        <p className="text-sand-500 mb-12">Browse photos from all {images.length > 0 ? "our" : ""} Evergreen Cottages units.</p>
+        <p className="text-sand-500 mb-12">Browse photos from all our Evergreen Cottages units.</p>
 
         <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
-          {images.map((img, i) => (
+          {visible.map((img, i) => (
             <div
               key={`${img.propertyId}-${i}`}
               className="break-inside-avoid cursor-pointer group relative overflow-hidden rounded-xl"
@@ -43,6 +49,7 @@ export default function Gallery({ images }: Props) {
                 height={400}
                 className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300"
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                loading={i < 6 ? "eager" : "lazy"}
               />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
                 <span className="text-white text-xs font-medium">{img.propertyName}</span>
@@ -50,6 +57,17 @@ export default function Gallery({ images }: Props) {
             </div>
           ))}
         </div>
+
+        {hasMore && (
+          <div className="text-center mt-10">
+            <button
+              onClick={() => setVisibleCount((c) => c + BATCH_SIZE)}
+              className="bg-ocean-500 text-white px-8 py-3 rounded-full font-semibold hover:bg-ocean-600 transition-all"
+            >
+              Load More ({images.length - visibleCount} remaining)
+            </button>
+          </div>
+        )}
 
         {images.length === 0 && (
           <div className="text-center py-20">
