@@ -80,9 +80,9 @@ export default function Layout({ children, title, description, dark, schema }: P
               <Image
                 src="/images/logo.png"
                 alt="Evergreen Cottages"
-                width={160}
-                height={48}
-                className="h-10 w-auto"
+                width={120}
+                height={65}
+                className="h-14 w-auto"
                 priority
               />
             </Link>
@@ -190,7 +190,7 @@ export default function Layout({ children, title, description, dark, schema }: P
           {/* Top section — brand + CTA */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 pb-10 border-b border-white/10">
             <div>
-              <Image src="/images/logo.png" alt="Evergreen Cottages" width={140} height={42} className="h-10 w-auto mb-2 brightness-0 invert" />
+              <Image src="/images/logo.png" alt="Evergreen Cottages" width={120} height={65} className="h-14 w-auto mb-2 brightness-0 invert" />
               <p className="text-sm">17 vacation rentals in Pensacola, FL. Book direct and save.</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
