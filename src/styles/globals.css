@@ -69,11 +69,10 @@
 
   /* Card hover lift */
   .card-lift {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease;
   }
   .card-lift:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 40px rgba(26, 58, 74, 0.12);
+    transform: translateY(-3px);
   }
 
   /* Scroll reveal */
