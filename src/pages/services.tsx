@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Layout from "../components/Layout";
+import Breadcrumbs from "../components/Breadcrumbs";
 
 const services = [
   {
@@ -51,6 +52,7 @@ export default function Services() {
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-16">
+        <Breadcrumbs items={[{ label: "Services" }]} />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger">
           {services.map((s) => (
             <div key={s.title} className="bg-white border border-sand-100 rounded-2xl p-7 card-lift fade-in-up">

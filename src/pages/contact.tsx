@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Layout from "../components/Layout";
+import Breadcrumbs from "../components/Breadcrumbs";
 
 export default function Contact() {
   const [name, setName] = useState("");
@@ -18,6 +19,7 @@ export default function Contact() {
   return (
     <Layout title="Contact" description="Contact Evergreen Cottages. Call, text, or email anytime.">
       <div className="max-w-4xl mx-auto px-5 sm:px-8 lg:px-10 py-20">
+        <Breadcrumbs items={[{ label: "Contact" }]} />
         <p className="text-coral-500 text-xs uppercase tracking-[0.2em] font-semibold mb-3">Get in Touch</p>
         <h1 className="text-4xl md:text-5xl font-serif text-ocean-500 mb-10">Contact Us</h1>
 

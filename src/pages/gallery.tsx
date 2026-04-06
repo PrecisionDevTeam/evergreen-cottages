@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Layout from "../components/Layout";
+import Breadcrumbs from "../components/Breadcrumbs";
 import { getProperties } from "../lib/db";
 
 type GalleryImage = {
@@ -23,6 +24,7 @@ export default function Gallery({ images }: Props) {
   return (
     <Layout title="Gallery" description="Photos of our 17 vacation rental units in Pensacola, FL.">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-20">
+        <Breadcrumbs items={[{ label: "Gallery" }]} />
         <p className="text-coral-500 text-xs uppercase tracking-[0.2em] font-semibold mb-3">Photos</p>
         <h1 className="text-4xl md:text-5xl font-serif text-ocean-500 mb-4">Property Gallery</h1>
         <p className="text-sand-500 mb-12">Browse photos from all {images.length > 0 ? "our" : ""} Evergreen Cottages units.</p>

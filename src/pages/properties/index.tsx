@@ -1,11 +1,11 @@
 import { useState, useMemo, useCallback } from "react";
 import Layout from "../../components/Layout";
 import PropertyCard from "../../components/PropertyCard";
-import { getProperties } from "../../lib/db";
+import { getProperties, getRecentBookingCounts } from "../../lib/db";
 import { Property } from "../../types";
 import { useFavorites } from "../../lib/localStorage";
 
-type Props = { properties: Property[] };
+type Props = { properties: Property[]; popularIds: number[] };
 
 const MAX_COMPARE = 3;
 
@@ -16,10 +16,11 @@ const PRICE_RANGES = [
   { key: "100+", label: "$100+", min: 100, max: Infinity },
 ];
 
-const Properties = ({ properties }: Props) => {
+const Properties = ({ properties, popularIds }: Props) => {
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("name");
   const [priceRange, setPriceRange] = useState("any");
+  const [search, setSearch] = useState("");
   const [compareIds, setCompareIds] = useState<number[]>([]);
   const [showCompare, setShowCompare] = useState(false);
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -37,6 +38,17 @@ const Properties = ({ properties }: Props) => {
 
   const filtered = useMemo(() => {
     let result = [...properties];
+
+    // Text search
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter((p) =>
+        p.name.toLowerCase().includes(q) ||
+        (p.address || "").toLowerCase().includes(q) ||
+        (p.description || "").toLowerCase().includes(q)
+      );
+    }
+
     if (filter === "pets") result = result.filter((p) => p.pets_allowed);
     if (filter === "4+") result = result.filter((p) => (p.person_capacity || 2) >= 4);
     if (filter === "bedroom") result = result.filter((p) => (p.bedrooms_number || 0) >= 1);
@@ -49,12 +61,12 @@ const Properties = ({ properties }: Props) => {
       });
     }
 
-    if (sort === "price-low") result.sort((a, b) => (a.base_price || 0) - (b.base_price || 0));
-    if (sort === "price-high") result.sort((a, b) => (b.base_price || 0) - (a.base_price || 0));
-    if (sort === "guests") result.sort((a, b) => (b.person_capacity || 0) - (a.person_capacity || 0));
-    if (sort === "name") result.sort((a, b) => a.name.localeCompare(b.name));
+    if (sort === "price-low") result = [...result].sort((a, b) => (a.base_price || 0) - (b.base_price || 0));
+    if (sort === "price-high") result = [...result].sort((a, b) => (b.base_price || 0) - (a.base_price || 0));
+    if (sort === "guests") result = [...result].sort((a, b) => (b.person_capacity || 0) - (a.person_capacity || 0));
+    if (sort === "name") result = [...result].sort((a, b) => a.name.localeCompare(b.name));
     return result;
-  }, [properties, filter, sort, priceRange]);
+  }, [properties, filter, sort, priceRange, search]);
 
   const filters = [
     { key: "all", label: "All" },
@@ -74,7 +86,33 @@ const Properties = ({ properties }: Props) => {
       </div>
 
       <div className="bg-white border-b border-sand-100 sticky top-16 z-40">
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-3">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-3 space-y-3">
+          {/* Search bar */}
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-sand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, description, or address..."
+              className="w-full pl-10 pr-4 py-2 border border-sand-200 rounded-xl text-sm bg-sand-50 focus:ring-2 focus:ring-ocean-500 focus:border-ocean-500 outline-none transition-all"
+              aria-label="Search properties"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-sand-400 hover:text-sand-600"
+                aria-label="Clear search"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex gap-2 overflow-x-auto pb-1">
               {filters.map((f) => (
@@ -122,7 +160,7 @@ const Properties = ({ properties }: Props) => {
         {filtered.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-sand-400 text-lg font-serif">No properties match your filters.</p>
-            <button onClick={() => { setFilter("all"); setPriceRange("any"); }} className="text-coral-500 font-medium mt-3 hover:underline">
+            <button onClick={() => { setFilter("all"); setPriceRange("any"); setSearch(""); }} className="text-coral-500 font-medium mt-3 hover:underline">
               Clear filters
             </button>
           </div>
@@ -137,6 +175,7 @@ const Properties = ({ properties }: Props) => {
                 onToggleCompare={toggleCompare}
                 isFavorite={isFavorite(property.id)}
                 onToggleFavorite={toggleFavorite}
+                recentBookings={popularIds.includes(property.id) ? 1 : 0}
               />
             ))}
           </div>
@@ -212,6 +251,19 @@ const Properties = ({ properties }: Props) => {
 export default Properties;
 
 export const getStaticProps = async () => {
-  const properties = await getProperties("Pensacola");
-  return { props: { properties: JSON.parse(JSON.stringify(properties)) }, revalidate: 3600 };
+  const [properties, bookingCounts] = await Promise.all([
+    getProperties("Pensacola"),
+    getRecentBookingCounts(),
+  ]);
+  // Only expose which properties are popular (>= 2 bookings), not raw counts
+  const popularIds = Object.entries(bookingCounts)
+    .filter(([, count]) => count >= 2)
+    .map(([id]) => Number(id));
+  return {
+    props: {
+      properties: JSON.parse(JSON.stringify(properties)),
+      popularIds,
+    },
+    revalidate: 3600,
+  };
 };

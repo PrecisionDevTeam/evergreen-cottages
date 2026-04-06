@@ -9,9 +9,10 @@ type Props = {
   onToggleCompare?: (id: number) => void;
   isFavorite?: boolean;
   onToggleFavorite?: (id: number) => void;
+  recentBookings?: number;
 };
 
-export default function PropertyCard({ property, priority = false, comparing, onToggleCompare, isFavorite, onToggleFavorite }: Props) {
+export default function PropertyCard({ property, priority = false, comparing, onToggleCompare, isFavorite, onToggleFavorite, recentBookings }: Props) {
   return (
     <Link
       href={`/properties/${property.id}`}
@@ -102,6 +103,11 @@ export default function PropertyCard({ property, priority = false, comparing, on
             </>
           ) : null}
         </div>
+        {recentBookings ? (
+          <p className="text-xs text-coral-500 font-medium mt-1.5">
+            Popular this month
+          </p>
+        ) : null}
       </div>
     </Link>
   );

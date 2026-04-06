@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Layout from "../components/Layout";
+import Breadcrumbs from "../components/Breadcrumbs";
 
 type FAQItem = { q: string; a: string };
 
@@ -148,6 +149,7 @@ export default function FAQ() {
   return (
     <Layout title="FAQ" description="Frequently asked questions about booking, check-in, pets, parking, WiFi, and more at Evergreen Cottages.">
       <div className="max-w-3xl mx-auto px-5 sm:px-8 lg:px-10 py-20">
+        <Breadcrumbs items={[{ label: "FAQ" }]} />
         <p className="text-coral-500 text-xs uppercase tracking-[0.2em] font-semibold mb-3">Help</p>
         <h1 className="text-4xl md:text-5xl font-serif text-ocean-500 mb-4">Frequently Asked Questions</h1>
         <p className="text-sand-500 mb-12">Everything you need to know before booking your stay.</p>

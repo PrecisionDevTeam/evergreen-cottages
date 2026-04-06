@@ -1,4 +1,5 @@
 import Layout from "../components/Layout";
+import Breadcrumbs from "../components/Breadcrumbs";
 
 type Props = { reviewCount: number; avgRating: number };
 
@@ -6,6 +7,7 @@ export default function About({ reviewCount, avgRating }: Props) {
   return (
     <Layout title="About" description="17 vacation rentals in Pensacola, FL. Learn about Evergreen Cottages.">
       <div className="max-w-4xl mx-auto px-5 sm:px-8 lg:px-10 py-20">
+        <Breadcrumbs items={[{ label: "About" }]} />
         <p className="text-coral-500 text-xs uppercase tracking-[0.2em] font-semibold mb-3">Our Story</p>
         <h1 className="text-4xl md:text-5xl font-serif text-ocean-500 mb-8">About Evergreen Cottages</h1>
 

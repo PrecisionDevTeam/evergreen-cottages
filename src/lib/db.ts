@@ -6,6 +6,29 @@ export const prisma = globalForPrisma.prisma || new PrismaClient();
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
+export async function getRecentBookingCounts(): Promise<Record<number, number>> {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const counts = await prisma.reservation.groupBy({
+    by: ["property_id"],
+    where: {
+      created_at: { gte: thirtyDaysAgo },
+      status: { in: ["confirmed", "checked_in", "checked_out"] },
+      property_id: { not: null },
+    },
+    _count: { id: true },
+  });
+
+  const map: Record<number, number> = {};
+  for (const row of counts) {
+    if (row.property_id) {
+      map[row.property_id] = row._count.id;
+    }
+  }
+  return map;
+}
+
 export async function getProperties(city?: string) {
   const where = city ? { city } : {};
   const properties = await prisma.property.findMany({
@@ -163,7 +186,7 @@ export async function getStayByToken(token: string) {
     `;
     doorCode = typeof result[0]?.code === "string" ? result[0].code : null;
   } catch (err) {
-    console.error("seam_access_codes query failed:", err);
+    // seam_access_codes query failed — door code unavailable
   }
 
   return {

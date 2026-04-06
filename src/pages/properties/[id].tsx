@@ -7,6 +7,7 @@ import AvailabilityCalendar from "../../components/AvailabilityCalendar";
 import { getProperty, getCalendar, getPropertyReviews } from "../../lib/db";
 import { Property, CalendarDay, Review } from "../../types";
 import { useRecentlyViewed } from "../../lib/localStorage";
+import Breadcrumbs from "../../components/Breadcrumbs";
 
 type Props = {
   property: Property & { knowledgeMap: Record<string, string | null> };
@@ -226,13 +227,10 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
   return (
     <Layout title={property.name} description={property.description ? stripEmojis(property.description).slice(0, 160) : undefined}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Back */}
-        <Link href="/properties" className="text-ocean-500 text-sm mb-4 inline-flex items-center hover:text-coral-500 transition-colors">
-          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          All Properties
-        </Link>
+        <Breadcrumbs items={[
+          { label: "Properties", href: "/properties" },
+          { label: property.name },
+        ]} />
 
         {/* Title */}
         <div className="flex items-start justify-between mt-3 mb-1">
@@ -426,6 +424,26 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
                 <p className="text-xs text-sand-400 mt-2">
                   {property.address || "3801 Mobile Highway, Pensacola, FL 32505"}
                 </p>
+
+                {/* Nearby places */}
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  {[
+                    { name: "Pensacola Beach", dist: "20 min", icon: "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" },
+                    { name: "Downtown Pensacola", dist: "10 min", icon: "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" },
+                    { name: "NAS Pensacola", dist: "15 min", icon: "M12 19l9 2-9-18-9 18 9-2zm0 0v-8" },
+                    { name: "Airport (PNS)", dist: "15 min", icon: "M12 19l9 2-9-18-9 18 9-2zm0 0v-8" },
+                    { name: "Cordova Mall", dist: "12 min", icon: "M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" },
+                    { name: "Joe Patti's Seafood", dist: "10 min", icon: "M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" },
+                  ].map((place) => (
+                    <div key={place.name} className="flex items-center gap-2 text-xs text-sand-500 py-1.5">
+                      <svg className="w-3.5 h-3.5 text-ocean-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={place.icon} />
+                      </svg>
+                      <span>{place.name}</span>
+                      <span className="text-sand-400 ml-auto">{place.dist}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
