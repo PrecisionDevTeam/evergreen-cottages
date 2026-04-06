@@ -143,31 +143,35 @@ const PropertyDetail = ({ property, calendar }: Props) => {
           {/* Left — Details */}
           <div className="lg:col-span-2">
             {/* Quick Info */}
-            <div className="flex flex-wrap gap-4 mb-6 pb-6 border-b">
-              <div className="flex items-center text-gray-600 text-sm">
-                <svg className="w-5 h-5 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            <div className="flex flex-wrap gap-5 mb-6 pb-6 border-b">
+              {/* Guests */}
+              <div className="flex items-center text-sand-600 text-sm">
+                <svg className="w-5 h-5 mr-2 text-sand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
                 {property.person_capacity || 2} guests
               </div>
+              {/* Bedroom */}
               {property.bedrooms_number ? (
-                <div className="flex items-center text-gray-600 text-sm">
-                  <svg className="w-5 h-5 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                <div className="flex items-center text-sand-600 text-sm">
+                  <svg className="w-5 h-5 mr-2 text-sand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v11a1 1 0 001 1h16a1 1 0 001-1V7M3 7l3-4h12l3 4M8 11h8M8 11V7m8 4V7" />
                   </svg>
                   {property.bedrooms_number} bedroom
                 </div>
               ) : null}
-              <div className="flex items-center text-gray-600 text-sm">
-                <svg className="w-5 h-5 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              {/* Bathroom */}
+              <div className="flex items-center text-sand-600 text-sm">
+                <svg className="w-5 h-5 mr-2 text-sand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                 </svg>
                 {property.bathrooms_number || 1} bath
               </div>
+              {/* Pets */}
               {property.pets_allowed && (
                 <div className="flex items-center text-evergreen-600 text-sm font-medium">
-                  <svg className="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017a2 2 0 01-.632-.103l-2.828-.94a2 2 0 01-.632-.103H4.5A1.5 1.5 0 013 18.5v-5A1.5 1.5 0 014.5 12H7l3-6a1 1 0 011.8.4L10 10z" />
                   </svg>
                   Pets allowed ($50 fee)
                 </div>
