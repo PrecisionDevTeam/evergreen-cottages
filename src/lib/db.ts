@@ -7,15 +7,17 @@ export const prisma = globalForPrisma.prisma || new PrismaClient();
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 export async function getRecentBookingCounts(): Promise<Record<number, number>> {
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
   const counts = await prisma.reservation.groupBy({
     by: ["property_id"],
     where: {
-      created_at: { gte: thirtyDaysAgo },
+      check_in: { gte: monthStart, lte: monthEnd },
       status: { in: ["confirmed", "checked_in", "checked_out"] },
       property_id: { not: null },
+      property: { city: "Pensacola" },
     },
     _count: { id: true },
   });
