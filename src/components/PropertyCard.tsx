@@ -11,61 +11,61 @@ export default function PropertyCard({ property, priority = false }: Props) {
   return (
     <Link
       href={`/properties/${property.id}`}
-      className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 group"
+      className="group block card-lift fade-in-up"
     >
-      <div className="aspect-[4/3] bg-gray-200 relative overflow-hidden">
+      <div className="aspect-[4/3] bg-sand-200 relative overflow-hidden rounded-2xl">
         {property.images[0] ? (
           <Image
             src={property.images[0]}
             alt={property.name}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             priority={priority}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
+          <div className="w-full h-full flex items-center justify-center text-sand-400 font-serif text-lg">
             No photo
           </div>
         )}
-        {property.pets_allowed && (
-          <span className="absolute top-3 left-3 bg-evergreen-600 text-white text-xs px-2.5 py-1 rounded-full font-medium">
-            Pets OK
-          </span>
-        )}
-        <span className="absolute top-3 right-3 bg-white/95 text-gray-900 text-xs px-2.5 py-1 rounded-full font-semibold shadow-sm">
-          From ${property.base_price || 65}/night
-        </span>
+        {/* Gradient overlay at bottom */}
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/40 to-transparent" />
+
+        {/* Price badge */}
+        <div className="absolute bottom-3 left-3 text-white">
+          <span className="text-lg font-serif">${property.base_price || 65}</span>
+          <span className="text-xs text-white/70 ml-0.5">/night</span>
+        </div>
+
+        {/* Tags */}
+        <div className="absolute top-3 left-3 flex gap-1.5">
+          {property.pets_allowed && (
+            <span className="bg-ocean-500/90 text-white text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full font-semibold backdrop-blur-sm">
+              Pets OK
+            </span>
+          )}
+          {(property.person_capacity || 2) >= 4 && (
+            <span className="bg-coral-500/90 text-white text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full font-semibold backdrop-blur-sm">
+              {property.person_capacity} guests
+            </span>
+          )}
+        </div>
       </div>
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-900 mb-1.5 line-clamp-1 group-hover:text-evergreen-700 transition-colors">
+
+      <div className="pt-3.5 pb-1">
+        <h3 className="font-serif text-lg text-ocean-500 group-hover:text-coral-500 transition-colors line-clamp-1">
           {property.name}
         </h3>
-        <div className="flex items-center text-sm text-gray-500 mb-3">
+        <div className="flex items-center text-sm text-sand-500 mt-1">
           <span>{property.person_capacity || 2} guests</span>
-          <span className="mx-1.5">&middot;</span>
+          <span className="mx-2 text-sand-300">&bull;</span>
           <span>{property.bathrooms_number || 1} bath</span>
           {property.bedrooms_number ? (
             <>
-              <span className="mx-1.5">&middot;</span>
+              <span className="mx-2 text-sand-300">&bull;</span>
               <span>{property.bedrooms_number} bed</span>
             </>
           ) : null}
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {property.amenityList.slice(0, 4).map((amenity) => (
-            <span
-              key={amenity}
-              className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full"
-            >
-              {amenity}
-            </span>
-          ))}
-          {property.amenityList.length > 4 && (
-            <span className="text-xs text-gray-400">
-              +{property.amenityList.length - 4} more
-            </span>
-          )}
         </div>
       </div>
     </Link>

@@ -11,172 +11,206 @@ type Props = {
 
 const Home = ({ properties, reviews }: Props) => {
   return (
-    <Layout description="17 professionally managed vacation rentals in Pensacola, Florida. Book direct and save 10-15%.">
+    <Layout dark description="17 professionally managed vacation rentals in Pensacola, Florida. Book direct and save 10-15%.">
       {/* Hero */}
-      <section className="relative bg-evergreen-800 text-white overflow-hidden">
+      <section className="relative min-h-[90vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=1920&q=80')] bg-cover bg-center" />
-        <div className="absolute inset-0 bg-gradient-to-r from-evergreen-900/80 to-evergreen-800/60" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-28 md:py-36">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
-            Your Home Away<br className="hidden sm:block" />From Home
-          </h1>
-          <p className="text-lg md:text-xl text-white/80 mb-8 max-w-xl leading-relaxed">
-            17 professionally managed vacation rentals in Pensacola, Florida.
-            Minutes from the beach, NAS, and downtown.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Link
-              href="/properties"
-              className="bg-white text-evergreen-800 px-8 py-3.5 rounded-lg font-semibold text-center hover:bg-gray-100 transition-colors shadow-lg"
-            >
-              Browse Properties
-            </Link>
-            <Link
-              href="/about"
-              className="border-2 border-white/80 text-white px-8 py-3.5 rounded-lg font-semibold text-center hover:bg-white/10 transition-colors"
-            >
-              Learn More
-            </Link>
+        <div className="absolute inset-0 bg-gradient-to-br from-ocean-700/85 via-ocean-600/70 to-ocean-500/50" />
+
+        <div className="relative max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-32">
+          <div className="max-w-2xl">
+            <p className="text-coral-400 text-sm uppercase tracking-[0.2em] font-semibold mb-4 fade-in">
+              Pensacola, Florida
+            </p>
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-serif text-white leading-[1.1] mb-6 fade-in-up">
+              Your Home<br />Away From Home
+            </h1>
+            <p className="text-lg text-white/70 mb-10 leading-relaxed max-w-lg fade-in-up" style={{ animationDelay: '0.15s' }}>
+              17 professionally managed vacation rentals, minutes from the beach.
+              Book direct and skip the platform fees.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 fade-in-up" style={{ animationDelay: '0.25s' }}>
+              <Link
+                href="/properties"
+                className="bg-white text-ocean-600 px-8 py-4 rounded-full font-semibold text-center hover:bg-sand-100 transition-all shadow-xl hover:shadow-2xl"
+              >
+                Browse Properties
+              </Link>
+              <Link
+                href="/about"
+                className="border-2 border-white/40 text-white px-8 py-4 rounded-full font-semibold text-center hover:bg-white/10 transition-all"
+              >
+                Learn More
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Decorative bottom curve */}
+        <div className="absolute bottom-0 w-full">
+          <svg viewBox="0 0 1440 60" fill="none" className="w-full">
+            <path d="M0 60V30C240 0 480 0 720 30C960 60 1200 60 1440 30V60H0Z" fill="#faf8f5" />
+          </svg>
+        </div>
+      </section>
+
+      {/* Trust bar */}
+      <section className="max-w-5xl mx-auto px-5 sm:px-8 -mt-2 mb-16">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-16 text-center py-6">
+          <div>
+            <div className="text-3xl font-serif text-ocean-500">17</div>
+            <div className="text-xs text-sand-500 uppercase tracking-widest mt-0.5">Properties</div>
+          </div>
+          <div className="hidden sm:block w-px h-8 bg-sand-300" />
+          <div>
+            <div className="text-3xl font-serif text-ocean-500">4.9</div>
+            <div className="text-xs text-sand-500 uppercase tracking-widest mt-0.5">Avg Rating</div>
+          </div>
+          <div className="hidden sm:block w-px h-8 bg-sand-300" />
+          <div>
+            <div className="text-3xl font-serif text-ocean-500">1,200+</div>
+            <div className="text-xs text-sand-500 uppercase tracking-widest mt-0.5">Reviews</div>
+          </div>
+          <div className="hidden sm:block w-px h-8 bg-sand-300" />
+          <div>
+            <div className="text-3xl font-serif text-ocean-500">24/7</div>
+            <div className="text-xs text-sand-500 uppercase tracking-widest mt-0.5">Support</div>
           </div>
         </div>
       </section>
 
       {/* Why Book Direct */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <h2 className="text-3xl font-bold text-gray-900 text-center mb-4">Why Book Direct?</h2>
-        <p className="text-gray-500 text-center mb-12 max-w-2xl mx-auto">
-          Skip the platform fees and get the best rate when you book directly with us.
-        </p>
+      <section className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 pb-24">
+        <div className="text-center mb-14">
+          <h2 className="text-4xl md:text-5xl font-serif text-ocean-500 mb-3">Why Book Direct?</h2>
+          <p className="text-sand-500 max-w-lg mx-auto">
+            Skip the middleman. Get the best rate and personal service.
+          </p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
             {
-              icon: (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              ),
-              title: "Save 10-15%",
-              desc: "No platform fees. Best price guaranteed when you book directly with us.",
+              label: "Save",
+              value: "10-15%",
+              desc: "No Airbnb or VRBO fees. Best price guaranteed when you book directly with us.",
             },
             {
-              icon: (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              ),
-              title: "24/7 Personal Service",
-              desc: "Direct contact with our local team. Call or text anytime for anything you need.",
+              label: "Direct",
+              value: "Contact",
+              desc: "Talk to our local Pensacola team. Call or text 24/7. No chatbots, real people.",
             },
             {
-              icon: (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              ),
-              title: "Flexible & Secure",
-              desc: "Smart lock entry, easy extensions, airport shuttle, and add-on services.",
+              label: "Smart",
+              value: "Entry",
+              desc: "Keyless smart lock entry. Your door code sent before arrival. Extend anytime.",
             },
           ].map((item) => (
-            <div key={item.title} className="text-center p-8 rounded-2xl hover:bg-gray-50 transition-colors">
-              <div className="w-16 h-16 bg-evergreen-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
-                <svg className="w-8 h-8 text-evergreen-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {item.icon}
-                </svg>
+            <div key={item.label} className="bg-white rounded-2xl p-8 text-center card-lift border border-sand-100">
+              <div className="text-xs text-coral-500 uppercase tracking-[0.2em] font-semibold mb-2">
+                {item.label}
               </div>
-              <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
-              <p className="text-gray-500 leading-relaxed">{item.desc}</p>
+              <div className="text-3xl font-serif text-ocean-500 mb-3">{item.value}</div>
+              <p className="text-sand-500 text-sm leading-relaxed">{item.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* Featured Properties */}
-      <section className="bg-gray-50 py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center mb-10">
+      <section className="bg-white py-24">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-12">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">Our Properties</h2>
-              <p className="text-gray-500 mt-1">{properties.length} rentals in Pensacola, FL</p>
+              <p className="text-coral-500 text-xs uppercase tracking-[0.2em] font-semibold mb-2">Featured</p>
+              <h2 className="text-4xl md:text-5xl font-serif text-ocean-500">Our Properties</h2>
             </div>
-            <Link href="/properties" className="text-evergreen-600 font-medium hover:text-evergreen-700 transition-colors hidden sm:block">
-              View all &rarr;
+            <Link href="/properties" className="text-ocean-500 font-medium hover:text-coral-500 transition-colors mt-4 sm:mt-0 group">
+              View all {properties.length}
+              <span className="inline-block ml-1 group-hover:translate-x-1 transition-transform">&rarr;</span>
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7 stagger">
             {properties.slice(0, 8).map((property, i) => (
               <PropertyCard key={property.id} property={property} priority={i < 4} />
             ))}
-          </div>
-          <div className="text-center mt-8 sm:hidden">
-            <Link href="/properties" className="text-evergreen-600 font-medium">
-              View all {properties.length} properties &rarr;
-            </Link>
           </div>
         </div>
       </section>
 
       {/* Reviews */}
       {reviews.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <h2 className="text-3xl font-bold text-gray-900 text-center mb-4">What Our Guests Say</h2>
-          <p className="text-gray-500 text-center mb-12">Real reviews from real guests</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {reviews.slice(0, 6).map((review) => (
-              <div key={review.id} className="bg-white border border-gray-100 rounded-2xl p-6 hover:shadow-md transition-shadow">
-                <div className="flex items-center mb-3">
-                  <div className="text-yellow-400 text-sm tracking-wide">
+        <section className="py-24">
+          <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
+            <div className="text-center mb-14">
+              <p className="text-coral-500 text-xs uppercase tracking-[0.2em] font-semibold mb-2">Testimonials</p>
+              <h2 className="text-4xl md:text-5xl font-serif text-ocean-500">What Guests Say</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 stagger">
+              {reviews.slice(0, 6).map((review) => (
+                <div key={review.id} className="bg-white rounded-2xl p-7 card-lift border border-sand-100 fade-in-up">
+                  <div className="text-coral-400 text-sm tracking-wide mb-3">
                     {"★".repeat(Math.round(review.rating || 5))}
                   </div>
-                  <span className="ml-2 text-sm text-gray-400">{review.rating}/5</span>
-                </div>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed italic">
-                  &ldquo;{review.review_content}&rdquo;
-                </p>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-gray-900">
-                    {review.reviewer_name || "Guest"}
+                  <p className="text-ocean-600 text-sm leading-relaxed mb-5 line-clamp-4 italic">
+                    &ldquo;{review.review_content}&rdquo;
                   </p>
-                  {review.submitted_at && (
-                    <p className="text-xs text-gray-400">
-                      {new Date(review.submitted_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
-                    </p>
-                  )}
+                  <div className="flex items-center justify-between border-t border-sand-100 pt-4">
+                    <span className="text-sm font-semibold text-ocean-500">
+                      {review.reviewer_name || "Guest"}
+                    </span>
+                    {review.submitted_at && (
+                      <span className="text-xs text-sand-400">
+                        {new Date(review.submitted_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </section>
       )}
 
       {/* Services CTA */}
-      <section className="bg-evergreen-700 text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold mb-4">Add-on Services</h2>
-          <p className="text-evergreen-100 mb-8 max-w-2xl mx-auto leading-relaxed">
-            Airport pickup &amp; drop-off, early check-in, late checkout, pet accommodations, and more.
+      <section className="relative py-24 overflow-hidden">
+        <div className="absolute inset-0 bg-ocean-500" />
+        <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml,%3Csvg width=60 height=60 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.15%22%3E%3Cpath d=%22M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]" />
+        <div className="relative max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 text-center">
+          <p className="text-coral-400 text-xs uppercase tracking-[0.2em] font-semibold mb-3">Extras</p>
+          <h2 className="text-4xl md:text-5xl font-serif text-white mb-5">Add-on Services</h2>
+          <p className="text-white/60 mb-10 max-w-xl mx-auto leading-relaxed">
+            Airport shuttle, early check-in, late checkout, pet accommodations, and more.
           </p>
           <Link
             href="/services"
-            className="inline-block bg-white text-evergreen-700 px-8 py-3.5 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg"
+            className="inline-block bg-white text-ocean-600 px-8 py-4 rounded-full font-semibold hover:bg-sand-100 transition-all shadow-xl"
           >
             View Services
           </Link>
         </div>
       </section>
 
-      {/* Contact CTA */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">Ready to Book?</h2>
-        <p className="text-gray-500 mb-8 max-w-xl mx-auto">
-          Have questions? Call or text us anytime. We&apos;re here to help.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <a
-            href="tel:+15108227060"
-            className="bg-evergreen-600 text-white px-8 py-3.5 rounded-lg font-semibold hover:bg-evergreen-700 transition-colors"
-          >
-            Call (510) 822-7060
-          </a>
-          <Link
-            href="/contact"
-            className="border-2 border-gray-300 text-gray-700 px-8 py-3.5 rounded-lg font-semibold hover:border-gray-400 transition-colors"
-          >
-            Send a Message
-          </Link>
+      {/* Final CTA */}
+      <section className="py-24 text-center">
+        <div className="max-w-2xl mx-auto px-5">
+          <h2 className="text-4xl md:text-5xl font-serif text-ocean-500 mb-5">Ready to Book?</h2>
+          <p className="text-sand-500 mb-10 leading-relaxed">
+            Have questions? Our team is here to help. Call, text, or send us a message.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a
+              href="tel:+15108227060"
+              className="bg-ocean-500 text-white px-8 py-4 rounded-full font-semibold hover:bg-ocean-600 transition-all shadow-lg"
+            >
+              Call (510) 822-7060
+            </a>
+            <Link
+              href="/contact"
+              className="border-2 border-sand-300 text-ocean-500 px-8 py-4 rounded-full font-semibold hover:border-ocean-500 transition-all"
+            >
+              Send a Message
+            </Link>
+          </div>
         </div>
       </section>
     </Layout>
@@ -194,6 +228,6 @@ export const getStaticProps = async () => {
       properties: JSON.parse(JSON.stringify(properties)),
       reviews: JSON.parse(JSON.stringify(reviews)),
     },
-    revalidate: 3600, // ISR: rebuild every hour
+    revalidate: 3600,
   };
 };

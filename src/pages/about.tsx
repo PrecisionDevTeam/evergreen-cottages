@@ -3,73 +3,55 @@ import { getReviews } from "../lib/db";
 
 type Props = { reviewCount: number; avgRating: number };
 
-const About = ({ reviewCount, avgRating }: Props) => {
+export default function About({ reviewCount, avgRating }: Props) {
   return (
-    <Layout title="About" description="Learn about Evergreen Cottages — 17 vacation rentals in Pensacola, FL.">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">About Evergreen Cottages</h1>
+    <Layout title="About" description="17 vacation rentals in Pensacola, FL. Learn about Evergreen Cottages.">
+      <div className="max-w-4xl mx-auto px-5 sm:px-8 lg:px-10 py-20">
+        <p className="text-coral-500 text-xs uppercase tracking-[0.2em] font-semibold mb-3">Our Story</p>
+        <h1 className="text-4xl md:text-5xl font-serif text-ocean-500 mb-8">About Evergreen Cottages</h1>
 
-        <div className="text-gray-600 space-y-5 leading-relaxed">
+        <div className="text-sand-600 space-y-5 leading-relaxed text-lg">
           <p>
             Evergreen Cottages is a collection of 17 professionally managed vacation rentals
-            located at 3801 Mobile Highway in Pensacola, Florida. We offer comfortable,
-            affordable accommodations just minutes from Pensacola Beach, NAS Pensacola,
-            and downtown.
+            at 3801 Mobile Highway in Pensacola, Florida.
           </p>
           <p>
-            Each unit is individually designed with everything you need — fully equipped
-            kitchens, air conditioning, WiFi, washer/dryer, free parking, and smart lock entry.
-            Most units welcome pets.
+            Each unit comes with a fully equipped kitchen, air conditioning, WiFi, washer/dryer,
+            free parking, and smart lock entry. Most units welcome pets.
           </p>
           <p>
-            Whether you&apos;re visiting for work, vacation, military duty, or just passing
-            through, our on-site management team is available 24/7 by phone or text.
+            Our on-site team is available 24/7 by phone or text. Whether you&apos;re here for work,
+            vacation, or military duty — we&apos;re here to help.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-14">
-          <div className="text-center p-4">
-            <div className="text-3xl font-bold text-evergreen-700">17</div>
-            <div className="text-sm text-gray-500 mt-1">Units</div>
-          </div>
-          <div className="text-center p-4">
-            <div className="text-3xl font-bold text-evergreen-700">{avgRating.toFixed(1)}</div>
-            <div className="text-sm text-gray-500 mt-1">Avg Rating</div>
-          </div>
-          <div className="text-center p-4">
-            <div className="text-3xl font-bold text-evergreen-700">{reviewCount.toLocaleString()}+</div>
-            <div className="text-sm text-gray-500 mt-1">Reviews</div>
-          </div>
-          <div className="text-center p-4">
-            <div className="text-3xl font-bold text-evergreen-700">24/7</div>
-            <div className="text-sm text-gray-500 mt-1">Support</div>
-          </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16">
+          {[
+            { val: "17", label: "Units" },
+            { val: avgRating.toFixed(1), label: "Avg Rating" },
+            { val: `${reviewCount.toLocaleString()}+`, label: "Reviews" },
+            { val: "24/7", label: "Support" },
+          ].map((s) => (
+            <div key={s.label} className="text-center bg-white rounded-2xl p-6 border border-sand-100">
+              <div className="text-3xl font-serif text-ocean-500">{s.val}</div>
+              <div className="text-xs text-sand-500 uppercase tracking-widest mt-1">{s.label}</div>
+            </div>
+          ))}
         </div>
 
-        <div className="mt-14 bg-gray-50 rounded-2xl p-8">
-          <h2 className="text-xl font-semibold mb-4">Location</h2>
-          <p className="text-gray-600 mb-2">3801 Mobile Highway, Pensacola, FL 32505</p>
-          <p className="text-gray-500 text-sm">
-            Minutes from Pensacola Beach, NAS Pensacola, Downtown Pensacola,
-            and Pensacola International Airport.
-          </p>
+        <div className="mt-16 bg-white rounded-2xl p-8 border border-sand-100">
+          <h2 className="text-xl font-serif text-ocean-500 mb-3">Location</h2>
+          <p className="text-sand-600">3801 Mobile Highway, Pensacola, FL 32505</p>
+          <p className="text-sand-500 text-sm mt-1">Minutes from the beach, NAS, and downtown.</p>
         </div>
       </div>
     </Layout>
   );
-};
-
-export default About;
+}
 
 export const getStaticProps = async () => {
   const reviews = await getReviews(999);
   const rated = reviews.filter((r) => r.rating);
-  const avgRating = rated.length > 0
-    ? rated.reduce((sum, r) => sum + (r.rating || 0), 0) / rated.length
-    : 4.9;
-
-  return {
-    props: { reviewCount: reviews.length, avgRating },
-    revalidate: 86400,
-  };
+  const avgRating = rated.length > 0 ? rated.reduce((sum, r) => sum + (r.rating || 0), 0) / rated.length : 4.9;
+  return { props: { reviewCount: reviews.length, avgRating }, revalidate: 86400 };
 };

@@ -5,7 +5,7 @@ import "../styles/globals.css";
 
 const progress = new ProgressBar({
   size: 3,
-  color: "#16a34a", // evergreen-600
+  color: "#e07c5a", // coral-500 accent
   className: "z-50",
   delay: 80,
 });
