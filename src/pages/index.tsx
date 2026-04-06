@@ -196,23 +196,23 @@ const Home = ({ properties, reviews, reviewCount, avgRating }: Props) => {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="py-24 text-center">
+      {/* Final CTA — matches footer bg to avoid alternating color */}
+      <section className="bg-ocean-600 py-24 text-center">
         <div className="max-w-2xl mx-auto px-5">
-          <h2 className="text-4xl md:text-5xl font-serif text-ocean-500 mb-5">Ready to Book?</h2>
-          <p className="text-sand-500 mb-10 leading-relaxed">
+          <h2 className="text-4xl md:text-5xl font-serif text-white mb-5">Ready to Book?</h2>
+          <p className="text-white/60 mb-10 leading-relaxed">
             Have questions? Our team is here to help. Call, text, or send us a message.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href="tel:+15108227060"
-              className="bg-ocean-500 text-white px-8 py-4 rounded-full font-semibold hover:bg-ocean-600 transition-all shadow-lg"
+              className="bg-white text-ocean-600 px-8 py-4 rounded-full font-semibold hover:bg-sand-100 transition-all shadow-lg"
             >
               Call or Text (510) 822-7060
             </a>
             <Link
               href="/contact"
-              className="border-2 border-sand-300 text-ocean-500 px-8 py-4 rounded-full font-semibold hover:border-ocean-500 transition-all"
+              className="border-2 border-white/40 text-white px-8 py-4 rounded-full font-semibold hover:bg-white/10 transition-all"
             >
               Contact Us
             </Link>
