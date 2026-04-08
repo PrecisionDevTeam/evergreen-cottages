@@ -567,7 +567,14 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
                   {(reviewsExpanded ? reviews : reviews.slice(0, 3)).map((review) => (
                     <div key={review.id} className="border border-sand-100 rounded-xl p-5">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-sm text-ocean-600">{review.reviewer_name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm text-ocean-600">{review.reviewer_name}</span>
+                          {review.channel_id && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-sand-100 text-sand-500 font-medium">
+                              {review.channel_id === 2018 ? "Airbnb" : review.channel_id === 2005 ? "Booking.com" : review.channel_id === 2002 ? "VRBO" : "Direct"}
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-1">
                           {Array.from({ length: 5 }, (_, i) => (
                             <svg

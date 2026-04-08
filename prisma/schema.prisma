@@ -105,6 +105,7 @@ model Review {
   id                    Int       @id @default(autoincrement())
   hostaway_review_id    String?
   hostaway_listing_id   String?
+  channel_id            Int?
   rating                Float?
   review_content        String?
   reviewer_name         String?

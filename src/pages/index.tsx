@@ -189,9 +189,16 @@ const Home = ({ properties, reviews, reviewCount, avgRating }: Props) => {
                     &ldquo;{review.review_content}&rdquo;
                   </p>
                   <div className="flex items-center justify-between border-t border-sand-100 pt-4">
-                    <span className="text-sm font-semibold text-ocean-500">
-                      {review.reviewer_name || "Guest"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-ocean-500">
+                        {review.reviewer_name || "Guest"}
+                      </span>
+                      {review.channel_id && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-sand-100 text-sand-500 font-medium">
+                          {review.channel_id === 2018 ? "Airbnb" : review.channel_id === 2005 ? "Booking.com" : review.channel_id === 2002 ? "VRBO" : "Direct"}
+                        </span>
+                      )}
+                    </div>
                     {review.submitted_at && (
                       <span className="text-xs text-sand-400">
                         {new Date(review.submitted_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
