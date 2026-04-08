@@ -2,9 +2,8 @@ import { NextApiRequest, NextApiResponse } from "next";
 import Stripe from "stripe";
 import { verifyOrigin, rateLimit, safeString } from "../../lib/api-security";
 
-const stripe = new Stripe(process.env.STRIPE_API_KEY || "", {
-  apiVersion: "2022-11-15",
-});
+// @ts-ignore
+const stripe = new Stripe(process.env.STRIPE_API_KEY || "");
 
 const SERVICES: Record<string, { name: string; amount: number; description: string }> = {
   "airport-pickup": { name: "Airport Pickup", amount: 2500, description: "One-way airport pickup from Pensacola International Airport" },

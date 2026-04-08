@@ -2,9 +2,8 @@ import { NextApiRequest, NextApiResponse } from "next";
 import Stripe from "stripe";
 import { verifyOrigin, rateLimit, safeString } from "../../lib/api-security";
 
-const stripe = new Stripe(process.env.STRIPE_API_KEY || "", {
-  apiVersion: "2022-11-15",
-});
+// @ts-ignore
+const stripe = new Stripe(process.env.STRIPE_API_KEY || "");
 
 const GIFT_AMOUNTS = [50, 100, 150, 200, 250, 500];
 

@@ -3,9 +3,8 @@ import { GetServerSideProps } from "next";
 import Layout from "../../components/Layout";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_API_KEY || "", {
-  apiVersion: "2022-11-15",
-});
+// @ts-ignore
+const stripe = new Stripe(process.env.STRIPE_API_KEY || "");
 
 export default function GiftSuccess({ amount }: { amount: string }) {
   return (

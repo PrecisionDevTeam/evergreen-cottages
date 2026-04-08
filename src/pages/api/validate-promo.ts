@@ -2,9 +2,8 @@ import { NextApiRequest, NextApiResponse } from "next";
 import Stripe from "stripe";
 import { verifyOrigin, rateLimit } from "../../lib/api-security";
 
-const stripe = new Stripe(process.env.STRIPE_API_KEY || "", {
-  apiVersion: "2022-11-15",
-});
+// @ts-ignore
+const stripe = new Stripe(process.env.STRIPE_API_KEY || "");
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {

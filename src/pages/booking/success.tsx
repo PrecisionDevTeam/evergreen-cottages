@@ -3,9 +3,8 @@ import Link from "next/link";
 import Layout from "../../components/Layout";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_API_KEY || "", {
-  apiVersion: "2022-11-15",
-});
+// @ts-ignore
+const stripe = new Stripe(process.env.STRIPE_API_KEY || "");
 
 type Props = {
   propertyName: string;
