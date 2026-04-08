@@ -4,14 +4,9 @@
 
 ---
 
-## Phase 5: Legal & Compliance (CRITICAL — do first)
+## Phase 5: Legal & Compliance — DONE
 
-| # | Feature | Effort | Impact | Notes |
-|---|---------|--------|--------|-------|
-| 76 | Privacy Policy page (/privacy) | Low | Critical | Required by law — site collects name, email, phone, billing via Stripe |
-| 77 | Terms of Service page (/terms) | Low | Critical | Booking terms, liability, cancellation policy |
-| 78 | Cookie Consent banner | Low | Critical | GDPR/CCPA requirement — simple dismiss/accept banner |
-| 79 | Link Privacy + Terms in footer | Low | Critical | Standard footer placement |
+All 4 items completed Apr 8.
 
 ## Phase 6: Analytics & Tracking (CRITICAL — can't optimize without data)
 
@@ -184,3 +179,7 @@
 | ✅ | Trust bar 4-col grid on mobile | Apr 8 |
 | ✅ | Map CSP fix (OpenStreetMap in frame-src) | Apr 8 |
 | ✅ | 7 code review passes — all CRITICAL + HIGH resolved | Apr 8 |
+| ✅ | Privacy Policy page (/privacy) — 12 sections, CCPA, data retention, Stripe | Apr 8 |
+| ✅ | Terms of Service page (/terms) — 13 sections, cancellation, house rules, liability | Apr 8 |
+| ✅ | Cookie Consent banner (localStorage, accept/dismiss, links to privacy) | Apr 8 |
+| ✅ | Privacy + Terms linked in footer | Apr 8 |

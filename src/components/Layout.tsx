@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import Head from "next/head";
+import CookieConsent from "./CookieConsent";
 
 type Props = {
   children: React.ReactNode;
@@ -59,7 +60,7 @@ export default function Layout({ children, title, description, dark, schema }: P
         <meta name="theme-color" content="#1a3a4a" />
         <link rel="icon" href="/favicon.ico" />
         {schema && (
-          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/<\/script>/gi, "<\\/script>") }} />
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026") }} />
         )}
         <link rel="canonical" href={`https://evergreencottages.com${router.asPath.split("?")[0]}`} />
       </Head>
@@ -246,12 +247,18 @@ export default function Layout({ children, title, description, dark, schema }: P
           </div>
 
           {/* Bottom bar */}
-          <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row justify-between items-center text-xs">
+          <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row justify-between items-center text-xs gap-2">
             <span>&copy; {new Date().getFullYear()} Evergreen Cottages</span>
+            <div className="flex gap-4">
+              <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+              <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+            </div>
             <span className="mt-2 sm:mt-0">Managed by Precision Management</span>
           </div>
         </div>
       </footer>
+
+      <CookieConsent />
     </div>
   );
 }
