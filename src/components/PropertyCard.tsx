@@ -52,7 +52,7 @@ export default function PropertyCard({ property, priority = false, comparing, on
         {onToggleFavorite && (
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavorite(property.id); }}
-            className={`absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center transition-all shadow-sm z-10 ${
+            className={`absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm z-10 ${
               isFavorite
                 ? "bg-coral-500 text-white"
                 : "bg-white/80 text-sand-400 backdrop-blur-sm hover:bg-white hover:text-coral-500"
@@ -69,7 +69,7 @@ export default function PropertyCard({ property, priority = false, comparing, on
         {onToggleCompare && (
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleCompare(property.id); }}
-            className={`absolute top-3 ${onToggleFavorite ? "right-12" : "right-3"} w-7 h-7 rounded-full flex items-center justify-center transition-all shadow-sm z-10 ${
+            className={`absolute top-3 ${onToggleFavorite ? "right-14" : "right-3"} w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm z-10 ${
               comparing
                 ? "bg-ocean-500 text-white"
                 : "bg-white/80 text-sand-400 backdrop-blur-sm hover:bg-white"

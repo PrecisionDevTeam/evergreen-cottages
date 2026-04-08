@@ -113,7 +113,7 @@ export default function AvailabilityCalendar({ calendar, onDateSelect, checkIn, 
         </div>
 
         {/* Compact legend */}
-        <div className="flex justify-center gap-3 mb-1 text-[9px] text-sand-400">
+        <div className="flex justify-center gap-3 mb-1 text-[10px] text-sand-400">
           <span>Available</span>
           <span className="line-through">Booked</span>
           <span className="text-ocean-500 font-medium">Selected</span>
@@ -148,7 +148,7 @@ export default function AvailabilityCalendar({ calendar, onDateSelect, checkIn, 
                 onClick={() => available && onDateSelect?.(dateStr)}
                 aria-label={ariaLabel}
                 aria-selected={isCheckIn || isCheckOut}
-                className={`aspect-square flex flex-col items-center justify-center text-xs rounded-lg transition-all relative ${
+                className={`aspect-square min-h-[44px] flex flex-col items-center justify-center text-xs rounded-lg transition-all relative ${
                   isCheckIn || isCheckOut
                     ? "bg-ocean-500 text-white font-semibold"
                     : isInRange
@@ -162,7 +162,7 @@ export default function AvailabilityCalendar({ calendar, onDateSelect, checkIn, 
               >
                 <span className={`${isCheckIn || isCheckOut ? "text-sm" : "text-xs"}`}>{day}</span>
                 {available && price > 0 && !isCheckIn && !isCheckOut && (
-                  <span className="text-[9px] text-sand-400 mt-0.5">${price}</span>
+                  <span className="text-[10px] text-sand-400 mt-0.5">${price}</span>
                 )}
               </button>
             );
