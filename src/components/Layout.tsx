@@ -212,6 +212,7 @@ export default function Layout({ children, title, description, dark, schema }: P
                 <Link href="/gallery" className="hover:text-white transition-colors">Gallery</Link>
                 <Link href="/guide" className="hover:text-white transition-colors">Area Guide</Link>
                 <Link href="/services" className="hover:text-white transition-colors">Services</Link>
+                <Link href="/gift-cards" className="hover:text-white transition-colors">Gift Cards</Link>
               </div>
             </div>
             <div>

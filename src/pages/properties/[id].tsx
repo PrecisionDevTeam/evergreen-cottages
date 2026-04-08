@@ -233,15 +233,58 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
     }
   };
 
-  const handleBookNow = () => {
-    if (!checkIn || !checkOut) return;
-    const subject = encodeURIComponent(
-      `Booking Request: ${property.name} | ${checkIn || "TBD"} to ${checkOut || "TBD"} | ${guests} guest(s)`
-    );
-    const body = encodeURIComponent(
-      `Hi, I'd like to book:\n\nProperty: ${property.name}\nCheck-in: ${checkIn || "TBD"}\nCheck-out: ${checkOut || "TBD"}\nGuests: ${guests}\n${priceCalc ? `\nEstimated Total: $${priceCalc.total}` : ""}\n\nPlease confirm availability and send me a payment link.\n\nThank you!`
-    );
-    window.location.href = `mailto:hello@staywithprecision.com?subject=${subject}&body=${body}`;
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoResult, setPromoResult] = useState<{ promoId: string; name: string; discount: { type: string; value: number } } | null>(null);
+  const [promoError, setPromoError] = useState("");
+
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) return;
+    setPromoError("");
+    try {
+      const res = await fetch("/api/validate-promo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoCode }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setPromoResult(data);
+      } else {
+        setPromoError(data.error || "Invalid code");
+        setPromoResult(null);
+      }
+    } catch {
+      setPromoError("Could not validate code");
+    }
+  };
+
+  const handleBookNow = async () => {
+    if (!checkIn || !checkOut || bookingLoading) return;
+    setBookingLoading(true);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          propertyId: property.id,
+          checkIn,
+          checkOut,
+          guests,
+          promoId: promoResult?.promoId || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || "Checkout failed");
+      }
+    } catch (err) {
+      setBookingLoading(false);
+      const message = err instanceof Error ? err.message : "Something went wrong";
+      alert(`Booking error: ${message}. Please call (510) 822-7060 to book.`);
+    }
   };
 
   return (
@@ -650,16 +693,44 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
                 </div>
               )}
 
+              {/* Promo code */}
+              {priceCalc && (
+                <div className="mb-4">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={promoCode}
+                      onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setPromoError(""); }}
+                      placeholder="Promo code"
+                      className="flex-1 border border-sand-200 rounded-lg px-3 py-2 text-sm bg-sand-50 focus:ring-2 focus:ring-ocean-500 focus:border-ocean-500 outline-none"
+                      aria-label="Promo code"
+                    />
+                    <button
+                      onClick={handleApplyPromo}
+                      className="px-4 py-2 text-sm font-medium text-ocean-500 border border-ocean-500 rounded-lg hover:bg-ocean-50 transition-colors"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                  {promoResult && (
+                    <p className="text-xs text-evergreen-600 mt-1.5">
+                      {promoResult.name} — {promoResult.discount.type === "percent" ? `${promoResult.discount.value}% off` : `$${promoResult.discount.value} off`} (applied at checkout)
+                    </p>
+                  )}
+                  {promoError && <p className="text-xs text-coral-500 mt-1.5">{promoError}</p>}
+                </div>
+              )}
+
               <button
                 onClick={handleBookNow}
-                disabled={!checkIn || !checkOut}
+                disabled={!checkIn || !checkOut || bookingLoading}
                 className={`w-full py-3.5 rounded-xl font-semibold transition-colors mb-2 ${
-                  checkIn && checkOut
+                  checkIn && checkOut && !bookingLoading
                     ? "bg-ocean-500 text-white hover:bg-ocean-600 cursor-pointer"
                     : "bg-sand-200 text-sand-400 cursor-not-allowed"
                 }`}
               >
-                {priceCalc ? `Book Now — $${priceCalc.total}` : "Select dates to book"}
+                {bookingLoading ? "Redirecting to payment..." : priceCalc ? `Book Now — $${priceCalc.total}` : "Select dates to book"}
               </button>
               <p className="text-center text-xs text-sand-400">Book direct &amp; save 10-15% vs Airbnb</p>
 
@@ -724,7 +795,7 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
               : "bg-sand-200 text-sand-400 cursor-not-allowed"
           }`}
         >
-          {priceCalc ? `Book — $${priceCalc.total}` : "Select dates"}
+          {bookingLoading ? "Processing..." : priceCalc ? `Book — $${priceCalc.total}` : "Select dates"}
         </button>
       </div>
     </Layout>
