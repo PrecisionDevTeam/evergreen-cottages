@@ -126,3 +126,13 @@ model StayToken {
 
   @@map("stay_tokens")
 }
+
+// Track processed Stripe events (idempotency guard)
+model ProcessedStripeEvent {
+  id                 Int       @id @default(autoincrement())
+  stripe_session_id  String    @unique
+  event_type         String?
+  processed_at       DateTime  @default(now())
+
+  @@map("processed_stripe_events")
+}

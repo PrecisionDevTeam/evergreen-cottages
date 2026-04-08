@@ -78,6 +78,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       payment_method_types: ["card"],
       mode: "payment",
       ...(promoId ? { discounts: [{ promotion_code: promoId }] } : { allow_promotion_codes: true }),
+      // Collect guest info for Hostaway reservation creation
+      billing_address_collection: "required",
+      phone_number_collection: { enabled: true },
       line_items: [
         {
           price_data: {
@@ -104,6 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ],
       metadata: {
         propertyId: String(property.id),
+        hostawayListingId: property.hostaway_property_id || "",
         propertyName: property.name,
         checkIn,
         checkOut,
