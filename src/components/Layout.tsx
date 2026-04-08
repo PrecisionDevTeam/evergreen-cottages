@@ -80,7 +80,7 @@ export default function Layout({ children, title, description, dark, schema }: P
           <div className="flex justify-between items-center h-18 py-4">
             <Link href="/" className="flex-shrink-0">
               <Image
-                src="/images/logo.png"
+                src="/image.png"
                 alt="Evergreen Cottages"
                 width={48}
                 height={48}
