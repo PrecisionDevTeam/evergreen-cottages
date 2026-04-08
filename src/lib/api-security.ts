@@ -31,6 +31,14 @@ export function rateLimit(
 ): boolean {
   const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
   const now = Date.now();
+
+  // Evict expired entries to prevent unbounded memory growth
+  if (rateLimitMap.size > 1000) {
+    rateLimitMap.forEach((val, key) => {
+      if (now > val.resetAt) rateLimitMap.delete(key);
+    });
+  }
+
   const entry = rateLimitMap.get(ip);
 
   if (!entry || now > entry.resetAt) {

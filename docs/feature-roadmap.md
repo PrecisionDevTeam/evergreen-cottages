@@ -17,18 +17,9 @@ All 4 items completed Apr 8.
 | 82 | Meta Pixel (Facebook/Instagram ads) | Low | Medium | Retarget visitors who viewed properties but didn't book |
 | 83 | Microsoft Clarity or Hotjar | Low | Medium | Heatmaps + session recordings — see where users drop off |
 
-## Phase 7: Conversion Optimization (HIGH IMPACT — drives revenue)
+## Phase 7: Conversion Optimization — DONE
 
-| # | Feature | Effort | Impact | Notes |
-|---|---------|--------|--------|-------|
-| 84 | Dollar savings callout on booking card | Medium | High | "You save $52 vs Airbnb on this booking" — calculated per booking |
-| 85 | Scarcity badges on properties | Medium | High | "Only X nights available this month" from calendar data |
-| 86 | "Last booked X ago" social proof | Medium | High | Show recent booking activity per property |
-| 87 | "Why Book Direct" callout on property pages | Low | High | Box with 3 bullets: save %, direct contact, smart lock |
-| 88 | Contact form → server-side submission | Low | High | Replace mailto with API route — works without email client |
-| 89 | Hero headline rewrite | Low | Medium | "Pensacola Beach Rentals — Save 15% vs Airbnb" (specific, not generic) |
-| 90 | Hero property search widget | Medium | Medium | Date + guests + search directly in the hero section |
-| 91 | Exit-intent popup / email capture | Medium | Medium | Capture visitors who leave without booking |
+All 8 items completed Apr 8.
 
 ## Phase 8: SEO & Content (MEDIUM — organic growth)
 
@@ -88,7 +79,6 @@ All 4 items completed Apr 8.
 | 120 | Video property tours (YouTube embed) | Low | Medium | If Noah has video content |
 | 121 | Lifestyle/experience photos (not just room photos) | Low | Medium | Beach, sunset, BBQ, dog park — sell the experience |
 | 122 | Blog / seasonal content | High | Medium | "Best Time to Visit Pensacola", "Spring Break Guide" — ongoing SEO |
-| 123 | Virtual 360 tour embed | Medium | Low | If property has Matterport or similar |
 
 ## Phase 14: Competitive Edge (NICE TO HAVE — differentiators)
 
@@ -177,6 +167,15 @@ All 4 items completed Apr 8.
 | ✅ | Trust bar 4-col grid on mobile | Apr 8 |
 | ✅ | Map CSP fix (OpenStreetMap in frame-src) | Apr 8 |
 | ✅ | 7 code review passes — all CRITICAL + HIGH resolved | Apr 8 |
+| ✅ | Dollar savings callout ("You save $X by booking direct") on booking card | Apr 8 |
+| ✅ | Scarcity badges ("Only X nights available this month") on property detail | Apr 8 |
+| ✅ | "Last booked X ago" social proof badge per property | Apr 8 |
+| ✅ | "Why Book Direct?" callout box on property pages (save %, contact, smart lock) | Apr 8 |
+| ✅ | Contact form server-side submission (was mailto, now stored in DB) | Apr 8 |
+| ✅ | Hero headline rewrite ("Pensacola Beach Vacation Rentals") | Apr 8 |
+| ✅ | Hero search widget with backdrop blur | Apr 8 |
+| ✅ | Exit-intent popup (desktop mouseout + mobile 30s timer, skips booking/contact) | Apr 8 |
+| ✅ | Rate limiter memory eviction (prevents unbounded growth) | Apr 8 |
 | ✅ | Privacy Policy page (/privacy) — 12 sections, CCPA, data retention, Stripe | Apr 8 |
 | ✅ | Terms of Service page (/terms) — 13 sections, cancellation, house rules, liability | Apr 8 |
 | ✅ | Cookie Consent banner (localStorage, accept/dismiss, links to privacy) | Apr 8 |

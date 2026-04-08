@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useMemo, useEffect } from "react";
 import Layout from "../../components/Layout";
 import AvailabilityCalendar from "../../components/AvailabilityCalendar";
-import { getProperty, getCalendar, getPropertyReviews, getTotalGuestCounts } from "../../lib/db";
+import { getProperty, getCalendar, getPropertyReviews, getTotalGuestCounts, getAvailableNightsThisMonth, getLastBookedMap } from "../../lib/db";
 import { Property, CalendarDay, Review } from "../../types";
 import { useRecentlyViewed } from "../../lib/localStorage";
 import Breadcrumbs from "../../components/Breadcrumbs";
@@ -14,6 +14,8 @@ type Props = {
   calendar: CalendarDay[];
   reviews: Review[];
   totalGuests: number;
+  availableNightsThisMonth: number | null;
+  lastBooked: string | null;
 };
 
 function stripEmojis(text: string): string {
@@ -147,7 +149,7 @@ function AmenitiesSection({ amenityList, expanded, onToggle }: { amenityList: st
   );
 }
 
-const PropertyDetail = ({ property, calendar, reviews, totalGuests }: Props) => {
+const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNightsThisMonth, lastBooked }: Props) => {
   const [currentImage, setCurrentImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
@@ -354,7 +356,21 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests }: Props) => 
             {copied ? "Copied!" : "Share"}
           </button>
         </div>
-        <p className="text-sand-500 mb-6">{property.address || "3801 Mobile Highway, Pensacola, FL 32505"}</p>
+        <p className="text-sand-500 mb-3">{property.address || "3801 Mobile Highway, Pensacola, FL 32505"}</p>
+
+        {/* Scarcity + social proof badges */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {availableNightsThisMonth !== null && availableNightsThisMonth <= 15 && (
+            <span className="text-xs bg-coral-50 text-coral-600 px-3 py-1 rounded-full font-medium">
+              Only {availableNightsThisMonth} nights available this month
+            </span>
+          )}
+          {lastBooked && (
+            <span className="text-xs bg-ocean-50 text-ocean-600 px-3 py-1 rounded-full font-medium">
+              Last booked {lastBooked}
+            </span>
+          )}
+        </div>
 
         {/* Image Gallery */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8 rounded-2xl overflow-hidden">
@@ -638,6 +654,31 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests }: Props) => 
               </div>
             )}
 
+            {/* Why Book Direct */}
+            <div className="mb-8 p-6 bg-ocean-50 rounded-xl">
+              <h3 className="font-semibold text-ocean-700 mb-3">Why Book Direct?</h3>
+              <div className="space-y-2 text-sm text-ocean-600">
+                <div className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-ocean-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span><strong>Save 10-15%</strong> — no Airbnb or VRBO service fees</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-ocean-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span><strong>Direct contact</strong> — call or text our team 24/7</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-ocean-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span><strong>Smart lock entry</strong> — door code sent before arrival</span>
+                </div>
+              </div>
+            </div>
+
             {/* Cancellation */}
             <div className="mb-8 p-6 bg-evergreen-50 rounded-xl">
               <h3 className="font-semibold text-evergreen-800 mb-1">Flexible Cancellation</h3>
@@ -765,7 +806,11 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests }: Props) => 
               >
                 {bookingLoading ? "Redirecting to payment..." : priceCalc ? `Book Now — $${priceCalc.total}` : "Select dates to book"}
               </button>
-              <p className="text-center text-xs text-sand-400">Book direct &amp; save 10-15% vs Airbnb</p>
+              <p className="text-center text-xs text-sand-400">
+                {priceCalc
+                  ? `You save $${Math.round(priceCalc.total * 0.15)} by booking direct (vs Airbnb fees)`
+                  : "Book direct & save 10-15% vs Airbnb"}
+              </p>
 
               <div className="mt-4 pt-4 border-t border-sand-100">
                 <a
@@ -844,11 +889,17 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const property = await getProperty(id);
   if (!property) return { notFound: true };
 
-  const [calendar, reviews, guestCounts] = await Promise.all([
+  const [calendar, reviews, guestCounts, availableNights, lastBookedMap] = await Promise.all([
     getCalendar(property.hostaway_property_id, 180).catch(() => []),
     getPropertyReviews(property.hostaway_property_id, 6).catch(() => []),
     getTotalGuestCounts().catch(() => ({})),
+    getAvailableNightsThisMonth().catch(() => ({})),
+    getLastBookedMap().catch(() => ({})),
   ]);
+
+  const availNights = property.hostaway_property_id
+    ? (availableNights as Record<string, number>)[property.hostaway_property_id] ?? null
+    : null;
 
   return {
     props: {
@@ -856,6 +907,8 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
       calendar: JSON.parse(JSON.stringify(calendar)),
       reviews: JSON.parse(JSON.stringify(reviews)),
       totalGuests: (guestCounts as Record<number, number>)[id] || 0,
+      availableNightsThisMonth: availNights,
+      lastBooked: (lastBookedMap as Record<number, string>)[id] || null,
     },
   };
 };

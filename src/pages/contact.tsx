@@ -7,13 +7,30 @@ export default function Contact() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const subject = encodeURIComponent(`Website Contact: ${name}`);
-    const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`);
-    window.location.href = `mailto:hello@staywithprecision.com?subject=${subject}&body=${body}`;
-    setSent(true);
+    setSending(true);
+    setError("");
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, message }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSent(true);
+      } else {
+        setError(data.error || "Failed to send. Please call (510) 822-7060.");
+      }
+    } catch {
+      setError("Failed to send. Please call (510) 822-7060.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -72,8 +89,9 @@ export default function Contact() {
                   <textarea id="msg" rows={4} required value={message} onChange={(e) => setMessage(e.target.value)}
                     className="w-full border border-sand-200 rounded-xl px-4 py-3 text-sm bg-sand-50 focus:ring-2 focus:ring-ocean-500 focus:border-ocean-500 outline-none transition-all resize-none" placeholder="How can we help?" />
                 </div>
-                <button type="submit" className="w-full bg-ocean-500 text-white py-3.5 rounded-xl font-semibold hover:bg-ocean-600 transition-all">
-                  Send Message
+                {error && <p className="text-coral-500 text-sm">{error}</p>}
+                <button type="submit" disabled={sending} className="w-full bg-ocean-500 text-white py-3.5 rounded-xl font-semibold hover:bg-ocean-600 transition-all disabled:opacity-50">
+                  {sending ? "Sending..." : "Send Message"}
                 </button>
               </form>
             )}

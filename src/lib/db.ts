@@ -22,6 +22,51 @@ export async function getTotalGuestCounts(): Promise<Record<number, number>> {
   return map;
 }
 
+export async function getLastBookedMap(): Promise<Record<number, string>> {
+  const results = await prisma.$queryRaw<{ property_id: number; last_booked: Date }[]>`
+    SELECT property_id, MAX(created_at) as last_booked
+    FROM reservations
+    WHERE status IN ('confirmed', 'checked_in', 'checked_out')
+    AND property_id IS NOT NULL
+    AND created_at >= NOW() - INTERVAL '30 days'
+    GROUP BY property_id
+  `;
+
+  const map: Record<number, string> = {};
+  for (const row of results) {
+    if (row.property_id && row.last_booked) {
+      const diffMs = Date.now() - new Date(row.last_booked).getTime();
+      const diffHours = Math.floor(diffMs / 3600000);
+      if (diffHours < 1) map[row.property_id] = "just now";
+      else if (diffHours < 24) map[row.property_id] = `${diffHours}h ago`;
+      else map[row.property_id] = `${Math.floor(diffHours / 24)}d ago`;
+    }
+  }
+  return map;
+}
+
+export async function getAvailableNightsThisMonth(): Promise<Record<string, number>> {
+  const now = new Date();
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+  const days = await prisma.calendarDay.groupBy({
+    by: ["hostaway_listing_id"],
+    where: {
+      date: { gte: now, lte: monthEnd },
+      is_available: 1,
+    },
+    _count: { id: true },
+  });
+
+  const map: Record<string, number> = {};
+  for (const row of days) {
+    if (row.hostaway_listing_id) {
+      map[row.hostaway_listing_id] = row._count.id;
+    }
+  }
+  return map;
+}
+
 export async function getRecentBookingCounts(): Promise<Record<number, number>> {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);

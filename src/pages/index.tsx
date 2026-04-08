@@ -56,25 +56,28 @@ const Home = ({ properties, reviews, reviewCount, avgRating }: Props) => {
               Pensacola, Florida
             </p>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-serif text-white leading-[1.1] mb-6 fade-in-up">
-              Your Home<br />Away From Home
+              Pensacola Beach<br />Vacation Rentals
             </h1>
             <p className="text-lg text-white/70 mb-10 leading-relaxed max-w-lg fade-in-up" style={{ animationDelay: '0.15s' }}>
-              17 professionally managed vacation rentals, minutes from the beach.
-              Book direct and skip the platform fees.
+              17 professionally managed cottages, minutes from the beach.
+              Book direct and save 10-15% vs Airbnb — no platform fees.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 fade-in-up" style={{ animationDelay: '0.25s' }}>
-              <Link
-                href="/properties"
-                className="bg-white text-ocean-600 px-8 py-4 rounded-full font-semibold text-center hover:bg-sand-100 transition-all shadow-xl hover:shadow-2xl"
-              >
-                Browse Properties
-              </Link>
-              <Link
-                href="/about"
-                className="border-2 border-white/40 text-white px-8 py-4 rounded-full font-semibold text-center hover:bg-white/10 transition-all"
-              >
-                Learn More
-              </Link>
+            {/* Quick search */}
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 max-w-xl fade-in-up" style={{ animationDelay: '0.25s' }}>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                  href="/properties"
+                  className="flex-1 bg-white text-ocean-600 px-6 py-3.5 rounded-xl font-semibold text-center hover:bg-sand-100 transition-all shadow-lg text-sm"
+                >
+                  Browse All {properties.length} Properties
+                </Link>
+                <a
+                  href="tel:+15108227060"
+                  className="px-6 py-3.5 rounded-xl font-semibold text-center text-white border border-white/40 hover:bg-white/10 transition-all text-sm"
+                >
+                  Call (510) 822-7060
+                </a>
+              </div>
             </div>
           </div>
         </div>

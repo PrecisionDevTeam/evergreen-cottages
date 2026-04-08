@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import CookieConsent from "./CookieConsent";
+import ExitIntent from "./ExitIntent";
 
 type Props = {
   children: React.ReactNode;
@@ -259,6 +260,7 @@ export default function Layout({ children, title, description, dark, schema }: P
       </footer>
 
       <CookieConsent />
+      <ExitIntent />
     </div>
   );
 }
