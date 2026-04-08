@@ -46,7 +46,7 @@
 | 96 | Blog / seasonal content | High | Medium | "Best Time to Visit Pensacola", "Spring Break Guide" |
 | 97 | Property description SEO optimization | Medium | Medium | Rewrite descriptions with local keywords (not Hostaway dumps) |
 
-## Phase 9: Accessibility (MEDIUM — compliance + inclusivity)
+## Phase 9: Accessibility — WCAG 2.1 AA (MEDIUM — compliance + inclusivity)
 
 | # | Feature | Effort | Impact | Notes |
 |---|---------|--------|--------|-------|
@@ -56,29 +56,58 @@
 | 101 | aria-hidden on decorative SVGs (breadcrumbs) | Low | Low | Screen readers skip decorative elements |
 | 102 | aria-controls on FAQ accordion | Low | Low | Links accordion button to its content panel |
 | 103 | Form validation feedback (gift cards, contact) | Medium | Low | Error messages for required fields |
+| 104 | Visible focus states on all interactive elements | Low | Medium | Keyboard users need to see where focus is |
 
-## Phase 10: Performance & Cleanup (LOW — polish)
-
-| # | Feature | Effort | Impact | Notes |
-|---|---------|--------|--------|-------|
-| 104 | Remove unused npm dependencies | Low | Low | mapbox-gl, react-map-gl, framer-motion, geolib, react-responsive-carousel |
-| 105 | Hero image → Next.js Image component | Low | Medium | Currently CSS bg-url, bypasses optimization |
-| 106 | Code-split comparison modal | Low | Low | Dynamic import for modal (not loaded until needed) |
-| 107 | Move rate limiting to Redis (Upstash) | Medium | Medium | Current in-memory resets on deploy |
-| 108 | Remove localhost:3000 from production origins | Low | Low | api-security.ts allows localhost in prod |
-| 109 | Remove unsafe-eval from CSP | Low | Low | Tighten Content Security Policy |
-
-## Phase 11: Competitive Edge (NICE TO HAVE — differentiators)
+## Phase 10: Mobile & Responsiveness (MEDIUM — mobile-first indexing)
 
 | # | Feature | Effort | Impact | Notes |
 |---|---------|--------|--------|-------|
-| 110 | Airbnb vs Direct comparison table | Medium | High | Side-by-side: fees, support, check-in, cancellation |
-| 111 | Repeat guest discount / loyalty | Medium | Medium | 10% off for returning guests (localStorage or email match) |
-| 112 | Seasonal promotions banner | Low | Medium | "Summer Special: 7+ nights get 15% off" — DB-driven |
-| 113 | Video property tours (YouTube embed) | Low | Medium | If Noah has video content |
-| 114 | Team/Noah photo on About page | Low | Low | Personal touch builds trust |
-| 115 | Live chat widget (Intercom/Crisp) | Medium | Medium | Real-time support for booking questions |
-| 116 | Discord + SMS notifications for service payments | Medium | Medium | Notify Noah/Jamie when services are paid |
+| 105 | Enlarge heart/compare buttons to 44px (w-10 h-10) | Low | Medium | Currently 28px — below minimum tap target |
+| 106 | Increase minimum text size to 12px | Low | Low | text-[10px] labels too small on some devices |
+| 107 | Calendar cells touch optimization for 320px | Low | Medium | Currently ~41px per cell, tight on small screens |
+| 108 | Replace hero stock Unsplash with real property photo | Low | High | First impression should show actual property |
+
+## Phase 11: Performance & Cleanup (LOW — polish)
+
+| # | Feature | Effort | Impact | Notes |
+|---|---------|--------|--------|-------|
+| 109 | Remove unused npm dependencies | Low | Low | mapbox-gl, react-map-gl, framer-motion, geolib, react-responsive-carousel |
+| 110 | Hero image → Next.js Image component | Low | Medium | Currently CSS bg-url, bypasses optimization |
+| 111 | Code-split comparison modal | Low | Low | Dynamic import for modal (not loaded until needed) |
+| 112 | Move rate limiting to Redis (Upstash) | Medium | Medium | Current in-memory resets on deploy |
+| 113 | Remove localhost:3000 from production origins | Low | Low | api-security.ts allows localhost in prod |
+| 114 | Remove unsafe-eval from CSP | Low | Low | Tighten Content Security Policy |
+| 115 | Optimize hero background (Next.js Image, not CSS bg-url) | Low | Medium | Bypasses Next.js image optimization |
+
+## Phase 12: Trust & Credibility (MEDIUM — builds confidence)
+
+| # | Feature | Effort | Impact | Notes |
+|---|---------|--------|--------|-------|
+| 116 | Team/Noah photo on About page | Low | Medium | Personal touch — guests want to see who manages |
+| 117 | "Verified Host" or "Superhost" badge | Low | Medium | If Noah has Airbnb Superhost status, display it |
+| 118 | Guest count / booking count per property | Low | Low | "X guests have stayed here" from reservation data |
+| 119 | Press mentions or awards section | Low | Low | If any exist, display on About page |
+
+## Phase 13: Content & Visuals (MEDIUM — engagement)
+
+| # | Feature | Effort | Impact | Notes |
+|---|---------|--------|--------|-------|
+| 120 | Video property tours (YouTube embed) | Low | Medium | If Noah has video content |
+| 121 | Lifestyle/experience photos (not just room photos) | Low | Medium | Beach, sunset, BBQ, dog park — sell the experience |
+| 122 | Blog / seasonal content | High | Medium | "Best Time to Visit Pensacola", "Spring Break Guide" — ongoing SEO |
+| 123 | Virtual 360 tour embed | Medium | Low | If property has Matterport or similar |
+
+## Phase 14: Competitive Edge (NICE TO HAVE — differentiators)
+
+| # | Feature | Effort | Impact | Notes |
+|---|---------|--------|--------|-------|
+| 124 | Airbnb vs Direct comparison table | Medium | High | Side-by-side: fees, support, check-in, cancellation |
+| 125 | Repeat guest discount / loyalty | Medium | Medium | 10% off for returning guests (localStorage or email match) |
+| 126 | Seasonal promotions banner | Low | Medium | "Summer Special: 7+ nights get 15% off" — DB-driven |
+| 127 | Live chat widget (Intercom/Crisp) | Medium | Medium | Real-time support for booking questions |
+| 128 | Discord + SMS notifications for service payments | Medium | Medium | Notify Noah/Jamie when services are paid |
+| 129 | More property filters (amenities, beds, price slider) | Medium | Medium | Match closer to Airbnb's 15+ filter options |
+| 130 | Back-to-top button on long pages | Low | Low | Smooth scroll to top |
 
 ---
 
