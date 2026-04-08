@@ -647,77 +647,73 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
                 }}
               />
 
-              {/* Selected dates summary */}
+              {/* Dates + Guests — compact row */}
               {(checkIn || checkOut) && (
-                <div className="flex gap-2 mb-3 text-xs">
-                  <div className={`flex-1 rounded-lg p-2.5 border ${checkIn ? "border-ocean-500 bg-ocean-50" : "border-sand-200"}`}>
-                    <div className="text-sand-400 mb-0.5">Check-in</div>
+                <div className="flex gap-2 mb-2 text-xs">
+                  <div className={`flex-1 rounded-lg p-2 border ${checkIn ? "border-ocean-500 bg-ocean-50" : "border-sand-200"}`}>
+                    <div className="text-sand-400 text-[10px]">Check-in</div>
                     <div className="font-medium text-ocean-600">{checkIn ? new Date(checkIn + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Select"}</div>
                   </div>
-                  <div className={`flex-1 rounded-lg p-2.5 border ${checkOut ? "border-ocean-500 bg-ocean-50" : "border-sand-200"}`}>
-                    <div className="text-sand-400 mb-0.5">Check-out</div>
+                  <div className={`flex-1 rounded-lg p-2 border ${checkOut ? "border-ocean-500 bg-ocean-50" : "border-sand-200"}`}>
+                    <div className="text-sand-400 text-[10px]">Check-out</div>
                     <div className="font-medium text-ocean-600">{checkOut ? new Date(checkOut + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Select"}</div>
                   </div>
+                  <select
+                    value={guests}
+                    onChange={(e) => setGuests(parseInt(e.target.value))}
+                    className="w-20 border border-sand-200 rounded-lg px-2 py-1 text-xs text-sand-600 bg-sand-50 focus:ring-2 focus:ring-ocean-500 outline-none"
+                    aria-label="Number of guests"
+                  >
+                    {Array.from({ length: property.person_capacity || 2 }, (_, i) => (
+                      <option key={i + 1} value={i + 1}>{i + 1} {i === 0 ? "guest" : "guests"}</option>
+                    ))}
+                  </select>
                 </div>
               )}
 
-              {/* Guests */}
-              <div className="mb-4">
-                <select
-                  value={guests}
-                  onChange={(e) => setGuests(parseInt(e.target.value))}
-                  className="w-full border border-sand-200 rounded-lg px-3 py-2.5 text-sm text-sand-600 bg-sand-50 focus:ring-2 focus:ring-ocean-500 focus:border-ocean-500 outline-none"
-                  aria-label="Number of guests"
-                >
-                  {Array.from({ length: property.person_capacity || 2 }, (_, i) => (
-                    <option key={i + 1} value={i + 1}>{i + 1} guest{i > 0 ? "s" : ""}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Price breakdown */}
+              {/* Price breakdown + Book Now */}
               {priceCalc && (
-                <div className="border-t border-sand-100 pt-3 mb-4 space-y-2 text-sm">
-                  <div className="flex justify-between text-sand-500">
+                <div className="border-t border-sand-100 pt-2 mb-3 space-y-1.5 text-sm">
+                  <div className="flex justify-between text-sand-500 text-xs">
                     <span>${priceCalc.nightly} x {priceCalc.nights} night{priceCalc.nights > 1 ? "s" : ""}</span>
                     <span>${priceCalc.subtotal}</span>
                   </div>
-                  <div className="flex justify-between text-sand-500">
+                  <div className="flex justify-between text-sand-500 text-xs">
                     <span>Cleaning fee</span>
                     <span>${priceCalc.cleaning}</span>
                   </div>
-                  <div className="flex justify-between font-semibold text-ocean-500 pt-2 border-t border-sand-100">
+                  <div className="flex justify-between font-semibold text-ocean-500 pt-1.5 border-t border-sand-100">
                     <span>Total</span>
                     <span>${priceCalc.total}</span>
                   </div>
                 </div>
               )}
 
-              {/* Promo code */}
+              {/* Promo code — collapsible */}
               {priceCalc && (
-                <div className="mb-4">
+                <div className="mb-3">
                   <div className="flex gap-2">
                     <input
                       type="text"
                       value={promoCode}
                       onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setPromoError(""); }}
                       placeholder="Promo code"
-                      className="flex-1 border border-sand-200 rounded-lg px-3 py-2 text-sm bg-sand-50 focus:ring-2 focus:ring-ocean-500 focus:border-ocean-500 outline-none"
+                      className="flex-1 border border-sand-200 rounded-lg px-3 py-1.5 text-xs bg-sand-50 focus:ring-2 focus:ring-ocean-500 focus:border-ocean-500 outline-none"
                       aria-label="Promo code"
                     />
                     <button
                       onClick={handleApplyPromo}
-                      className="px-4 py-2 text-sm font-medium text-ocean-500 border border-ocean-500 rounded-lg hover:bg-ocean-50 transition-colors"
+                      className="px-3 py-1.5 text-xs font-medium text-ocean-500 border border-ocean-500 rounded-lg hover:bg-ocean-50 transition-colors"
                     >
                       Apply
                     </button>
                   </div>
                   {promoResult && (
-                    <p className="text-xs text-evergreen-600 mt-1.5">
-                      {promoResult.name} — {promoResult.discount.type === "percent" ? `${promoResult.discount.value}% off` : `$${promoResult.discount.value} off`} (applied at checkout)
+                    <p className="text-xs text-evergreen-600 mt-1">
+                      {promoResult.name} — {promoResult.discount.type === "percent" ? `${promoResult.discount.value}% off` : `$${promoResult.discount.value} off`}
                     </p>
                   )}
-                  {promoError && <p className="text-xs text-coral-500 mt-1.5">{promoError}</p>}
+                  {promoError && <p className="text-xs text-coral-500 mt-1">{promoError}</p>}
                 </div>
               )}
 
