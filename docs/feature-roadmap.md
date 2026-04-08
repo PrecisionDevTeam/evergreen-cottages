@@ -78,10 +78,8 @@ All 4 items completed Apr 8.
 
 | # | Feature | Effort | Impact | Notes |
 |---|---------|--------|--------|-------|
-| 116 | Team/Noah photo on About page | Low | Medium | Personal touch — guests want to see who manages |
-| 117 | "Verified Host" or "Superhost" badge | Low | Medium | If Noah has Airbnb Superhost status, display it |
-| 118 | Guest count / booking count per property | Low | Low | "X guests have stayed here" from reservation data |
-| 119 | Press mentions or awards section | Low | Low | If any exist, display on About page |
+| 116 | "Verified Host" or "Superhost" badge | Low | Medium | If Noah has Airbnb Superhost status, display it |
+| 117 | Guest count / booking count per property | Low | Low | "X guests have stayed here" from reservation data |
 
 ## Phase 13: Content & Visuals (MEDIUM — engagement)
 
