@@ -795,6 +795,13 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNig
                 </div>
               )}
 
+              {/* Savings callout — above Book Now */}
+              {priceCalc && (
+                <div className="bg-evergreen-50 text-evergreen-700 text-xs font-medium text-center py-2 px-3 rounded-lg mb-3">
+                  You save ${Math.round(priceCalc.total * 0.15)} by booking direct (vs Airbnb fees)
+                </div>
+              )}
+
               <button
                 onClick={handleBookNow}
                 disabled={!checkIn || !checkOut || bookingLoading}
@@ -806,11 +813,7 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNig
               >
                 {bookingLoading ? "Redirecting to payment..." : priceCalc ? `Book Now — $${priceCalc.total}` : "Select dates to book"}
               </button>
-              <p className="text-center text-xs text-sand-400">
-                {priceCalc
-                  ? `You save $${Math.round(priceCalc.total * 0.15)} by booking direct (vs Airbnb fees)`
-                  : "Book direct & save 10-15% vs Airbnb"}
-              </p>
+              {!priceCalc && <p className="text-center text-xs text-sand-400">Book direct &amp; save 10-15% vs Airbnb</p>}
 
               <div className="mt-4 pt-4 border-t border-sand-100">
                 <a
