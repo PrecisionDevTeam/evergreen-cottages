@@ -59,7 +59,8 @@ export default function Layout({ children, title, description, dark, schema }: P
         {description && <meta name="twitter:description" content={description} />}
         <meta name="twitter:image" content="https://evergreencottages.com/og-image.png" />
         <meta name="theme-color" content="#1a3a4a" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" href="/image.png" />
+        <link rel="apple-touch-icon" href="/image.png" />
         {schema && (
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026") }} />
         )}
