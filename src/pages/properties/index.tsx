@@ -76,11 +76,11 @@ const Properties = ({ properties, popularIds }: Props) => {
   ];
 
   return (
-    <Layout title="Properties" description="Browse 17 vacation rentals in Pensacola, FL.">
+    <Layout title="Pensacola Vacation Rentals" description="Browse 17 pet-friendly vacation rentals near Pensacola Beach, FL. Book direct and save 10-15% vs Airbnb. From $60/night.">
       <div className="bg-white border-b border-sand-200">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-10">
           <p className="text-coral-500 text-xs uppercase tracking-[0.2em] font-semibold mb-2">Browse</p>
-          <h1 className="text-4xl font-serif text-ocean-500">All Properties</h1>
+          <h1 className="text-4xl font-serif text-ocean-500">Pensacola Vacation Rentals</h1>
           <p className="text-sand-500 mt-1">{filtered.length} vacation rentals in Pensacola, FL</p>
         </div>
       </div>

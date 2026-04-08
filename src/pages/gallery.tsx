@@ -28,7 +28,7 @@ export default function Gallery({ images }: Props) {
   };
 
   return (
-    <Layout title="Gallery" description="Photos of our 17 vacation rental units in Pensacola, FL.">
+    <Layout title="Property Photos" description="Browse photos of 17 vacation rental cottages near Pensacola Beach, FL. See bedrooms, kitchens, and amenities at Evergreen Cottages.">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-20">
         <Breadcrumbs items={[{ label: "Gallery" }]} />
         <p className="text-coral-500 text-xs uppercase tracking-[0.2em] font-semibold mb-3">Photos</p>

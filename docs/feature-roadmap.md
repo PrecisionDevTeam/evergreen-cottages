@@ -21,16 +21,13 @@ All 4 items completed Apr 8.
 
 All 8 items completed Apr 8.
 
-## Phase 8: SEO & Content (MEDIUM — organic growth)
+## Phase 8: SEO & Content — DONE (except blog)
 
-| # | Feature | Effort | Impact | Notes |
-|---|---------|--------|--------|-------|
-| 92 | FAQPage schema on FAQ page | Low | Medium | Rich snippets in Google search results |
-| 93 | BreadcrumbList schema | Low | Medium | Breadcrumb trail in Google search results |
-| 94 | Optimize H1 tags with local keywords | Low | Medium | "Pensacola Vacation Rentals" not "Your Home Away From Home" |
-| 95 | Internal links: guide ↔ properties | Low | Medium | Link area guide places to nearby properties |
-| 96 | Blog / seasonal content | High | Medium | "Best Time to Visit Pensacola", "Spring Break Guide" |
-| 97 | Property description SEO optimization | Medium | Medium | Rewrite descriptions with local keywords (not Hostaway dumps) |
+5 of 6 items completed Apr 8. Blog (#96) deferred — needs ongoing content.
+
+| # | Feature | Status |
+|---|---------|--------|
+| 96 | Blog / seasonal content | DEFERRED | 
 
 ## Phase 9: Accessibility — WCAG 2.1 AA (MEDIUM — compliance + inclusivity)
 
@@ -176,6 +173,11 @@ All 8 items completed Apr 8.
 | ✅ | Hero search widget with backdrop blur | Apr 8 |
 | ✅ | Exit-intent popup (desktop mouseout + mobile 30s timer, skips booking/contact) | Apr 8 |
 | ✅ | Rate limiter memory eviction (prevents unbounded growth) | Apr 8 |
+| ✅ | FAQPage schema (20 Q&As as rich snippets for Google) | Apr 8 |
+| ✅ | BreadcrumbList schema on all inner pages (auto-generated from Breadcrumbs component) | Apr 8 |
+| ✅ | H1 + meta description SEO optimization (local keywords on all pages) | Apr 8 |
+| ✅ | Internal links: guide → properties, property → guide, guide → FAQ/services/gallery | Apr 8 |
+| ✅ | Property meta descriptions with price, guests, pets, "book direct" CTA | Apr 8 |
 | ✅ | Privacy Policy page (/privacy) — 12 sections, CCPA, data retention, Stripe | Apr 8 |
 | ✅ | Terms of Service page (/terms) — 13 sections, cancellation, house rules, liability | Apr 8 |
 | ✅ | Cookie Consent banner (localStorage, accept/dismiss, links to privacy) | Apr 8 |

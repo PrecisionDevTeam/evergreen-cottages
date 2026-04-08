@@ -145,9 +145,26 @@ function FAQAccordion({ item }: { item: FAQItem }) {
   );
 }
 
+// Build FAQPage schema from all sections
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ_SECTIONS.flatMap((s) =>
+    s.items.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
+    }))
+  ),
+};
+
 export default function FAQ() {
   return (
-    <Layout title="FAQ" description="Frequently asked questions about booking, check-in, pets, parking, WiFi, and more at Evergreen Cottages.">
+    <Layout
+      title="FAQ"
+      description="Frequently asked questions about booking, check-in, pets, parking, WiFi, and more at Evergreen Cottages."
+      schema={faqSchema}
+    >
       <div className="max-w-3xl mx-auto px-5 sm:px-8 lg:px-10 py-20">
         <Breadcrumbs items={[{ label: "FAQ" }]} />
         <p className="text-coral-500 text-xs uppercase tracking-[0.2em] font-semibold mb-3">Help</p>

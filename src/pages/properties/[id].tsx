@@ -292,8 +292,8 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNig
 
   return (
     <Layout
-      title={property.name}
-      description={property.description ? stripEmojis(property.description).slice(0, 160) : undefined}
+      title={`${property.name} — Pensacola Vacation Rental`}
+      description={`${property.name} — from $${property.base_price || 65}/night in Pensacola, FL. ${property.person_capacity || 2} guests, ${property.bathrooms_number || 1} bath${property.pets_allowed ? ", pets welcome" : ""}. Book direct and save 10-15%.`}
       schema={(() => {
         const avgRating = reviews.length > 0
           ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length
@@ -576,6 +576,9 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNig
                     </div>
                   ))}
                 </div>
+                <Link href="/guide" className="text-ocean-500 text-xs font-medium hover:text-coral-500 transition-colors mt-3 inline-block">
+                  View full area guide &rarr;
+                </Link>
               </div>
             )}
 

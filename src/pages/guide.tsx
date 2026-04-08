@@ -111,7 +111,21 @@ export default function Guide() {
           ))}
         </div>
 
-        <div className="mt-16 text-center bg-white rounded-2xl p-10 border border-sand-100">
+        {/* Internal links */}
+        <div className="mt-12 p-6 bg-sand-50 rounded-xl">
+          <h3 className="text-sm font-semibold text-ocean-700 mb-3">Explore More</h3>
+          <div className="flex flex-wrap gap-3 text-sm">
+            <Link href="/properties" className="text-ocean-500 hover:text-coral-500 transition-colors">Browse Properties</Link>
+            <span className="text-sand-300">|</span>
+            <Link href="/faq" className="text-ocean-500 hover:text-coral-500 transition-colors">FAQ</Link>
+            <span className="text-sand-300">|</span>
+            <Link href="/services" className="text-ocean-500 hover:text-coral-500 transition-colors">Services & Add-ons</Link>
+            <span className="text-sand-300">|</span>
+            <Link href="/gallery" className="text-ocean-500 hover:text-coral-500 transition-colors">Photo Gallery</Link>
+          </div>
+        </div>
+
+        <div className="mt-8 text-center bg-white rounded-2xl p-10 border border-sand-100">
           <h2 className="text-xl font-serif text-ocean-500 mb-3">Ready to explore Pensacola?</h2>
           <p className="text-sand-500 mb-6">Book your stay and start planning.</p>
           <Link href="/properties" className="bg-ocean-500 text-white px-8 py-3.5 rounded-full font-semibold hover:bg-ocean-600 transition-all inline-block">

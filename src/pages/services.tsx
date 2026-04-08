@@ -92,7 +92,7 @@ export default function Services() {
   };
 
   return (
-    <Layout title="Services" description="Airport shuttle, early check-in, pet accommodations, and more.">
+    <Layout title="Services & Add-ons" description="Airport shuttle, early check-in, pet fee, and more for your Pensacola vacation rental stay at Evergreen Cottages.">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-20">
         <Breadcrumbs items={[{ label: "Services" }]} />
         <p className="text-coral-500 text-xs uppercase tracking-[0.2em] font-semibold mb-3">Extras</p>
