@@ -2,22 +2,13 @@
 
 **Last updated:** April 6, 2026
 
-## Revenue Features (Needs Stripe Keys)
+## Remaining
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 15 | Direct checkout | BLOCKED | Full booking + Stripe payment on site. Needs sk_live/sk_test from Noah. |
-| 16 | Services checkout | BLOCKED | Pay for airport pickup, pet fee, extension, early check-in online |
-| 17 | Gift cards | NOT STARTED | Buy a stay as a gift |
-| 18 | Promo codes | NOT STARTED | Discount codes for direct bookings |
+| 20 | Google Analytics + Meta Pixel | WAITING ON NOAH | Need GA4 measurement ID from Noah |
 
-## SEO & Marketing
-
-| # | Feature | Status | Notes |
-|---|---------|--------|-------|
-| 20 | Google Analytics + Meta Pixel | NOT STARTED | Track traffic, conversions, ad performance |
-
-## Completed (66 features)
+## Completed (70 features)
 
 | # | Feature | Date |
 |---|---------|------|
@@ -94,3 +85,7 @@
 | ✅ | OG image for social sharing (beach sunset banner) | Apr 6 |
 | ✅ | Favicon source image | Apr 6 |
 | ✅ | Base prices synced to lowest available calendar rate per property | Apr 6 |
+| ✅ | Stripe direct checkout — property bookings with real calendar pricing | Apr 8 |
+| ✅ | Stripe services checkout — pay for airport, pet fee, early check-in | Apr 8 |
+| ✅ | Gift cards ($50-$500) with Stripe checkout | Apr 8 |
+| ✅ | Promo codes — validate + apply Stripe promotion codes at checkout | Apr 8 |
