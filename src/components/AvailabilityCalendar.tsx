@@ -84,10 +84,10 @@ export default function AvailabilityCalendar({ calendar, onDateSelect, checkIn, 
   }
 
   return (
-    <div className="mb-4">
-      <div className="rounded-xl p-1">
+    <div className="mb-2">
+      <div className="rounded-xl">
         {/* Month nav */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-2">
           <button
             onClick={prevMonth}
             disabled={!canGoPrev}
@@ -113,7 +113,7 @@ export default function AvailabilityCalendar({ calendar, onDateSelect, checkIn, 
         </div>
 
         {/* Day headers */}
-        <div className="grid grid-cols-7 mb-1">
+        <div className="grid grid-cols-7">
           {DAYS.map((d) => (
             <div key={d} className="text-center text-xs text-sand-400 font-medium py-1">
               {d}
@@ -162,21 +162,6 @@ export default function AvailabilityCalendar({ calendar, onDateSelect, checkIn, 
           })}
         </div>
 
-        {/* Legend */}
-        <div className="flex items-center gap-4 mt-4 pt-3 border-t border-sand-100 text-xs text-sand-400">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-white border border-sand-200" />
-            Available
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-sand-100 line-through text-[8px] text-center text-sand-300">x</div>
-            Booked
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-ocean-500" />
-            Selected
-          </div>
-        </div>
       </div>
     </div>
   );
