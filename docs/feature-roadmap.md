@@ -41,14 +41,9 @@ All 8 items completed Apr 8.
 | 103 | Form validation feedback (gift cards, contact) | Medium | Low | Error messages for required fields |
 | 104 | Visible focus states on all interactive elements | Low | Medium | Keyboard users need to see where focus is |
 
-## Phase 10: Mobile & Responsiveness (MEDIUM — mobile-first indexing)
+## Phase 10: Mobile & Responsiveness — DONE
 
-| # | Feature | Effort | Impact | Notes |
-|---|---------|--------|--------|-------|
-| 105 | Enlarge heart/compare buttons to 44px (w-10 h-10) | Low | Medium | Currently 28px — below minimum tap target |
-| 106 | Increase minimum text size to 12px | Low | Low | text-[10px] labels too small on some devices |
-| 107 | Calendar cells touch optimization for 320px | Low | Medium | Currently ~41px per cell, tight on small screens |
-| 108 | Replace hero stock Unsplash with real property photo | Low | High | First impression should show actual property |
+All 4 items completed Apr 9.
 
 ## Phase 11: Performance & Cleanup (LOW — polish)
 
@@ -178,6 +173,10 @@ All 8 items completed Apr 8.
 | ✅ | H1 + meta description SEO optimization (local keywords on all pages) | Apr 8 |
 | ✅ | Internal links: guide → properties, property → guide, guide → FAQ/services/gallery | Apr 8 |
 | ✅ | Property meta descriptions with price, guests, pets, "book direct" CTA | Apr 8 |
+| ✅ | Heart/compare buttons enlarged to 44px tap targets (was 28px) | Apr 9 |
+| ✅ | Calendar text bumped from 9px to 10px, cells min-height 44px | Apr 9 |
+| ✅ | Hero image uses real property photo (was stock Unsplash) | Apr 9 |
+| ✅ | Favicon updated to image.png (was default Next.js) | Apr 9 |
 | ✅ | Privacy Policy page (/privacy) — 12 sections, CCPA, data retention, Stripe | Apr 8 |
 | ✅ | Terms of Service page (/terms) — 13 sections, cancellation, house rules, liability | Apr 8 |
 | ✅ | Cookie Consent banner (localStorage, accept/dismiss, links to privacy) | Apr 8 |
