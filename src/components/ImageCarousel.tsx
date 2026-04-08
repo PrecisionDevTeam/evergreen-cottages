@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 type Props = {
   images: string[];
@@ -9,7 +9,7 @@ type Props = {
 
 export default function ImageCarousel({ images, alt, priority = false }: Props) {
   const [current, setCurrent] = useState(0);
-  const [loaded, setLoaded] = useState(false);
+  const [loadedSet, setLoadedSet] = useState<Set<number>>(new Set([0]));
   const total = images.length;
 
   if (total === 0) {
@@ -20,35 +20,63 @@ export default function ImageCarousel({ images, alt, priority = false }: Props) 
     );
   }
 
+  const markLoaded = useCallback((i: number) => {
+    setLoadedSet((prev) => {
+      const next = new Set(prev);
+      next.add(i);
+      return next;
+    });
+  }, []);
+
   const prev = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setLoaded(false);
     setCurrent((c) => (c > 0 ? c - 1 : total - 1));
   };
 
   const next = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setLoaded(false);
     setCurrent((c) => (c < total - 1 ? c + 1 : 0));
   };
 
+  // Preload next and previous images
+  const preloadIdx = [
+    (current + 1) % total,
+    (current - 1 + total) % total,
+  ];
+
   return (
     <div className="relative w-full h-full group">
-      {/* Skeleton shimmer */}
-      {!loaded && (
+      {/* Skeleton shimmer — only on first load */}
+      {!loadedSet.has(current) && (
         <div className="absolute inset-0 bg-sand-200 animate-pulse" />
       )}
+
+      {/* Current image */}
       <Image
+        key={current}
         src={images[current]}
         alt={`${alt} — photo ${current + 1}`}
         fill
-        className={`object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+        className={`object-cover transition-opacity duration-200 ${loadedSet.has(current) ? "opacity-100" : "opacity-0"}`}
         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
         priority={priority && current === 0}
-        onLoad={() => setLoaded(true)}
+        onLoad={() => markLoaded(current)}
       />
+
+      {/* Preload adjacent images (hidden) */}
+      {preloadIdx.map((i) => (
+        <Image
+          key={`preload-${i}`}
+          src={images[i]}
+          alt=""
+          fill
+          className="opacity-0 pointer-events-none absolute"
+          sizes="1px"
+          onLoad={() => markLoaded(i)}
+        />
+      ))}
 
       {/* Arrows — visible on hover */}
       {total > 1 && (
