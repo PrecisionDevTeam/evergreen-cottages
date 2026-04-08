@@ -8,7 +8,7 @@
 |---|---------|--------|-------|
 | 20 | Google Analytics + Meta Pixel | WAITING ON NOAH | Need GA4 measurement ID from Noah |
 
-## Completed (70 features)
+## Completed (75 features)
 
 | # | Feature | Date |
 |---|---------|------|
@@ -89,3 +89,8 @@
 | ✅ | Stripe services checkout — pay for airport, pet fee, early check-in | Apr 8 |
 | ✅ | Gift cards ($50-$500) with Stripe checkout | Apr 8 |
 | ✅ | Promo codes — validate + apply Stripe promotion codes at checkout | Apr 8 |
+| ✅ | Stripe webhook with signature verification + idempotency guard | Apr 8 |
+| ✅ | Auto-create Hostaway reservation on payment (guest name, email, phone) | Apr 8 |
+| ✅ | Stripe SDK upgraded to v22 (API version 2026-03-25.dahlia) | Apr 8 |
+| ✅ | 0 npm vulnerabilities (was 15) | Apr 8 |
+| ✅ | Security hardening: PII stripping, headers, rate limiting, CSRF, idempotency | Apr 8 |
