@@ -112,6 +112,13 @@ export default function AvailabilityCalendar({ calendar, onDateSelect, checkIn, 
           </button>
         </div>
 
+        {/* Compact legend */}
+        <div className="flex justify-center gap-3 mb-1 text-[9px] text-sand-400">
+          <span>Available</span>
+          <span className="line-through">Booked</span>
+          <span className="text-ocean-500 font-medium">Selected</span>
+        </div>
+
         {/* Day headers */}
         <div className="grid grid-cols-7">
           {DAYS.map((d) => (
