@@ -6,6 +6,22 @@ export const prisma = globalForPrisma.prisma || new PrismaClient();
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
+export async function getTotalGuestCounts(): Promise<Record<number, number>> {
+  const counts = await prisma.reservation.groupBy({
+    by: ["property_id"],
+    where: {
+      status: { in: ["confirmed", "checked_in", "checked_out"] },
+      property_id: { not: null },
+    },
+    _count: { id: true },
+  });
+  const map: Record<number, number> = {};
+  for (const row of counts) {
+    if (row.property_id) map[row.property_id] = row._count.id;
+  }
+  return map;
+}
+
 export async function getRecentBookingCounts(): Promise<Record<number, number>> {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);

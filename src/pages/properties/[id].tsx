@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useMemo, useEffect } from "react";
 import Layout from "../../components/Layout";
 import AvailabilityCalendar from "../../components/AvailabilityCalendar";
-import { getProperty, getCalendar, getPropertyReviews } from "../../lib/db";
+import { getProperty, getCalendar, getPropertyReviews, getTotalGuestCounts } from "../../lib/db";
 import { Property, CalendarDay, Review } from "../../types";
 import { useRecentlyViewed } from "../../lib/localStorage";
 import Breadcrumbs from "../../components/Breadcrumbs";
@@ -13,6 +13,7 @@ type Props = {
   property: Property & { knowledgeMap: Record<string, string | null> };
   calendar: CalendarDay[];
   reviews: Review[];
+  totalGuests: number;
 };
 
 function stripEmojis(text: string): string {
@@ -146,7 +147,7 @@ function AmenitiesSection({ amenityList, expanded, onToggle }: { amenityList: st
   );
 }
 
-const PropertyDetail = ({ property, calendar, reviews }: Props) => {
+const PropertyDetail = ({ property, calendar, reviews, totalGuests }: Props) => {
   const [currentImage, setCurrentImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
@@ -473,6 +474,14 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017a2 2 0 01-.632-.103l-2.828-.94a2 2 0 01-.632-.103H4.5A1.5 1.5 0 013 18.5v-5A1.5 1.5 0 014.5 12H7l3-6a1 1 0 011.8.4L10 10z" />
                   </svg>
                   Pets allowed ($50 fee)
+                </div>
+              )}
+              {totalGuests > 0 && (
+                <div className="flex items-center text-sand-500 text-sm">
+                  <svg className="w-5 h-5 mr-2 text-sand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {totalGuests} guests have stayed
                 </div>
               )}
             </div>
@@ -835,9 +844,10 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const property = await getProperty(id);
   if (!property) return { notFound: true };
 
-  const [calendar, reviews] = await Promise.all([
+  const [calendar, reviews, guestCounts] = await Promise.all([
     getCalendar(property.hostaway_property_id, 180).catch(() => []),
     getPropertyReviews(property.hostaway_property_id, 6).catch(() => []),
+    getTotalGuestCounts().catch(() => ({})),
   ]);
 
   return {
@@ -845,6 +855,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
       property: JSON.parse(JSON.stringify({ ...property, knowledgeMap: undefined, knowledge: undefined })),
       calendar: JSON.parse(JSON.stringify(calendar)),
       reviews: JSON.parse(JSON.stringify(reviews)),
+      totalGuests: (guestCounts as Record<number, number>)[id] || 0,
     },
   };
 };

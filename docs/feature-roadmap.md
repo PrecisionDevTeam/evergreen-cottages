@@ -79,7 +79,7 @@ All 4 items completed Apr 8.
 | # | Feature | Effort | Impact | Notes |
 |---|---------|--------|--------|-------|
 | 116 | "Verified Host" or "Superhost" badge | Low | Medium | Ask Noah — Hostaway API doesn't expose this. Manual if confirmed. |
-| 117 | Guest count / booking count per property | Low | Low | "X guests have stayed here" from reservation data |
+| ~~117~~ | ~~Guest count per property~~ | | | ✅ Done Apr 8 |
 
 ## Phase 13: Content & Visuals (MEDIUM — engagement)
 
