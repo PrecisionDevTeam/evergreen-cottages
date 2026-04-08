@@ -31,6 +31,7 @@ export type Review = {
   check_out_date: string | null;
   hostaway_listing_id: string | null;
   channel_id: number | null;
+  category_ratings_json: string | null;
 };
 
 export type CalendarDay = {

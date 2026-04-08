@@ -589,6 +589,27 @@ const PropertyDetail = ({ property, calendar, reviews }: Props) => {
                         </div>
                       </div>
                       <p className="text-sand-600 text-sm leading-relaxed">{review.review_content}</p>
+                      {review.category_ratings_json && (() => {
+                        try {
+                          const cats = JSON.parse(review.category_ratings_json);
+                          const labels: Record<string, string> = { cleanliness: "Clean", accuracy: "Accuracy", checkin: "Check-in", communication: "Comms", location: "Location", value: "Value" };
+                          return (
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+                              {Object.entries(labels).map(([key, label]) => {
+                                const val = cats[key];
+                                if (typeof val !== "number" || val <= 0) return null;
+                                // Airbnb uses 1-10 scale; other platforms use 1-5
+                                const score = Math.round((val > 5 ? val / 2 : val) * 10) / 10;
+                                return (
+                                  <span key={key} className="text-[10px] text-sand-400">
+                                    {label} <span className="font-medium text-sand-600">{score}</span>
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          );
+                        } catch { return null; }
+                      })()}
                       {review.submitted_at && (
                         <p className="text-sand-400 text-xs mt-2">
                           {new Date(review.submitted_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}

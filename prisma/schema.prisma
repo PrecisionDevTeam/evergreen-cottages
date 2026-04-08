@@ -106,6 +106,7 @@ model Review {
   hostaway_review_id    String?
   hostaway_listing_id   String?
   channel_id            Int?
+  category_ratings_json String?
   rating                Float?
   review_content        String?
   reviewer_name         String?
