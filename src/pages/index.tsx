@@ -89,25 +89,22 @@ const Home = ({ properties, reviews, reviewCount, avgRating }: Props) => {
 
       {/* Trust bar */}
       <section className="max-w-5xl mx-auto px-5 sm:px-8 -mt-2 mb-16">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-16 text-center py-6">
+        <div className="grid grid-cols-4 text-center py-6 gap-2">
           <div>
-            <div className="text-3xl font-serif text-ocean-500">{properties.length}</div>
-            <div className="text-xs text-sand-500 uppercase tracking-widest mt-0.5">Properties</div>
+            <div className="text-2xl sm:text-3xl font-serif text-ocean-500">{properties.length}</div>
+            <div className="text-[10px] sm:text-xs text-sand-500 uppercase tracking-widest mt-0.5">Properties</div>
           </div>
-          <div className="hidden sm:block w-px h-8 bg-sand-300" />
           <div>
-            <div className="text-3xl font-serif text-ocean-500">{avgRating.toFixed(1)}</div>
-            <div className="text-xs text-sand-500 uppercase tracking-widest mt-0.5">Avg Rating</div>
+            <div className="text-2xl sm:text-3xl font-serif text-ocean-500">{avgRating.toFixed(1)}</div>
+            <div className="text-[10px] sm:text-xs text-sand-500 uppercase tracking-widest mt-0.5">Avg Rating</div>
           </div>
-          <div className="hidden sm:block w-px h-8 bg-sand-300" />
           <div>
-            <div className="text-3xl font-serif text-ocean-500">{reviewCount.toLocaleString()}+</div>
-            <div className="text-xs text-sand-500 uppercase tracking-widest mt-0.5">Reviews</div>
+            <div className="text-2xl sm:text-3xl font-serif text-ocean-500">{reviewCount.toLocaleString()}+</div>
+            <div className="text-[10px] sm:text-xs text-sand-500 uppercase tracking-widest mt-0.5">Reviews</div>
           </div>
-          <div className="hidden sm:block w-px h-8 bg-sand-300" />
           <div>
-            <div className="text-3xl font-serif text-ocean-500">24/7</div>
-            <div className="text-xs text-sand-500 uppercase tracking-widest mt-0.5">Support</div>
+            <div className="text-2xl sm:text-3xl font-serif text-ocean-500">24/7</div>
+            <div className="text-[10px] sm:text-xs text-sand-500 uppercase tracking-widest mt-0.5">Support</div>
           </div>
         </div>
       </section>
