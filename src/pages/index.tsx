@@ -242,7 +242,15 @@ export const getServerSideProps = async () => {
 
   return {
     props: {
-      properties: JSON.parse(JSON.stringify(properties)),
+      properties: JSON.parse(JSON.stringify(
+        properties.map((p: any) => ({
+          ...p,
+          images: p.images.slice(0, 8),
+          description: null,
+          listing_images: undefined,
+          amenities: undefined,
+        }))
+      )),
       reviews: JSON.parse(JSON.stringify(reviews)),
       reviewCount: stats._count.id || 0,
       avgRating: stats._avg.rating || 4.9,
