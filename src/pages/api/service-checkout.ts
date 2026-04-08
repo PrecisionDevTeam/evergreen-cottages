@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import Stripe from "stripe";
+import { verifyOrigin, rateLimit, safeString } from "../../lib/api-security";
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY || "", {
   apiVersion: "2022-11-15",
@@ -17,8 +18,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
+  if (!verifyOrigin(req, res)) return;
+  if (!rateLimit(req, res, 10)) return;
 
-  const { serviceId, guestName, propertyName, quantity: rawQty } = req.body;
+  const { serviceId, quantity: rawQty } = req.body;
+  const guestName = safeString(req.body.guestName) || "Guest";
+  const propertyName = safeString(req.body.propertyName);
   const quantity = Math.min(Math.max(1, Math.floor(Number(rawQty) || 1)), 10);
 
   const service = SERVICES[serviceId];

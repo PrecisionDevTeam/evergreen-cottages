@@ -814,7 +814,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
 
   return {
     props: {
-      property: JSON.parse(JSON.stringify(property)),
+      property: JSON.parse(JSON.stringify({ ...property, knowledgeMap: undefined, knowledge: undefined })),
       calendar: JSON.parse(JSON.stringify(calendar)),
       reviews: JSON.parse(JSON.stringify(reviews)),
     },

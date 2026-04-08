@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import Stripe from "stripe";
+import { verifyOrigin, rateLimit, safeString } from "../../lib/api-security";
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY || "", {
   apiVersion: "2022-11-15",
@@ -11,8 +12,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
+  if (!verifyOrigin(req, res)) return;
+  if (!rateLimit(req, res, 10)) return;
 
-  const { amount, senderName, recipientName, message } = req.body;
+  const { amount } = req.body;
+  const senderName = safeString(req.body.senderName) || "Anonymous";
+  const recipientName = safeString(req.body.recipientName);
+  const message = safeString(req.body.message, 200);
 
   if (!amount || !GIFT_AMOUNTS.includes(Number(amount))) {
     return res.status(400).json({ error: "Invalid gift card amount" });

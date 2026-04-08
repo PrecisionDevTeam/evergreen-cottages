@@ -233,9 +233,27 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const data = await getStayByToken(token);
   if (!data) return { notFound: true };
 
+  // Strip PII — only pass fields needed for display
+  const safeData = {
+    reservation: {
+      check_in: data.reservation.check_in,
+      check_out: data.reservation.check_out,
+      adults: data.reservation.adults,
+      children: data.reservation.children,
+    },
+    property: data.property ? {
+      id: data.property.id,
+      name: data.property.name,
+      address: data.property.address,
+    } : null,
+    guest: { first_name: data.guest?.first_name || "Guest" },
+    knowledgeMap: data.knowledgeMap,
+    doorCode: data.doorCode,
+  };
+
   return {
     props: {
-      data: JSON.parse(JSON.stringify(data)),
+      data: JSON.parse(JSON.stringify(safeData)),
     },
   };
 };

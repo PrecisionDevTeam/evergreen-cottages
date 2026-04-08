@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import Stripe from "stripe";
 import { getProperty, getCalendar } from "../../lib/db";
+import { verifyOrigin, rateLimit } from "../../lib/api-security";
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY || "", {
   apiVersion: "2022-11-15",
@@ -10,6 +11,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
+  if (!verifyOrigin(req, res)) return;
+  if (!rateLimit(req, res, 10)) return;
 
   const { propertyId, checkIn, checkOut, guests, promoId } = req.body;
 
@@ -27,7 +30,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const property = await getProperty(Number(propertyId));
+    const id = parseInt(String(propertyId), 10);
+    if (!Number.isInteger(id) || id <= 0 || id > 100000) {
+      return res.status(400).json({ error: "Invalid property ID" });
+    }
+    const property = await getProperty(id);
     if (!property) {
       return res.status(404).json({ error: "Property not found" });
     }
