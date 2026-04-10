@@ -36,6 +36,7 @@ model Property {
 
   reservations    Reservation[]
   knowledge       PropertyKnowledge[]
+  websiteOverride WebsitePropertyOverride?
 
   @@map("properties")
 }
@@ -127,6 +128,35 @@ model StayToken {
   created_at      DateTime  @default(now())
 
   @@map("stay_tokens")
+}
+
+// Website property overrides (admin-editable, website-only)
+model WebsitePropertyOverride {
+  id                  Int       @id @default(autoincrement())
+  property_id         Int       @unique
+  website_name        String?
+  website_description String?
+  website_images      Json?
+  website_base_price  Float?
+  visible_on_website  Boolean   @default(true)
+  tags                String[]  @default([])
+  updated_at          DateTime? @default(now())
+  updated_by          String?
+
+  property Property @relation(fields: [property_id], references: [id])
+
+  @@map("website_property_overrides")
+}
+
+// Website content (homepage, services, FAQ — admin-editable)
+model WebsiteContent {
+  id            Int       @id @default(autoincrement())
+  content_key   String    @unique
+  content_value Json      @default("{}")
+  updated_at    DateTime? @default(now())
+  updated_by    String?
+
+  @@map("website_content")
 }
 
 // Track processed Stripe events (idempotency guard)

@@ -260,3 +260,86 @@ export async function getStayByToken(token: string) {
     doorCode,
   };
 }
+
+// ── Website content (admin-editable) ────────────────────────────────────
+
+type WebsiteContentKey = "homepage_hero" | "homepage_featured" | "homepage_stats" | "services" | "faq";
+
+export async function getWebsiteContent(key: WebsiteContentKey) {
+  const row = await prisma.websiteContent.findUnique({
+    where: { content_key: key },
+  });
+  return row?.content_value ?? null;
+}
+
+export async function getPropertiesWithOverrides(city?: string) {
+  const where: Record<string, unknown> = {};
+  if (city) where.city = city;
+
+  const properties = await prisma.property.findMany({
+    where,
+    include: { websiteOverride: true },
+    orderBy: { name: "asc" },
+  });
+
+  return properties
+    .filter((p) => {
+      // Filter out hidden properties
+      const override = p.websiteOverride;
+      if (override && override.visible_on_website === false) return false;
+      return true;
+    })
+    .map((p) => {
+      const o = p.websiteOverride;
+      return {
+        ...p,
+        // Use override values if set, fall back to Hostaway data
+        displayName: o?.website_name || p.name,
+        displayDescription: o?.website_description || p.description,
+        displayPrice: o?.website_base_price ?? p.base_price,
+        tags: o?.tags ?? [],
+        images: (() => {
+          const src = o?.website_images || p.listing_images;
+          if (!src) return [];
+          if (Array.isArray(src)) return src;
+          try { return JSON.parse(src as string); } catch { return []; }
+        })(),
+        amenityList: p.amenities ? p.amenities.split(", ").filter(Boolean) : [],
+      };
+    });
+}
+
+export async function getPropertyWithOverride(id: number) {
+  const property = await prisma.property.findUnique({
+    where: { id },
+    include: {
+      knowledge: true,
+      websiteOverride: true,
+    },
+  });
+  if (!property) return null;
+
+  // Check visibility
+  if (property.websiteOverride?.visible_on_website === false) return null;
+
+  const o = property.websiteOverride;
+  return {
+    ...property,
+    displayName: o?.website_name || property.name,
+    displayDescription: o?.website_description || property.description,
+    displayPrice: o?.website_base_price ?? property.base_price,
+    tags: o?.tags ?? [],
+    images: (() => {
+      const src = o?.website_images || property.listing_images;
+      if (!src) return [];
+      if (Array.isArray(src)) return src;
+      try { return JSON.parse(src as string); } catch { return []; }
+    })(),
+    amenityList: property.amenities
+      ? property.amenities.split(", ").filter(Boolean)
+      : [],
+    knowledgeMap: Object.fromEntries(
+      property.knowledge.map((k) => [k.field_name, k.field_value])
+    ),
+  };
+}

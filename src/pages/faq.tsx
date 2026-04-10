@@ -1,7 +1,9 @@
 import { useState } from "react";
 import Link from "next/link";
+import { GetStaticProps } from "next";
 import Layout from "../components/Layout";
 import Breadcrumbs from "../components/Breadcrumbs";
+import { getWebsiteContent } from "../lib/db";
 
 type FAQItem = { q: string; a: string };
 
@@ -158,7 +160,30 @@ const faqSchema = {
   ),
 };
 
-export default function FAQ() {
+type FaqPageProps = {
+  dbSections: { section: string; questions: { q: string; a: string }[] }[] | null;
+};
+
+export const getStaticProps: GetStaticProps<FaqPageProps> = async () => {
+  try {
+    const raw = await getWebsiteContent("faq");
+    const dbSections = Array.isArray(raw)
+      ? (raw as { section?: string; questions?: { q?: string; a?: string }[] }[])
+          .filter((s) => typeof s.section === "string" && Array.isArray(s.questions))
+          .map((s) => ({
+            section: s.section!,
+            questions: (s.questions || [])
+              .filter((q) => typeof q.q === "string" && typeof q.a === "string")
+              .map((q) => ({ q: q.q!, a: q.a! })),
+          }))
+      : null;
+    return { props: { dbSections }, revalidate: 60 };
+  } catch {
+    return { props: { dbSections: null }, revalidate: 60 };
+  }
+};
+
+export default function FAQ({ dbSections }: FaqPageProps) {
   return (
     <Layout
       title="FAQ"
@@ -172,7 +197,10 @@ export default function FAQ() {
         <p className="text-sand-500 mb-12">Everything you need to know before booking your stay.</p>
 
         <div className="space-y-10">
-          {FAQ_SECTIONS.map((section) => (
+          {(dbSections
+            ? dbSections.map((s) => ({ title: s.section, items: s.questions }))
+            : FAQ_SECTIONS
+          ).map((section) => (
             <div key={section.title}>
               <h2 className="text-lg font-serif text-ocean-500 mb-4">{section.title}</h2>
               <div className="bg-white rounded-2xl border border-sand-100 px-6">
