@@ -124,6 +124,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         timestamp: new Date().toISOString(),
       }));
 
+      // Notify data hub about service purchases (so Noah gets SMS)
+      if (meta.type === "service" && meta.serviceId) {
+        const customer = session.customer_details || {};
+        const dataHubUrl = process.env.DATA_HUB_URL || "https://hostaway-data-hub-production-ffd2.up.railway.app";
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        try {
+          await fetch(`${dataHubUrl}/webhooks/service-payment`, {
+            method: "POST",
+            signal: controller.signal,
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${process.env.WEBHOOK_SECRET || ""}`,
+            },
+            body: JSON.stringify({
+              serviceName: meta.serviceName,
+              serviceId: meta.serviceId,
+              amount: (session.amount_total || 0) / 100,
+              guestName: customer.name || meta.guestName || "Guest",
+              guestEmail: customer.email || "",
+              guestPhone: customer.phone || "",
+              propertyName: meta.propertyName || "",
+              unitLabel: meta.unitLabel || "",
+              checkInDate: meta.checkInDate || "",
+              flightInfo: meta.flightInfo || "",
+              quantity: meta.quantity || "1",
+              stripeSessionId: session.id,
+            }),
+          });
+          console.log("SERVICE_PAYMENT_NOTIFIED:", meta.serviceName, meta.propertyName);
+        } catch (err) {
+          console.error("SERVICE_PAYMENT_NOTIFY_FAILED:", err instanceof Error ? err.message : "Unknown");
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      }
+
       // Create Hostaway reservation (only for property bookings)
       if (meta.hostawayListingId && meta.checkIn && meta.checkOut) {
         // Idempotency check — skip if already processed

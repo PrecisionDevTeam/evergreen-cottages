@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { GetStaticProps } from "next";
 import Layout from "../components/Layout";
@@ -96,29 +96,41 @@ export const getStaticProps: GetStaticProps<ServicesPageProps> = async () => {
 
 export default function Services({ dbServices }: ServicesPageProps) {
   const [loading, setLoading] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState<string | null>(null);
+  const [guestName, setGuestName] = useState("");
+  const [unitLabel, setUnitLabel] = useState("");
+  const [flightInfo, setFlightInfo] = useState("");
 
-  const autoTriggered = useRef(false);
+  const getPropertyName = () => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("property") || "";
+  };
 
-  // Read non-PII params from URL (property name + service to auto-trigger)
-  const getUrlParams = () => {
-    if (typeof window === "undefined") return { property: "", service: "" };
-    const params = new URLSearchParams(window.location.search);
-    return {
-      property: params.get("property") || "",
-      service: params.get("service") || "",
-    };
+  const isAirportService = (id: string) => id.startsWith("airport-");
+
+  const handleBuyClick = (serviceId: string) => {
+    setShowForm(serviceId);
+    setGuestName("");
+    setUnitLabel("");
+    setFlightInfo("");
   };
 
   const handlePay = async (serviceId: string) => {
+    if (!guestName.trim()) {
+      alert("Please enter your name.");
+      return;
+    }
     setLoading(serviceId);
-    const urlParams = getUrlParams();
     try {
       const res = await fetch("/api/service-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           serviceId,
-          propertyName: urlParams.property || undefined,
+          guestName: guestName.trim(),
+          propertyName: getPropertyName(),
+          unitLabel: unitLabel.trim() || undefined,
+          flightInfo: flightInfo.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -133,16 +145,6 @@ export default function Services({ dbServices }: ServicesPageProps) {
       alert(`Payment error: ${message}. Please call (510) 822-7060.`);
     }
   };
-
-  // Auto-trigger checkout if ?service= param is present (direct link from check-in page)
-  useEffect(() => {
-    if (autoTriggered.current) return;
-    const urlParams = getUrlParams();
-    if (urlParams.service && services.some((s) => s.serviceId === urlParams.service)) {
-      autoTriggered.current = true;
-      handlePay(urlParams.service);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Layout title="Services & Add-ons" description="Airport shuttle, early check-in, pet fee, and more for your Pensacola vacation rental stay at Evergreen Cottages.">
@@ -176,13 +178,45 @@ export default function Services({ dbServices }: ServicesPageProps) {
               <h3 className="text-lg font-serif text-ocean-500 mb-1">{s.title}</h3>
               <p className="text-coral-500 font-semibold text-sm mb-3">{s.price}</p>
               <p className="text-sand-500 text-sm leading-relaxed mb-4 flex-1">{s.desc}</p>
-              {s.serviceId ? (
+              {s.serviceId && showForm === s.serviceId ? (
+                <div className="space-y-2 mt-2">
+                  <input
+                    type="text"
+                    placeholder="Your name *"
+                    value={guestName}
+                    onChange={(e) => setGuestName(e.target.value)}
+                    className="w-full border border-sand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-ocean-400"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Unit number (e.g. 5)"
+                    value={unitLabel}
+                    onChange={(e) => setUnitLabel(e.target.value)}
+                    className="w-full border border-sand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-ocean-400"
+                  />
+                  {isAirportService(s.serviceId) && (
+                    <input
+                      type="text"
+                      placeholder="Flight info (airline, time)"
+                      value={flightInfo}
+                      onChange={(e) => setFlightInfo(e.target.value)}
+                      className="w-full border border-sand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-ocean-400"
+                    />
+                  )}
+                  <button
+                    onClick={() => handlePay(s.serviceId!)}
+                    disabled={loading === s.serviceId}
+                    className="w-full bg-ocean-500 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-ocean-600 transition-colors disabled:opacity-50"
+                  >
+                    {loading === s.serviceId ? "Processing..." : `Pay ${s.price}`}
+                  </button>
+                </div>
+              ) : s.serviceId ? (
                 <button
-                  onClick={() => handlePay(s.serviceId!)}
-                  disabled={loading === s.serviceId}
-                  className="w-full bg-ocean-500 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-ocean-600 transition-colors disabled:opacity-50"
+                  onClick={() => handleBuyClick(s.serviceId!)}
+                  className="w-full bg-ocean-500 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-ocean-600 transition-colors"
                 >
-                  {loading === s.serviceId ? "Processing..." : `Pay ${s.price}`}
+                  {`Pay ${s.price}`}
                 </button>
               ) : (
                 <a

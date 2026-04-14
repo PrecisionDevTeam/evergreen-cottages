@@ -23,6 +23,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { serviceId, quantity: rawQty } = req.body;
   const guestName = safeString(req.body.guestName) || "Guest";
   const propertyName = safeString(req.body.propertyName);
+  const unitLabel = safeString(req.body.unitLabel) || "";
+  const checkInDate = safeString(req.body.checkInDate) || "";
+  const flightInfo = safeString(req.body.flightInfo) || "";
   const quantity = Math.min(Math.max(1, Math.floor(Number(rawQty) || 1)), 10);
 
   const service = SERVICES[serviceId];
@@ -60,6 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       payment_method_types: ["card"],
       mode: "payment",
       ...(resolvedEmail ? { customer_email: resolvedEmail } : {}),
+      phone_number_collection: { enabled: true },
       line_items: [
         {
           price_data: {
@@ -74,10 +78,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       ],
       metadata: {
+        type: "service",
         serviceId,
         serviceName: service.name,
         guestName: guestName || "Guest",
         propertyName: propertyName || "",
+        unitLabel: unitLabel || "",
+        checkInDate: checkInDate || "",
+        flightInfo: flightInfo || "",
+        quantity: String(quantity),
       },
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://evergreencottages.com"}/booking/service-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://evergreencottages.com"}/services`,
