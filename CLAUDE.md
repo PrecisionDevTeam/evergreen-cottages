@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Guest-facing vacation rental booking website for Evergreen Cottages in Pensacola, FL. Replaces evergreencottages.holidayfuture.com. Built for direct bookings (bypassing Airbnb/VRBO fees), guest reservation details, and service upsells.
+Guest-facing vacation rental booking website for Evergreen Cottages in Pensacola, FL. Replaces evergreencottages.holidayfuture.com. Built for direct bookings (bypassing Airbnb/VRBO fees), stay extensions, service add-ons, and guest reservation details. Connected to [hostaway-data-hub](https://github.com/PrecisionDevTeam/hostaway-data-hub) via shared Railway Postgres.
 
 ## Tech Stack
 
@@ -12,7 +12,8 @@ Guest-facing vacation rental booking website for Evergreen Cottages in Pensacola
 - **Database:** Railway Postgres (shared with hostaway-data-hub — same `DATABASE_URL`)
 - **ORM:** Prisma (mapped to existing tables, NOT creating new ones)
 - **Images:** Next.js `<Image>` component with `remotePatterns` for Hostaway S3
-- **Payments:** Stripe (pending API keys)
+- **Payments:** Stripe (Checkout Sessions, webhooks, promo codes, gift cards, extensions)
+- **Security:** CSRF origin check, rate limiting, input validation, Stripe signature verification
 
 ## Project Structure
 
@@ -26,7 +27,9 @@ evergreen-cottages/
 │   │   │   └── [id].tsx           # Property detail with gallery, booking, reviews, share, nearby, recently viewed
 │   │   ├── stay/
 │   │   │   └── [token].tsx        # My Stay — private guest reservation page
-│   │   ├── services.tsx           # Add-on services
+│   │   ├── extend/
+│   │   │   └── [token].tsx        # Stay extension (HMAC-verified, calendar, Stripe checkout)
+│   │   ├── services.tsx           # Add-on services (guest form, auto-trigger from check-in page)
 │   │   ├── about.tsx              # About page (stats from DB)
 │   │   ├── contact.tsx            # Contact form
 │   │   ├── faq.tsx                # FAQ page (6 sections, 20 questions, accordion)
@@ -34,6 +37,15 @@ evergreen-cottages/
 │   │   ├── 404.tsx                # Custom branded 404 page
 │   │   ├── sitemap.xml.tsx        # Dynamic XML sitemap
 │   │   └── _app.tsx               # App wrapper (progress bar)
+│   │   └── api/
+│   │       ├── checkout.ts        # Stripe session for property bookings
+│   │       ├── extension-checkout.ts  # Stripe session for stay extensions (no cleaning fee)
+│   │       ├── service-checkout.ts    # Stripe session for services (pre-fills guest email from DB)
+│   │       ├── webhook.ts         # Stripe webhook → Hostaway reservation + service/extension notifications
+│   │       ├── gift-card.ts       # Gift card purchase
+│   │       ├── validate-promo.ts  # Promo code validation
+│   │       ├── contact.ts         # Contact form submission
+│   │       └── revalidate.ts      # On-demand ISR cache refresh
 │   ├── components/
 │   │   ├── Layout.tsx             # Shared nav + footer + SEO meta + OG/Twitter cards
 │   │   ├── PropertyCard.tsx       # Property card (carousel, favorites, compare, social proof)
@@ -42,6 +54,7 @@ evergreen-cottages/
 │   │   └── Breadcrumbs.tsx        # Reusable breadcrumb navigation
 │   ├── lib/
 │   │   ├── db.ts                  # Prisma queries (properties, calendar, reviews, booking counts, stay tokens)
+│   │   ├── api-security.ts        # CSRF verification, rate limiting, input sanitization
 │   │   └── localStorage.ts       # Client-side hooks (recently viewed, favorites)
 │   ├── types/
 │   │   └── index.ts               # Shared TypeScript types
@@ -58,19 +71,24 @@ evergreen-cottages/
 
 ## Database
 
-This project reads from the SAME Railway Postgres database as hostaway-data-hub. It does NOT create its own tables (except `stay_tokens`).
+This project reads from the SAME Railway Postgres database as hostaway-data-hub.
 
-### Tables Used (read-only)
+### Tables Read (owned by hostaway-data-hub)
 - `properties` — 33 properties with descriptions, amenities, up to 41 images, pricing
-- `reservations` — booking data
-- `guests` — guest profiles
+- `reservations` — booking data (used for extension lookups + guest email resolution)
+- `guests` — guest profiles (email for Stripe pre-fill)
 - `hostaway_calendar` — daily availability per listing
 - `hostaway_reviews` — guest reviews with ratings
 - `property_knowledge` — WiFi, gate codes, parking, rules (key-value per property)
 - `seam_access_codes` — Schlage door codes per reservation
+- `reservation_extensions` — links original booking to extension (for auto-detection)
 
 ### Tables Created
 - `stay_tokens` — unique private links for My Stay page (token → reservation_id, expires_at)
+- `website_property_overrides` — admin-editable property names, descriptions, images
+- `website_content` — editable homepage/services/FAQ content (JSON)
+- `contact_submissions` — contact form messages
+- `processed_stripe_events` — Stripe webhook idempotency guard
 
 ## Design System
 
