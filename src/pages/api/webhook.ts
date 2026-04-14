@@ -67,7 +67,9 @@ async function createHostawayReservation(session: any): Promise<any> {
     totalPrice: (session.amount_total || 0) / 100,
     isPaid: 1,
     currency: "USD",
-    comment: `Direct booking via evergreencottages.com. Stripe session: ${session.id}`,
+    comment: meta.type === "extension"
+      ? `Stay extension via evergreencottages.com (extends reservation #${meta.originalReservationId || "?"}). Stripe: ${session.id}`
+      : `Direct booking via evergreencottages.com. Stripe session: ${session.id}`,
   };
 
   const resp = await fetch(`${HOSTAWAY_API}/reservations`, {
