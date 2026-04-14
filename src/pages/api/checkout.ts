@@ -13,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!verifyOrigin(req, res)) return;
   if (!rateLimit(req, res, 10)) return;
 
-  const { propertyId, checkIn, checkOut, guests, promoId } = req.body;
+  const { propertyId, checkIn, checkOut, guests, promoId, occasion } = req.body;
 
   // Input validation
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -116,6 +116,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         subtotal: String(subtotal),
         cleaningFee: String(cleaningFee),
         total: String(total),
+        occasion: typeof occasion === "string" ? occasion.slice(0, 50) : "",
       },
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://evergreencottages.com"}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://evergreencottages.com"}/properties/${property.id}`,

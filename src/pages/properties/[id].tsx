@@ -158,6 +158,7 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNig
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState(1);
+  const [occasion, setOccasion] = useState("");
 
   const { recentlyViewed, addViewed } = useRecentlyViewed();
 
@@ -274,6 +275,7 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNig
           checkIn,
           checkOut,
           guests,
+          occasion: occasion || undefined,
           promoId: promoResult?.promoId || undefined,
         }),
       });
@@ -795,6 +797,30 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNig
                     </p>
                   )}
                   {promoError && <p className="text-xs text-coral-500 mt-1">{promoError}</p>}
+                </div>
+              )}
+
+              {/* Special occasion (optional) */}
+              {priceCalc && (
+                <div className="mb-3">
+                  <label className="block text-xs text-sand-400 mb-1">Celebrating something? (optional)</label>
+                  <select
+                    value={occasion}
+                    onChange={(e) => setOccasion(e.target.value)}
+                    className="w-full border border-sand-200 rounded-lg px-3 py-2 text-sm text-sand-600 bg-sand-50 focus:ring-2 focus:ring-ocean-500 outline-none"
+                  >
+                    <option value="">Just a getaway</option>
+                    <option value="birthday">Birthday</option>
+                    <option value="anniversary">Anniversary</option>
+                    <option value="honeymoon">Honeymoon</option>
+                    <option value="graduation">Graduation</option>
+                    <option value="family_reunion">Family Reunion</option>
+                    <option value="babymoon">Babymoon</option>
+                    <option value="girls_trip">Girls Trip</option>
+                    <option value="guys_trip">Guys Trip</option>
+                    <option value="retirement">Retirement</option>
+                    <option value="other">Other celebration</option>
+                  </select>
                 </div>
               )}
 
