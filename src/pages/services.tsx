@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { GetStaticProps } from "next";
 import Layout from "../components/Layout";
@@ -97,13 +97,29 @@ export const getStaticProps: GetStaticProps<ServicesPageProps> = async () => {
 export default function Services({ dbServices }: ServicesPageProps) {
   const [loading, setLoading] = useState<string | null>(null);
 
+  const autoTriggered = useRef(false);
+
+  // Read non-PII params from URL (property name + service to auto-trigger)
+  const getUrlParams = () => {
+    if (typeof window === "undefined") return { property: "", service: "" };
+    const params = new URLSearchParams(window.location.search);
+    return {
+      property: params.get("property") || "",
+      service: params.get("service") || "",
+    };
+  };
+
   const handlePay = async (serviceId: string) => {
     setLoading(serviceId);
+    const urlParams = getUrlParams();
     try {
       const res = await fetch("/api/service-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ serviceId }),
+        body: JSON.stringify({
+          serviceId,
+          propertyName: urlParams.property || undefined,
+        }),
       });
       const data = await res.json();
       if (data.url) {
@@ -117,6 +133,16 @@ export default function Services({ dbServices }: ServicesPageProps) {
       alert(`Payment error: ${message}. Please call (510) 822-7060.`);
     }
   };
+
+  // Auto-trigger checkout if ?service= param is present (direct link from check-in page)
+  useEffect(() => {
+    if (autoTriggered.current) return;
+    const urlParams = getUrlParams();
+    if (urlParams.service && services.some((s) => s.serviceId === urlParams.service)) {
+      autoTriggered.current = true;
+      handlePay(urlParams.service);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Layout title="Services & Add-ons" description="Airport shuttle, early check-in, pet fee, and more for your Pensacola vacation rental stay at Evergreen Cottages.">

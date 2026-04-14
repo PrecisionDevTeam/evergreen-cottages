@@ -31,9 +31,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    // Resolve guest email server-side from current reservation for this property
+    let resolvedEmail: string | undefined;
+    if (propertyName) {
+      try {
+        const property = await prisma.property.findFirst({
+          where: { name: { contains: propertyName } },
+        });
+        if (property) {
+          const reservation = await prisma.reservation.findFirst({
+            where: {
+              property_id: property.id,
+              status: { notIn: ["cancelled", "canceled", "declined", "inquiry"] },
+              check_in: { lte: new Date() },
+              check_out: { gte: new Date() },
+            },
+            include: { guest: true },
+            orderBy: { check_in: "desc" },
+          });
+          resolvedEmail = reservation?.guest?.primary_email || undefined;
+        }
+      } catch {
+        // Non-blocking — Stripe will collect email if not resolved
+      }
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
+      ...(resolvedEmail ? { customer_email: resolvedEmail } : {}),
       line_items: [
         {
           price_data: {
