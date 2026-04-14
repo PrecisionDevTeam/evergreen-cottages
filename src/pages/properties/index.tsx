@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import Layout from "../../components/Layout";
 import PropertyCard from "../../components/PropertyCard";
-import { getProperties, getRecentBookingCounts } from "../../lib/db";
+import { getPropertiesWithOverrides, getRecentBookingCounts } from "../../lib/db";
 import { Property } from "../../types";
 import { useFavorites } from "../../lib/localStorage";
 
@@ -252,7 +252,7 @@ export default Properties;
 
 export const getServerSideProps = async () => {
   const [properties, bookingCounts] = await Promise.all([
-    getProperties("Pensacola"),
+    getPropertiesWithOverrides("Pensacola"),
     getRecentBookingCounts(),
   ]);
   // Only badge the top 3 most-booked units

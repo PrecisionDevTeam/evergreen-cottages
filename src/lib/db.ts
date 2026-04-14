@@ -293,9 +293,12 @@ export async function getPropertiesWithOverrides(city?: string) {
       const o = p.websiteOverride;
       return {
         ...p,
-        // Use override values if set, fall back to Hostaway data
+        // Override name/description/price for website display
+        name: o?.website_name || p.name,
         displayName: o?.website_name || p.name,
+        description: o?.website_description || p.description,
         displayDescription: o?.website_description || p.description,
+        base_price: o?.website_base_price ?? p.base_price,
         displayPrice: o?.website_base_price ?? p.base_price,
         tags: o?.tags ?? [],
         images: (() => {
@@ -325,8 +328,11 @@ export async function getPropertyWithOverride(id: number) {
   const o = property.websiteOverride;
   return {
     ...property,
+    name: o?.website_name || property.name,
     displayName: o?.website_name || property.name,
+    description: o?.website_description || property.description,
     displayDescription: o?.website_description || property.description,
+    base_price: o?.website_base_price ?? property.base_price,
     displayPrice: o?.website_base_price ?? property.base_price,
     tags: o?.tags ?? [],
     images: (() => {

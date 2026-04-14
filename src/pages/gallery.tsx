@@ -2,7 +2,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Layout from "../components/Layout";
 import Breadcrumbs from "../components/Breadcrumbs";
-import { getProperties } from "../lib/db";
+import { getPropertiesWithOverrides } from "../lib/db";
 
 type GalleryImage = {
   src: string;
@@ -122,7 +122,7 @@ export default function Gallery({ images }: Props) {
 }
 
 export const getServerSideProps = async () => {
-  const properties = await getProperties("Pensacola");
+  const properties = await getPropertiesWithOverrides("Pensacola");
 
   const images: GalleryImage[] = properties.flatMap((p: any) =>
     p.images.slice(0, 5).map((src: string) => ({

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Layout from "../components/Layout";
 import PropertyCard from "../components/PropertyCard";
-import { getProperties, getReviews } from "../lib/db";
+import { getPropertiesWithOverrides, getReviews } from "../lib/db";
 import { Property, Review } from "../types";
 
 type Props = {
@@ -244,7 +244,7 @@ export default Home;
 export const getServerSideProps = async () => {
   const { prisma } = await import("../lib/db");
   const [properties, reviews, stats] = await Promise.all([
-    getProperties("Pensacola"),
+    getPropertiesWithOverrides("Pensacola"),
     getReviews(6),
     prisma.review.aggregate({
       _avg: { rating: true },

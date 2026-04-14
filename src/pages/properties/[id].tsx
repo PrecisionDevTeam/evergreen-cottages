@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useMemo, useEffect } from "react";
 import Layout from "../../components/Layout";
 import AvailabilityCalendar from "../../components/AvailabilityCalendar";
-import { getProperty, getCalendar, getPropertyReviews, getTotalGuestCounts, getAvailableNightsThisMonth, getLastBookedMap } from "../../lib/db";
+import { getPropertyWithOverride, getCalendar, getPropertyReviews, getTotalGuestCounts, getAvailableNightsThisMonth, getLastBookedMap } from "../../lib/db";
 import { Property, CalendarDay, Review } from "../../types";
 import { useRecentlyViewed } from "../../lib/localStorage";
 import Breadcrumbs from "../../components/Breadcrumbs";
@@ -892,7 +892,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const id = parseInt(params?.id as string);
   if (isNaN(id) || id <= 0 || id > 2_147_483_647) return { notFound: true };
 
-  const property = await getProperty(id);
+  const property = await getPropertyWithOverride(id);
   if (!property) return { notFound: true };
 
   const [calendar, reviews, guestCounts, availableNights, lastBookedMap] = await Promise.all([
