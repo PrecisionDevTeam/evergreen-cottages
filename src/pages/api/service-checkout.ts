@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import Stripe from "stripe";
+import { prisma } from "../../lib/db";
 import { verifyOrigin, rateLimit, safeString } from "../../lib/api-security";
 
 // @ts-ignore
