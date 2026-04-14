@@ -30,8 +30,8 @@ export default function Terms() {
           <section>
             <h2 className="text-lg font-semibold text-ocean-700 mb-3">3. Cancellation & Refund Policy</h2>
             <ul className="list-disc pl-5 space-y-2">
-              <li><strong>Free cancellation:</strong> Cancel up to 48 hours before check-in for a full refund.</li>
-              <li><strong>Late cancellation (within 48 hours):</strong> The first night is non-refundable. Remaining nights will be refunded.</li>
+              <li><strong>Free cancellation:</strong> Cancel up to 7 days before check-in for a full refund.</li>
+              <li><strong>Late cancellation (within 7 days):</strong> Non-refundable. Contact us for special circumstances.</li>
               <li><strong>No-show:</strong> No refund for no-shows.</li>
               <li><strong>Early departure:</strong> No refund for unused nights if you check out early.</li>
               <li><strong>Extenuating circumstances:</strong> For emergencies or exceptional situations, contact us at (510) 822-7060 and we will do our best to accommodate.</li>

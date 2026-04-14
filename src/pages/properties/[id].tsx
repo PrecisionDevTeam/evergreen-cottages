@@ -685,7 +685,7 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNig
             {/* Cancellation */}
             <div className="mb-8 p-6 bg-evergreen-50 rounded-xl">
               <h3 className="font-semibold text-evergreen-800 mb-1">Flexible Cancellation</h3>
-              <p className="text-sm text-evergreen-700">Free cancellation up to 48 hours before check-in. Contact us for details.</p>
+              <p className="text-sm text-evergreen-700">Free cancellation up to 7 days before check-in.</p>
             </div>
           </div>
 

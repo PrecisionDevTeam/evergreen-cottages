@@ -17,7 +17,7 @@ const FAQ_SECTIONS: { title: string; items: FAQItem[] }[] = [
       },
       {
         q: "What is the cancellation policy?",
-        a: "Free cancellation up to 48 hours before check-in. After that, the first night is non-refundable. Contact us for special circumstances.",
+        a: "Free cancellation up to 7 days before check-in. Cancellations within 7 days are non-refundable. Contact us for special circumstances.",
       },
       {
         q: "Why should I book direct instead of Airbnb or VRBO?",
