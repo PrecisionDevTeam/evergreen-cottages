@@ -151,12 +151,15 @@ const HOST_REVIEW_PHRASES = [
 // to avoid false positives like "smelled like fresh flowers"
 const NEGATIVE_PHRASES_EXACT = [
   "not clean", "wasn't clean", "halfway cleaned", "wasn't cleaned",
+  "issues with the cleanliness", "issues with cleanliness",
+  "noise disturbance", "noise from outside",
   "didn't feel safe", "wouldn't recommend", "would not recommend",
   "don't recommend", "do not recommend", "not worth", "waste of money",
   "rip off", "nothing special", "super cheap", "not what we expected",
   "no response", "didn't work", "doesn't work", "not working", "out of order",
   "couldn't sleep", "bed bugs", "never again", "never staying",
   "never coming back", "never return", "not a fan", "wasn't a fan",
+  "plumbing issue", "only downfall",
 ];
 
 const NEGATIVE_WORDS_BOUNDARY = [
@@ -164,7 +167,7 @@ const NEGATIVE_WORDS_BOUNDARY = [
   "dirty", "filthy", "disgusting", "gross", "mold", "mildew",
   "unsafe", "sketchy", "dangerous", "scary", "ripoff", "scam",
   "inconsiderate", "rude", "unprofessional", "unresponsive",
-  "broken", "stink", "stunk", "odor", "noisy", "bedbug",
+  "broken", "stink", "stunk", "odor", "noisy", "noise", "bedbug",
   "worst", "terrible", "horrible", "awful", "nightmare",
   "disappointed", "disappointing", "uncomfortable",
 ];
