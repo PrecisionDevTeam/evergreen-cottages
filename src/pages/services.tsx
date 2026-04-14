@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { GetStaticProps } from "next";
 import Layout from "../components/Layout";
@@ -107,6 +107,24 @@ export default function Services({ dbServices }: ServicesPageProps) {
   };
 
   const isAirportService = (id: string) => id.startsWith("airport-");
+  const autoOpened = useRef(false);
+
+  // Auto-open form + scroll to the service if ?service= is in URL
+  useEffect(() => {
+    if (autoOpened.current) return;
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const serviceParam = params.get("service") || "";
+    if (serviceParam && services.some((s) => s.serviceId === serviceParam)) {
+      autoOpened.current = true;
+      setShowForm(serviceParam);
+      // Scroll to the card after render
+      setTimeout(() => {
+        const el = document.getElementById(`service-${serviceParam}`);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100);
+    }
+  }, []);
 
   const handleBuyClick = (serviceId: string) => {
     setShowForm(serviceId);
@@ -169,7 +187,7 @@ export default function Services({ dbServices }: ServicesPageProps) {
               })
             : services
           ).map((s) => (
-            <div key={s.title} className="bg-white border border-sand-100 rounded-2xl p-7 card-lift fade-in-up flex flex-col">
+            <div key={s.title} id={s.serviceId ? `service-${s.serviceId}` : undefined} className="bg-white border border-sand-100 rounded-2xl p-7 card-lift fade-in-up flex flex-col">
               <div className="w-12 h-12 bg-ocean-50 rounded-xl flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-ocean-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   {s.icon}
