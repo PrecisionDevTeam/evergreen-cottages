@@ -65,13 +65,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       mode: "payment",
       ...(resolvedEmail ? { customer_email: resolvedEmail } : {}),
       phone_number_collection: { enabled: true },
+      payment_intent_data: {
+        description: `${service.name}${guestName !== "Guest" ? ` — ${guestName}` : ""}${propertyName ? ` at ${propertyName}` : ""}${unitLabel ? ` Unit ${unitLabel}` : ""}`,
+      },
       line_items: [
         {
           price_data: {
             currency: "usd",
             product_data: {
-              name: service.name,
-              description: service.description,
+              name: `${service.name}${propertyName ? ` — ${propertyName}` : ""}${guestName !== "Guest" ? ` — ${guestName}` : ""}`.slice(0, 250),
+              description: `${service.description}${unitLabel ? ` | Unit ${unitLabel}` : ""}`,
             },
             unit_amount: service.amount,
           },

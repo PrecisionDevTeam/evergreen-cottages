@@ -81,13 +81,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Collect guest info for Hostaway reservation creation
       billing_address_collection: "required",
       phone_number_collection: { enabled: true },
+      payment_intent_data: {
+        description: `${property.name} | ${checkInFormatted} – ${checkOutFormatted} | ${nights} nights | ${guests} guest${Number(guests) > 1 ? "s" : ""}`,
+      },
       line_items: [
         {
           price_data: {
             currency: "usd",
             product_data: {
-              name: property.name,
-              description: `${nights} night${nights > 1 ? "s" : ""} | ${checkInFormatted} – ${checkOutFormatted} | ${guests} guest${guests > 1 ? "s" : ""}`,
+              name: `${property.name} | ${checkInFormatted} – ${checkOutFormatted}`,
+              description: `${nights} night${nights > 1 ? "s" : ""} | ${guests} guest${guests > 1 ? "s" : ""} | Direct booking`,
               images: property.images[0] ? [property.images[0]] : [],
             },
             unit_amount: Math.round(subtotal * 100),

@@ -110,6 +110,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       phone_number_collection: { enabled: true },
       // Pre-fill guest email resolved server-side from original reservation
       ...(resolvedEmail ? { customer_email: resolvedEmail } : {}),
+      payment_intent_data: {
+        description: `Stay Extension — ${property.name} | ${checkInFormatted} – ${checkOutFormatted} | ${nights} extra nights | No cleaning fee`,
+      },
       line_items: [
         {
           price_data: {
@@ -144,7 +147,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({ url: session.url });
   } catch (error) {
-    console.error("Extension checkout error:", error);
+    console.error("Extension checkout error:", error instanceof Error ? error.message : "Unknown");
     return res.status(500).json({ error: "Extension checkout failed. Please try again or call (510) 822-7060." });
   }
 }
