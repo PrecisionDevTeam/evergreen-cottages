@@ -21,20 +21,19 @@ type Service = {
 };
 
 const services: Service[] = [
-  {
-    title: "Airport Pickup",
-    price: "$25",
-    desc: "One-way pickup from Pensacola International Airport. Availability based on timing.",
-    icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />,
-    serviceId: "airport-pickup",
-  },
-  {
-    title: "Airport Drop-off",
-    price: "$25",
-    desc: "One-way drop-off to Pensacola International Airport.",
-    icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />,
-    serviceId: "airport-dropoff",
-  },
+  // Airport pickup/dropoff disabled — no car yet
+  // {
+  //   title: "Airport Pickup",
+  //   price: "$25",
+  //   desc: "One-way pickup from Pensacola International Airport.",
+  //   serviceId: "airport-pickup",
+  // },
+  // {
+  //   title: "Airport Drop-off",
+  //   price: "$25",
+  //   desc: "One-way drop-off to Pensacola International Airport.",
+  //   serviceId: "airport-dropoff",
+  // },
   {
     title: "Early Check-in (1 PM)",
     price: "$25",
