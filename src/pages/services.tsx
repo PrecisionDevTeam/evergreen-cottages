@@ -96,16 +96,13 @@ export const getStaticProps: GetStaticProps<ServicesPageProps> = async () => {
 export default function Services({ dbServices }: ServicesPageProps) {
   const [loading, setLoading] = useState<string | null>(null);
   const [showForm, setShowForm] = useState<string | null>(null);
-  const [guestName, setGuestName] = useState("");
   const [unitLabel, setUnitLabel] = useState("");
-  const [flightInfo, setFlightInfo] = useState("");
 
   const getPropertyName = () => {
     if (typeof window === "undefined") return "";
     return new URLSearchParams(window.location.search).get("property") || "";
   };
 
-  const isAirportService = (id: string) => id.startsWith("airport-");
   const autoOpened = useRef(false);
 
   // Auto-open form + scroll to the service if ?service= is in URL
@@ -127,14 +124,12 @@ export default function Services({ dbServices }: ServicesPageProps) {
 
   const handleBuyClick = (serviceId: string) => {
     setShowForm(serviceId);
-    setGuestName("");
     setUnitLabel("");
-    setFlightInfo("");
   };
 
   const handlePay = async (serviceId: string) => {
-    if (!guestName.trim()) {
-      alert("Please enter your name.");
+    if (!unitLabel) {
+      alert("Please select your unit number.");
       return;
     }
     setLoading(serviceId);
@@ -144,10 +139,8 @@ export default function Services({ dbServices }: ServicesPageProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           serviceId,
-          guestName: guestName.trim(),
           propertyName: getPropertyName(),
-          unitLabel: unitLabel.trim() || undefined,
-          flightInfo: flightInfo.trim() || undefined,
+          unitLabel: unitLabel,
         }),
       });
       const data = await res.json();
@@ -197,29 +190,18 @@ export default function Services({ dbServices }: ServicesPageProps) {
               <p className="text-sand-500 text-sm leading-relaxed mb-4 flex-1">{s.desc}</p>
               {s.serviceId && showForm === s.serviceId ? (
                 <div className="space-y-2 mt-2">
-                  <input
-                    type="text"
-                    placeholder="Your name *"
-                    value={guestName}
-                    onChange={(e) => setGuestName(e.target.value)}
-                    className="w-full border border-sand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-ocean-400"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Unit number (e.g. 5)"
-                    value={unitLabel}
-                    onChange={(e) => setUnitLabel(e.target.value)}
-                    className="w-full border border-sand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-ocean-400"
-                  />
-                  {isAirportService(s.serviceId) && (
+                  <div>
+                    <label className="block text-xs text-sand-400 mb-1">Unit number *</label>
                     <input
-                      type="text"
-                      placeholder="Flight info (airline, time)"
-                      value={flightInfo}
-                      onChange={(e) => setFlightInfo(e.target.value)}
-                      className="w-full border border-sand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-ocean-400"
+                      type="number"
+                      placeholder="e.g. 5"
+                      min="1"
+                      max="19"
+                      value={unitLabel}
+                      onChange={(e) => setUnitLabel(e.target.value)}
+                      className="w-full border border-sand-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-ocean-400"
                     />
-                  )}
+                  </div>
                   <button
                     onClick={() => handlePay(s.serviceId!)}
                     disabled={loading === s.serviceId}
