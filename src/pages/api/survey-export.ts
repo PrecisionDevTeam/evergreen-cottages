@@ -1,29 +1,22 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getPool } from "../../lib/db";
+import { prisma } from "../../lib/db";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // Simple admin auth via query param (Noah's use only)
   const key = req.query.key;
   if (key !== process.env.ADMIN_EXPORT_KEY && key !== "precision2026") {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const pool = getPool();
-
-  // Count
-  const countResult = await pool.query("SELECT COUNT(*) FROM guest_surveys");
-  const total = parseInt(countResult.rows[0].count, 10);
-
-  // Format
   const format = req.query.format;
+
   if (format === "csv") {
-    const result = await pool.query(
-      "SELECT * FROM guest_surveys ORDER BY created_at DESC"
-    );
+    const rows: any[] = await prisma.$queryRaw`
+      SELECT * FROM guest_surveys ORDER BY created_at DESC
+    `;
 
     const headers = [
       "Name", "Email", "Phone", "Unit", "Overall", "Cleanliness", "Check-in", "Value",
@@ -32,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ];
 
     let csv = headers.join(",") + "\n";
-    for (const r of result.rows) {
+    for (const r of rows) {
       csv += [
         `"${(r.guest_name || "").replace(/"/g, '""')}"`,
         r.guest_email || "",
@@ -60,21 +53,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // JSON summary
-  const statsResult = await pool.query(`
+  const stats: any[] = await prisma.$queryRaw`
     SELECT
-      COUNT(*) as total,
+      COUNT(*)::int as total,
       ROUND(AVG(overall_rating), 1) as avg_overall,
       ROUND(AVG(cleanliness_rating), 1) as avg_cleanliness,
-      COUNT(*) FILTER (WHERE would_book_direct = 'yes') as would_book_direct,
-      COUNT(*) FILTER (WHERE used_laundry = true) as used_laundry,
-      COUNT(*) FILTER (WHERE would_pay_wash_fold = true) as would_pay_wash_fold,
-      COUNT(*) FILTER (WHERE gift_card_sent = false) as pending_gift_cards
+      COUNT(*) FILTER (WHERE would_book_direct = 'yes')::int as would_book_direct,
+      COUNT(*) FILTER (WHERE used_laundry = true)::int as used_laundry,
+      COUNT(*) FILTER (WHERE would_pay_wash_fold = true)::int as would_pay_wash_fold,
+      COUNT(*) FILTER (WHERE gift_card_sent = false)::int as pending_gift_cards
     FROM guest_surveys
-  `);
+  `;
 
   return res.status(200).json({
-    total,
-    stats: statsResult.rows[0],
+    total: stats[0]?.total || 0,
+    stats: stats[0],
     csvUrl: `/api/survey-export?key=${key}&format=csv`,
   });
 }
