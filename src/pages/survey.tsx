@@ -49,8 +49,20 @@ export default function Survey() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!overall || !cleanliness) {
-      setError("Please rate your overall experience and cleanliness.");
+    const missing: string[] = [];
+    if (!name.trim()) missing.push("Name");
+    if (!email.trim()) missing.push("Email");
+    if (!property.trim()) missing.push("Unit you stayed at");
+    if (!overall) missing.push("Overall rating");
+    if (!cleanliness) missing.push("Cleanliness rating");
+    if (!checkin) missing.push("Check-in rating");
+    if (!valueRating) missing.push("Value rating");
+    if (!bookDirect) missing.push("Book direct question");
+    if (!usedLaundry) missing.push("Laundry question");
+    if (!washFold) missing.push("Wash & fold question");
+    if (!giftCardEmail.trim() && !email.trim()) missing.push("Gift card email");
+    if (missing.length > 0) {
+      setError("Please complete: " + missing.join(", "));
       return;
     }
     setSubmitting(true);
