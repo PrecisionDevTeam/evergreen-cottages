@@ -299,7 +299,7 @@ export default function Survey() {
           {/* Birthday */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6">
             <label className="block text-sm font-semibold text-gray-800 mb-1">Birthday (optional)</label>
-            <p className="text-xs text-gray-500 mb-2">We will send you a special discount on your birthday!</p>
+            <p className="text-xs text-gray-500 mb-2">Returning guests may receive a special birthday offer</p>
             <input type="date" value={birthday} onChange={(e) => setBirthday(e.target.value)}
               className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-teal-500" />
           </div>
