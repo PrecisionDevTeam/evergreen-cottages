@@ -16,7 +16,7 @@ export type DrinkItem = {
 export const SERVICE_FEE_CENTS = 1000;
 
 export const FL_ALCOHOL_DISCLAIMER =
-  "Alcoholic beverages are sold and supplied by Total Wine & More, a licensed Florida beverage retailer. Evergreen Cottages acts solely as a third-party service provider facilitating order placement and delivery. By placing this order, you acknowledge that you are at least 21 years of age. A valid government-issued photo ID must be presented at the time of delivery. Prices shown reflect the retailer's current pricing plus a 10% service markup. A non-refundable service fee is added to each order to cover platform maintenance and delivery services.";
+  "Alcoholic beverages are sold and supplied by Total Wine & More, a licensed Florida beverage retailer. Evergreen Cottages acts solely as a third-party service provider facilitating order placement and delivery. By placing this order, you acknowledge that you are at least 21 years of age. A valid government-issued photo ID must be presented at the time of delivery. A non-refundable service fee is added to each order to cover delivery services.";
 
 export const DELIVERY_OPTIONS = [
   { id: "asap", label: "Under 2 hours", description: "Staff orders immediately" },
