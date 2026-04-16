@@ -210,8 +210,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return res.status(200).json({ received: true });
         }
 
-        // Notify data hub (Noah gets SMS)
-        const itemList = itemEntries.map((e: any) => `${e.name} x${e.quantity}`).join(", ");
+        // Notify data hub (Noah + Jamie get SMS)
+        const itemList = itemEntries.map((e: any) => {
+          const cat = getItemById(e.itemId);
+          const size = cat ? cat.size : "";
+          return `${e.name} ${size} x${e.quantity}`;
+        }).join(", ");
+
+        // Resolve check-in date from current reservation
+        let checkInDate = "";
+        const propName = meta.propertyName || "";
+        if (propName && propName.length >= 5) {
+          try {
+            const prop = await prisma.property.findFirst({ where: { name: { contains: propName } } });
+            if (prop) {
+              const rez = await prisma.reservation.findFirst({
+                where: {
+                  property_id: prop.id,
+                  status: { notIn: ["cancelled", "canceled", "declined", "inquiry"] },
+                  check_in: { lte: new Date() },
+                  check_out: { gte: new Date() },
+                },
+                orderBy: { check_in: "desc" },
+              });
+              if (rez?.check_in) {
+                checkInDate = new Date(rez.check_in).toISOString().split("T")[0];
+              }
+            }
+          } catch {}
+        }
+
         const dataHubUrl = process.env.DATA_HUB_URL || "https://hostaway-data-hub-production-ffd2.up.railway.app";
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
@@ -232,7 +260,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               guestPhone: customer.phone || "",
               propertyName: meta.propertyName || "",
               unitLabel: meta.unitLabel || "",
-              checkInDate: "",
+              checkInDate,
               flightInfo: meta.deliveryPref || "",
               quantity: meta.itemCount || "1",
               stripeSessionId: session.id,

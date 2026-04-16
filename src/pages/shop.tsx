@@ -149,33 +149,6 @@ export default function ShopPage() {
       </section>
 
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-10">
-        {/* Guest info bar */}
-        <div className="bg-white rounded-2xl border border-sand-100 p-4 mb-8 flex flex-col sm:flex-row gap-3 items-end">
-          <div className="flex-1 min-w-0">
-            <label className="text-xs text-sand-400 font-semibold block mb-1">Your Name</label>
-            <input
-              type="text"
-              value={guestName}
-              onChange={(e) => setGuestName(e.target.value)}
-              placeholder="Guest name"
-              className="w-full border border-sand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-ocean-400"
-            />
-          </div>
-          <div className="w-full sm:w-32">
-            <label className="text-xs text-sand-400 font-semibold block mb-1">Unit #</label>
-            <input
-              type="text"
-              value={unitLabel}
-              onChange={(e) => setUnitLabel(e.target.value)}
-              placeholder="e.g. 5"
-              className="w-full border border-sand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-ocean-400"
-            />
-          </div>
-          {propertyName && (
-            <div className="text-xs text-sand-400 py-2">{propertyName}</div>
-          )}
-        </div>
-
         {/* Category filter */}
         <div className="flex gap-2 overflow-x-auto pb-2 mb-8 -mx-1 px-1">
           <button
@@ -284,6 +257,8 @@ export default function ShopPage() {
         checking={checking}
         guestName={guestName}
         unitLabel={unitLabel}
+        onGuestNameChange={setGuestName}
+        onUnitLabelChange={setUnitLabel}
       />
     </Layout>
   );

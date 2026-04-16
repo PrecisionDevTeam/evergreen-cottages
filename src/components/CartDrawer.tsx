@@ -16,6 +16,8 @@ type CartDrawerProps = {
   checking: boolean;
   guestName: string;
   unitLabel: string;
+  onGuestNameChange: (val: string) => void;
+  onUnitLabelChange: (val: string) => void;
 };
 
 function formatPrice(cents: number): string {
@@ -26,6 +28,7 @@ export default function CartDrawer({
   items, subtotal, serviceFee, total,
   onUpdateQuantity, onRemoveItem, onCheckout,
   isOpen, onClose, checking, guestName, unitLabel,
+  onGuestNameChange, onUnitLabelChange,
 }: CartDrawerProps) {
   const [deliveryPref, setDeliveryPref] = useState("asap");
   const [scheduledTime, setScheduledTime] = useState("");
@@ -156,9 +159,28 @@ export default function CartDrawer({
               <span className="text-ocean-900">{formatPrice(total)}</span>
             </div>
 
-            {(!guestName.trim() || !unitLabel.trim()) && (
-              <p className="text-xs text-amber-600 text-center">Enter your name and unit number above to checkout</p>
-            )}
+            <div className="flex gap-2 pt-1">
+              <div className="flex-1">
+                <label className="text-[10px] text-sand-400 font-semibold block mb-0.5">Your Name</label>
+                <input
+                  type="text"
+                  value={guestName}
+                  onChange={(e) => onGuestNameChange(e.target.value)}
+                  placeholder="Guest name"
+                  className="w-full border border-sand-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:border-ocean-400"
+                />
+              </div>
+              <div className="w-20">
+                <label className="text-[10px] text-sand-400 font-semibold block mb-0.5">Unit #</label>
+                <input
+                  type="text"
+                  value={unitLabel}
+                  onChange={(e) => onUnitLabelChange(e.target.value)}
+                  placeholder="e.g. 5"
+                  className="w-full border border-sand-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:border-ocean-400"
+                />
+              </div>
+            </div>
 
             <button
               onClick={() => onCheckout(deliveryPref, scheduledTime)}
