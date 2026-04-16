@@ -286,7 +286,7 @@ export default function Survey() {
               {[
                 { key: "50_off_night", label: "50% off one night (minimum 2-night stay)" },
                 { key: "1_free_of_3", label: "1 night free when you book 3 nights" },
-                { key: "neither", label: "Neither / Not planning to return" },
+                { key: "neither", label: "No preference" },
               ].map((opt) => (
                 <button key={opt.key} type="button" onClick={() => setDiscount(opt.key)}
                   className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition ${
