@@ -284,8 +284,8 @@ export default function Survey() {
             <h3 className="font-semibold text-gray-900 mb-2">Which discount would you prefer for your next stay? *</h3>
             <div className="space-y-2">
               {[
-                { key: "50_off_night", label: "50% off one night (minimum 2-night stay)" },
-                { key: "1_free_of_3", label: "1 night free when you book 3 nights" },
+                { key: "10_off_3nights", label: "10% off your next stay (3+ nights)" },
+                { key: "15_off_5nights", label: "15% off your next stay (5+ nights)" },
                 { key: "neither", label: "No preference" },
               ].map((opt) => (
                 <button key={opt.key} type="button" onClick={() => setDiscount(opt.key)}
