@@ -229,6 +229,13 @@ export default function Services({ dbServices }: ServicesPageProps) {
           ))}
         </div>
 
+        {/* Shop banner */}
+        <Link href="/shop" className="block mt-12 bg-ocean-900 text-white rounded-2xl p-8 text-center hover:bg-ocean-800 transition-colors">
+          <h2 className="text-2xl font-serif mb-2">Drinks & More</h2>
+          <p className="text-ocean-200">Wine, spirits, beer, and cocktail essentials — delivered same-day to your cottage.</p>
+          <span className="inline-block mt-4 text-sm font-semibold bg-white/10 px-5 py-2 rounded-full">Browse Shop</span>
+        </Link>
+
         <div className="text-center mt-16 bg-white rounded-2xl p-12 border border-sand-100">
           <h2 className="text-2xl font-serif text-ocean-500 mb-3">Questions?</h2>
           <p className="text-sand-500 mb-8">Call or text us and we&apos;ll handle everything.</p>

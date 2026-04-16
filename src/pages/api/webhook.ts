@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import Stripe from "stripe";
 import { buffer } from "micro";
 import { prisma } from "../../lib/db";
+import { getItemById } from "../../lib/shop-catalog";
 
 // @ts-ignore
 const stripe = new Stripe(process.env.STRIPE_API_KEY || "");
@@ -156,6 +157,90 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           console.log("SERVICE_PAYMENT_NOTIFIED:", meta.serviceName, meta.propertyName);
         } catch (err) {
           console.error("SERVICE_PAYMENT_NOTIFY_FAILED:", err instanceof Error ? err.message : "Unknown");
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      }
+
+      // Handle shop orders (Total Wine drinks)
+      if (meta.type === "shop") {
+        const customer = session.customer_details || {};
+
+        // Idempotency: skip if already processed
+        const existingShop = await prisma.shopOrder.findUnique({
+          where: { stripe_session_id: session.id },
+        });
+        if (existingShop) {
+          console.log("SHOP_ORDER_DUPLICATE_SKIPPED:", session.id);
+          return res.status(200).json({ received: true });
+        }
+
+        // Parse items from compact format "id:qty,id:qty"
+        const itemEntries = (meta.items || "").split(",").filter(Boolean).map((entry: string) => {
+          const [itemId, qtyStr] = entry.split(":");
+          const catalogItem = getItemById(itemId);
+          if (!catalogItem) {
+            console.warn("SHOP_ITEM_NOT_FOUND:", itemId);
+            return { itemId, name: itemId, quantity: parseInt(qtyStr, 10) || 1, priceInCents: 0 };
+          }
+          return { itemId, name: catalogItem.name, quantity: parseInt(qtyStr, 10) || 1, priceInCents: catalogItem.priceInCents };
+        });
+
+        // Create shop order in DB — use Stripe's authoritative total
+        try {
+          await prisma.shopOrder.create({
+            data: {
+              stripe_session_id: session.id,
+              property_name: meta.propertyName || null,
+              unit_label: meta.unitLabel || null,
+              guest_name: customer.name || meta.guestName || "Guest",
+              guest_email: customer.email || null,
+              guest_phone: customer.phone || null,
+              items_json: itemEntries,
+              subtotal_cents: parseInt(meta.subtotalCents, 10) || 0,
+              service_fee_cents: parseInt(meta.serviceFeeCents, 10) || 0,
+              total_cents: session.amount_total || 0,
+              delivery_pref: meta.deliveryPref || null,
+              status: "pending",
+            },
+          });
+          console.log("SHOP_ORDER_CREATED:", session.id);
+        } catch (err) {
+          console.error("SHOP_ORDER_CREATE_FAILED:", err instanceof Error ? err.message : "Unknown");
+          return res.status(200).json({ received: true });
+        }
+
+        // Notify data hub (Noah gets SMS)
+        const itemList = itemEntries.map((e: any) => `${e.name} x${e.quantity}`).join(", ");
+        const dataHubUrl = process.env.DATA_HUB_URL || "https://hostaway-data-hub-production-ffd2.up.railway.app";
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        try {
+          await fetch(`${dataHubUrl}/webhooks/service-payment`, {
+            method: "POST",
+            signal: controller.signal,
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${process.env.WEBHOOK_SECRET || ""}`,
+            },
+            body: JSON.stringify({
+              serviceName: `Drinks Order: ${itemList}`,
+              serviceId: "shop-order",
+              amount: (session.amount_total || 0) / 100,
+              guestName: customer.name || meta.guestName || "Guest",
+              guestEmail: customer.email || "",
+              guestPhone: customer.phone || "",
+              propertyName: meta.propertyName || "",
+              unitLabel: meta.unitLabel || "",
+              checkInDate: "",
+              flightInfo: meta.deliveryPref || "",
+              quantity: meta.itemCount || "1",
+              stripeSessionId: session.id,
+            }),
+          });
+          console.log("SHOP_ORDER_NOTIFIED:", meta.propertyName, itemList);
+        } catch (err) {
+          console.error("SHOP_ORDER_NOTIFY_FAILED:", err instanceof Error ? err.message : "Unknown");
         } finally {
           clearTimeout(timeoutId);
         }

@@ -17,6 +17,7 @@ type Props = {
 const navLinks = [
   { href: "/properties", label: "Properties" },
   { href: "/services", label: "Services" },
+  { href: "/shop", label: "Shop" },
   { href: "/about", label: "About" },
   { href: "/faq", label: "FAQ" },
   { href: "/contact", label: "Contact" },
@@ -216,6 +217,7 @@ export default function Layout({ children, title, description, dark, schema }: P
                 <Link href="/guide" className="hover:text-white transition-colors">Area Guide</Link>
                 <Link href="/services" className="hover:text-white transition-colors">Services</Link>
                 <Link href="/gift-cards" className="hover:text-white transition-colors">Gift Cards</Link>
+                <Link href="/shop" className="hover:text-white transition-colors">Drinks & More</Link>
               </div>
             </div>
             <div>

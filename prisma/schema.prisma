@@ -159,6 +159,28 @@ model WebsiteContent {
   @@map("website_content")
 }
 
+// Shop orders (Total Wine drinks, future: Amazon packages)
+model ShopOrder {
+  id                Int       @id @default(autoincrement())
+  stripe_session_id String?   @unique
+  property_name     String?
+  unit_label        String?
+  guest_name        String?
+  guest_email       String?
+  guest_phone       String?
+  items_json        Json
+  subtotal_cents    Int
+  service_fee_cents Int       @default(0)
+  total_cents       Int
+  delivery_pref     String?
+  status            String    @default("pending")
+  notes             String?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @default(now()) @updatedAt
+
+  @@map("shop_orders")
+}
+
 // Track processed Stripe events (idempotency guard)
 model ProcessedStripeEvent {
   id                 Int       @id @default(autoincrement())

@@ -200,6 +200,13 @@ const MyStay = ({ data }: Props) => {
               <div className="text-xs text-sand-500">$50 per pet</div>
             </Link>
           </div>
+          <Link
+            href={`/shop?property=${encodeURIComponent(property?.name || "")}&unit=${encodeURIComponent(property?.name?.match(/Unit\s*(\d+)/i)?.[1] || "")}`}
+            className="block mt-3 p-4 bg-ocean-900 text-white rounded-lg hover:bg-ocean-800 transition-colors text-center"
+          >
+            <div className="text-sm font-semibold">Drinks & More</div>
+            <div className="text-xs text-ocean-200">Wine, spirits & cocktail essentials — same-day delivery</div>
+          </Link>
         </div>
 
         {/* Troubleshooting */}
