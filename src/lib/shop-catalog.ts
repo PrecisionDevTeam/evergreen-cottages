@@ -8,6 +8,7 @@ export type DrinkItem = {
   taste: string[];
   category: DrinkCategory;
   priceInCents: number;
+  imageUrl?: string;
   maxQuantity: number;
   featured?: boolean;
 };
@@ -40,6 +41,7 @@ export const CATALOG: DrinkItem[] = [
     taste: ["Cherry", "Berry", "Vanilla"],
     description: "Crafted from California's top winegrowing regions, French oak-aged for unique structure and depth.",
     category: "wine",
+    imageUrl: "/shop/wine-meiomi-pinot-noir.webp",
     priceInCents: 1540,
 
     maxQuantity: 6,

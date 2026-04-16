@@ -26,7 +26,14 @@ function ProductCard({
 }) {
   return (
     <div className="bg-white rounded-2xl border border-sand-100 p-5 flex flex-col card-lift transition-shadow">
-      {/* Category color bar */}
+      {/* Product image */}
+      {item.imageUrl && (
+        <div className="flex justify-center mb-3">
+          <img src={item.imageUrl} alt={item.name} className="h-32 object-contain" />
+        </div>
+      )}
+
+      {/* Size + badge */}
       <div className="flex items-center justify-between mb-3">
         <span className="text-[10px] font-semibold text-sand-400 uppercase tracking-wider">
           {item.size}
