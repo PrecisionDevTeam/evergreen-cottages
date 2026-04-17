@@ -12,6 +12,7 @@ const SERVICES: Record<string, { name: string; amount: number; description: stri
   "early-checkin-standard": { name: "Early Check-in (1 PM)", amount: 2500, description: "Standard early check-in at 1:00 PM" },
   "early-checkin-super": { name: "Super Early Check-in (7 AM)", amount: 4000, description: "Super early check-in at 7:00 AM" },
   "pet-fee": { name: "Pet Fee", amount: 5000, description: "$50 per pet per stay" },
+  "gaming-wifi": { name: "Gaming WiFi", amount: 1000, description: "High-speed gaming WiFi upgrade for your stay" },
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
