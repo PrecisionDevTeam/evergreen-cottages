@@ -172,9 +172,12 @@ export default function Services({ dbServices }: ServicesPageProps) {
         <p className="text-sand-500 mb-12">Make your stay even better. Pay online or call to arrange.</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger">
-          {(dbServices
-            ? dbServices.map((ds) => {
-                // Match DB service to hardcoded one for icon + serviceId
+          {(() => {
+            // Merge DB services with hardcoded ones so new hardcoded items always show
+            let displayServices: Service[];
+            if (dbServices) {
+              const dbTitles = new Set(dbServices.map((ds) => ds.name.toLowerCase()));
+              const fromDb: Service[] = dbServices.map((ds) => {
                 const match = services.find((s) => s.title.toLowerCase() === ds.name.toLowerCase());
                 return {
                   title: ds.name,
@@ -182,10 +185,15 @@ export default function Services({ dbServices }: ServicesPageProps) {
                   desc: ds.desc,
                   icon: match?.icon || <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />,
                   serviceId: match?.serviceId,
-                } as Service;
-              })
-            : services
-          ).map((s) => (
+                };
+              });
+              const hardcodedOnly = services.filter((s) => !dbTitles.has(s.title.toLowerCase()));
+              displayServices = [...fromDb, ...hardcodedOnly];
+            } else {
+              displayServices = services;
+            }
+            return displayServices;
+          })().map((s) => (
             <div key={s.title} id={s.serviceId ? `service-${s.serviceId}` : undefined} className="bg-white border border-sand-100 rounded-2xl p-7 card-lift fade-in-up flex flex-col">
               <div className="w-12 h-12 bg-ocean-50 rounded-xl flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-ocean-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
