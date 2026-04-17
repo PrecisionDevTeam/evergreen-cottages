@@ -204,9 +204,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query }) => {
     const meta = session.metadata || {};
 
     const customer = session.customer_details || {};
-    const customFields = (session as any).custom_fields || [];
-    const guestNameField = customFields.find((f: any) => f.key === "guest_full_name");
-    const guestFullName = guestNameField?.text?.value || customer.name || "Guest";
+    const guestFullName = customer.name || "Guest";
 
     return {
       props: {
