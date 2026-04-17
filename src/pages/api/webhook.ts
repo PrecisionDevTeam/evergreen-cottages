@@ -110,7 +110,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
+    // Retrieve full session — event payload often lacks customer_details
+    const rawSession = event.data.object;
+    const session = await stripe.checkout.sessions.retrieve(rawSession.id, {
+      expand: ["customer_details"],
+    });
     const meta = session.metadata || {};
 
     if (session.payment_status === "paid") {
