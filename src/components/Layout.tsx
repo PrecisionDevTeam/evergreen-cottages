@@ -72,7 +72,7 @@ export default function Layout({ children, title, description, dark, schema }: P
       <nav
         className={`fixed top-0 w-full z-50 transition-all duration-300 ${
           scrolled
-            ? "bg-sand-50/95 backdrop-blur-md shadow-sm"
+            ? "bg-sand-50 backdrop-blur-md shadow-sm"
             : dark
             ? "bg-transparent"
             : "bg-sand-50/70 backdrop-blur-sm"
