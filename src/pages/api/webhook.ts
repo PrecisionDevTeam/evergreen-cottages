@@ -64,6 +64,7 @@ async function createHostawayReservation(session: any): Promise<any> {
     guestLastName: lastName,
     guestEmail: customer.email || "",
     guestPhone: customer.phone || "",
+    phone: customer.phone || "",
     // Use Stripe's authoritative total, not metadata
     totalPrice: (session.amount_total || 0) / 100,
     isPaid: 1,
