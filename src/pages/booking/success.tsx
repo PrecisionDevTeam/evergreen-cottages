@@ -1,5 +1,6 @@
 import { GetServerSideProps } from "next";
 import Link from "next/link";
+import { useState, useRef } from "react";
 import Layout from "../../components/Layout";
 import Stripe from "stripe";
 
@@ -13,11 +14,68 @@ type Props = {
   guests: string;
   nights: string;
   total: string;
+  guestName: string;
+  guestEmail: string;
+  sessionId: string;
 };
 
-export default function BookingSuccess({ propertyName, checkIn, checkOut, guests, nights, total }: Props) {
+export default function BookingSuccess({ propertyName, checkIn, checkOut, guests, nights, total, guestName, guestEmail, sessionId }: Props) {
   const checkInFormatted = new Date(checkIn + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
   const checkOutFormatted = new Date(checkOut + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+
+  const [idUploading, setIdUploading] = useState(false);
+  const [idUploaded, setIdUploaded] = useState(false);
+  const [idError, setIdError] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleIdUpload = async () => {
+    const file = fileRef.current?.files?.[0];
+    if (!file) return;
+
+    const allowed = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowed.includes(file.type)) {
+      setIdError("Please upload a JPEG, PNG, or WebP image.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setIdError("Photo must be under 10 MB.");
+      return;
+    }
+
+    setIdUploading(true);
+    setIdError("");
+
+    try {
+      // Convert file to base64 data URL
+      const reader = new FileReader();
+      const photoDataUrl = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const res = await fetch("/api/id-upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          photo: photoDataUrl,
+          guestName,
+          guestEmail,
+          propertyName,
+          stripeSessionId: sessionId,
+        }),
+      });
+      if (res.ok) {
+        setIdUploaded(true);
+      } else {
+        const data = await res.json();
+        setIdError(data.error || "Upload failed. Please try again.");
+      }
+    } catch {
+      setIdError("Connection error. Please try again.");
+    }
+    setIdUploading(false);
+  };
 
   return (
     <Layout title="Booking Confirmed" description="Your reservation has been confirmed.">
@@ -85,6 +143,40 @@ export default function BookingSuccess({ propertyName, checkIn, checkOut, guests
           </ul>
         </div>
 
+        {/* ID Upload */}
+        <div className="bg-white border border-sand-100 rounded-2xl p-6 text-left mb-8">
+          <h3 className="font-semibold text-ocean-700 mb-2">Photo ID Verification</h3>
+          <p className="text-sm text-sand-500 mb-4">
+            For the safety and security of our guests and properties, we require a photo of a valid government-issued ID (driver&apos;s license or passport) for all direct bookings. Your door code and check-in details will be sent once your ID is verified.
+          </p>
+
+          {idUploaded ? (
+            <div className="flex items-center gap-2 text-evergreen-600 text-sm font-medium">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              ID uploaded successfully. We&apos;ll verify it shortly.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="w-full text-sm text-sand-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-ocean-50 file:text-ocean-600 hover:file:bg-ocean-100"
+              />
+              {idError && <p className="text-sm text-red-500">{idError}</p>}
+              <button
+                onClick={handleIdUpload}
+                disabled={idUploading}
+                className="bg-ocean-500 text-white px-6 py-2.5 rounded-lg font-semibold text-sm hover:bg-ocean-600 transition disabled:opacity-50"
+              >
+                {idUploading ? "Uploading..." : "Upload ID"}
+              </button>
+            </div>
+          )}
+        </div>
+
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/properties" className="bg-ocean-500 text-white px-8 py-3.5 rounded-full font-semibold hover:bg-ocean-600 transition-all">
             Browse More Properties
@@ -100,7 +192,7 @@ export default function BookingSuccess({ propertyName, checkIn, checkOut, guests
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
   const sessionId = query.session_id as string;
-  if (!sessionId) {
+  if (!sessionId || !/^cs_(live|test)_[A-Za-z0-9]{10,}$/.test(sessionId)) {
     return { redirect: { destination: "/properties", permanent: false } };
   }
 
@@ -111,6 +203,11 @@ export const getServerSideProps: GetServerSideProps = async ({ query }) => {
     }
     const meta = session.metadata || {};
 
+    const customer = session.customer_details || {};
+    const customFields = (session as any).custom_fields || [];
+    const guestNameField = customFields.find((f: any) => f.key === "guest_full_name");
+    const guestFullName = guestNameField?.text?.value || customer.name || "Guest";
+
     return {
       props: {
         propertyName: meta.propertyName || "Evergreen Cottages",
@@ -119,6 +216,9 @@ export const getServerSideProps: GetServerSideProps = async ({ query }) => {
         guests: meta.guests || "1",
         nights: meta.nights || "1",
         total: meta.total || String((session.amount_total || 0) / 100),
+        guestName: guestFullName,
+        guestEmail: customer.email || "",
+        sessionId: sessionId,
       },
     };
   } catch {

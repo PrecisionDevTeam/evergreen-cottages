@@ -81,6 +81,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Collect guest info for Hostaway reservation creation
       billing_address_collection: "required",
       phone_number_collection: { enabled: true },
+      custom_fields: [
+        {
+          key: "guest_full_name",
+          label: { type: "custom", custom: "Guest Full Name" },
+          type: "text",
+        },
+      ],
       payment_intent_data: {
         description: `${property.name} | ${checkInFormatted} – ${checkOutFormatted} | ${nights} nights | ${guests} guest${Number(guests) > 1 ? "s" : ""}`,
       },

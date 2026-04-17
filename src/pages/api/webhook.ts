@@ -46,7 +46,11 @@ async function createHostawayReservation(session: any): Promise<any> {
   const token = await getHostawayToken();
   await new Promise((r) => setTimeout(r, 1100));
 
-  const nameParts = (customer.name || "Guest").split(" ");
+  // Prefer custom field guest name over billing name
+  const customFields = session.custom_fields || [];
+  const guestNameField = customFields.find((f: any) => f.key === "guest_full_name");
+  const guestFullName = guestNameField?.text?.value || customer.name || "Guest";
+  const nameParts = guestFullName.split(" ");
   const firstName = nameParts[0] || "Guest";
   const lastName = nameParts.slice(1).join(" ") || "Direct";
 
