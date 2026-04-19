@@ -519,6 +519,13 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     return { notFound: true };
   }
 
+  // Block clicks for cancelled/declined reservations — a guest could have
+  // received an SMS at 10 AM, cancelled at 11 AM, then tapped the link at 9 PM.
+  const DEAD_STATUSES = new Set(["cancelled", "canceled", "declined", "inquiry", "expired"]);
+  if (reservation.status && DEAD_STATUSES.has(reservation.status.toLowerCase())) {
+    return { notFound: true };
+  }
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const checkout = new Date(reservation.check_out);
