@@ -71,8 +71,8 @@ async function createHostawayReservation(session: any): Promise<any> {
     paymentStatus: "paid",
     currency: "USD",
     comment: meta.type === "extension"
-      ? `PAID $${((session.amount_total || 0) / 100).toFixed(2)} via Stripe. Stay extension (extends #${meta.originalReservationId || "?"}). Session: ${session.id}`
-      : `PAID $${((session.amount_total || 0) / 100).toFixed(2)} via Stripe. Direct booking.${meta.occasion ? ` Occasion: ${meta.occasion}.` : ""} Session: ${session.id}`,
+      ? `✅ PAID $${((session.amount_total || 0) / 100).toFixed(2)} via Stripe — DO NOT REQUEST PAYMENT. Stay extension (extends #${meta.originalReservationId || "?"}). Session: ${session.id}`
+      : `✅ PAID $${((session.amount_total || 0) / 100).toFixed(2)} via Stripe — DO NOT REQUEST PAYMENT. Direct booking via evergreencottages.com.${meta.occasion ? ` Occasion: ${meta.occasion}.` : ""} Session: ${session.id}`,
   };
 
   const resp = await fetch(`${HOSTAWAY_API}/reservations`, {
@@ -301,13 +301,54 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           });
 
           const result = await createHostawayReservation(session);
+          const hostawayId = result?.result?.id;
           console.log("HOSTAWAY_RESERVATION_CREATED:", JSON.stringify({
-            hostawayId: result?.result?.id || null,
+            hostawayId: hostawayId || null,
             propertyName: meta.propertyName,
             checkIn: meta.checkIn,
             checkOut: meta.checkOut,
             timestamp: new Date().toISOString(),
           }));
+
+          // Send Discord + SMS notification about the paid direct booking
+          // Only after Hostaway confirmed the reservation with an ID —
+          // prevents staff getting alerts for bookings that failed to create.
+          if (hostawayId) {
+            const customer = session.customer_details || {};
+            const bookingAmount = ((session.amount_total || 0) / 100).toFixed(2);
+            const dataHubUrl = process.env.DATA_HUB_URL || "https://hostaway-data-hub-production-ffd2.up.railway.app";
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            try {
+              await fetch(`${dataHubUrl}/webhooks/service-payment`, {
+                method: "POST",
+                signal: controller.signal,
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${process.env.WEBHOOK_SECRET || ""}`,
+                },
+                body: JSON.stringify({
+                  serviceName: `Direct Booking PAID $${bookingAmount}`,
+                  serviceId: "direct-booking",
+                  amount: parseFloat(bookingAmount),
+                  guestName: customer.name || "Guest",
+                  guestEmail: customer.email || "",
+                  guestPhone: customer.phone || "",
+                  propertyName: meta.propertyName || "",
+                  unitLabel: "",
+                  checkInDate: meta.checkIn || "",
+                  flightInfo: `${meta.nights || "?"}n · ${meta.guests || "?"}g · HA#${hostawayId}`,
+                  quantity: "1",
+                  stripeSessionId: session.id,
+                }),
+              });
+              console.log("DIRECT_BOOKING_NOTIFIED:", meta.propertyName, `$${bookingAmount}`, `HA#${hostawayId}`);
+            } catch (err) {
+              console.error("DIRECT_BOOKING_NOTIFY_FAILED:", err instanceof Error ? err.message : "Unknown");
+            } finally {
+              clearTimeout(timeoutId);
+            }
+          }
         } catch (err) {
           const message = err instanceof Error ? err.message : "Unknown error";
           console.error("HOSTAWAY_RESERVATION_FAILED:", JSON.stringify({
