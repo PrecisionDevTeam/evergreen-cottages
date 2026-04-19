@@ -1,17 +1,20 @@
 import Link from "next/link";
 import Layout from "../components/Layout";
 import PropertyCard from "../components/PropertyCard";
-import { getPropertiesWithOverrides, getReviews } from "../lib/db";
+import { getPropertiesWithOverrides, getReviews, getWebsiteContent } from "../lib/db";
 import { Property, Review } from "../types";
+
+type Hero = { headline: string; subtitle: string };
 
 type Props = {
   properties: Property[];
   reviews: Review[];
   reviewCount: number;
   avgRating: number;
+  hero: Hero;
 };
 
-const Home = ({ properties, reviews, reviewCount, avgRating }: Props) => {
+const Home = ({ properties, reviews, reviewCount, avgRating, hero }: Props) => {
   return (
     <Layout
       dark
@@ -59,11 +62,10 @@ const Home = ({ properties, reviews, reviewCount, avgRating }: Props) => {
               Pensacola, Florida
             </p>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-serif text-white leading-[1.1] mb-6 fade-in-up">
-              Pensacola Beach<br />Vacation Rentals
+              {hero.headline || <>Pensacola Beach<br />Vacation Rentals</>}
             </h1>
             <p className="text-lg text-white/70 mb-10 leading-relaxed max-w-lg fade-in-up" style={{ animationDelay: '0.15s' }}>
-              17 professionally managed cottages, minutes from the beach.
-              Book direct and save 10-15% vs Airbnb — no platform fees.
+              {hero.subtitle || "17 professionally managed cottages, minutes from the beach. Book direct and save 10-15% vs Airbnb — no platform fees."}
             </p>
             {/* Quick search */}
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 max-w-xl fade-in-up" style={{ animationDelay: '0.25s' }}>
@@ -243,7 +245,7 @@ export default Home;
 
 export const getServerSideProps = async () => {
   const { prisma } = await import("../lib/db");
-  const [properties, reviews, stats] = await Promise.all([
+  const [properties, reviews, stats, heroRaw] = await Promise.all([
     getPropertiesWithOverrides("Pensacola"),
     getReviews(6),
     prisma.review.aggregate({
@@ -251,7 +253,15 @@ export const getServerSideProps = async () => {
       _count: { id: true },
       where: { rating: { not: null }, review_content: { not: null } },
     }),
+    getWebsiteContent("homepage_hero"),
   ]);
+
+  // Hero has a default in the UI so an unedited/missing row is safe.
+  const heroObj = (heroRaw && typeof heroRaw === "object" ? heroRaw : {}) as Record<string, unknown>;
+  const hero: Hero = {
+    headline: typeof heroObj.headline === "string" ? heroObj.headline : "",
+    subtitle: typeof heroObj.subtitle === "string" ? heroObj.subtitle : "",
+  };
 
   return {
     props: {
@@ -267,6 +277,7 @@ export const getServerSideProps = async () => {
       reviews: JSON.parse(JSON.stringify(reviews)),
       reviewCount: stats._count.id || 0,
       avgRating: stats._avg.rating || 4.9,
+      hero,
     },
   };
 };
