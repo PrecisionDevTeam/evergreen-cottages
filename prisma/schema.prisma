@@ -85,6 +85,10 @@ model CalendarDay {
   date                  DateTime? @db.Date
   is_available          Int?
   price                 Float?
+  min_nights            Int?
+  max_nights            Int?
+  closed_on_arrival     Boolean?
+  closed_on_departure   Boolean?
   notes                 String?
 
   @@map("hostaway_calendar")

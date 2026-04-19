@@ -6,6 +6,13 @@ import { verifyOrigin, rateLimit } from "../../lib/api-security";
 // @ts-ignore
 const stripe = new Stripe(process.env.STRIPE_API_KEY || "");
 
+function formatDateLabel(dateStr: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+  return new Date(dateStr + "T12:00:00").toLocaleDateString("en-US", {
+    weekday: "short", month: "short", day: "numeric", year: "numeric",
+  });
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -38,14 +45,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ error: "Property not found" });
     }
 
-    // Fetch calendar for pricing + availability
-    const calendar = await getCalendar(property.hostaway_property_id, 180);
+    // Reject dates beyond our calendar window so we never silently bypass a restriction
+    const CALENDAR_WINDOW_DAYS = 365;
+    const maxAllowed = new Date();
+    maxAllowed.setDate(maxAllowed.getDate() + CALENDAR_WINDOW_DAYS);
+    if (new Date(checkOut) > maxAllowed) {
+      return res.status(400).json({
+        error: `We can only accept bookings up to ${CALENDAR_WINDOW_DAYS} days out. Please contact us for longer stays.`,
+      });
+    }
+
+    // Fetch calendar for pricing + availability + stay rules
+    const calendar = await getCalendar(property.hostaway_property_id, CALENDAR_WINDOW_DAYS);
     const calendarPrices: Record<string, number> = {};
     const blockedDates = new Set<string>();
+    const minNightsByDate: Record<string, number> = {};
+    const maxNightsByDate: Record<string, number> = {};
+    const closedArrival = new Set<string>();
+    const closedDeparture = new Set<string>();
     for (const day of calendar) {
       const key = String(day.date).split("T")[0];
       if (day.price) calendarPrices[key] = Number(day.price);
       if (!day.is_available) blockedDates.add(key);
+      if (day.min_nights && day.min_nights > 0) minNightsByDate[key] = day.min_nights;
+      if (day.max_nights && day.max_nights > 0) maxNightsByDate[key] = day.max_nights;
+      if (day.closed_on_arrival) closedArrival.add(key);
+      if (day.closed_on_departure) closedDeparture.add(key);
     }
 
     const start = new Date(checkIn);
@@ -53,6 +78,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const nights = Math.ceil((end.getTime() - start.getTime()) / 86400000);
     if (nights <= 0) {
       return res.status(400).json({ error: "Invalid dates" });
+    }
+
+    // Closed-on-arrival / closed-on-departure gates
+    if (closedArrival.has(checkIn)) {
+      return res.status(409).json({
+        error: `Check-in is not allowed on ${formatDateLabel(checkIn)}. Please pick another arrival date.`,
+      });
+    }
+    if (closedDeparture.has(checkOut)) {
+      return res.status(409).json({
+        error: `Check-out is not allowed on ${formatDateLabel(checkOut)}. Please pick another departure date.`,
+      });
+    }
+
+    // Minimum-night gate (based on check-in day's rule)
+    const minNightsRequired = minNightsByDate[checkIn] || 0;
+    if (minNightsRequired && nights < minNightsRequired) {
+      return res.status(409).json({
+        error: `This property requires a ${minNightsRequired}-night minimum for your selected dates. You selected ${nights} night${nights === 1 ? "" : "s"}.`,
+      });
+    }
+
+    // Maximum-night gate (based on check-in day's rule)
+    const maxNightsAllowed = maxNightsByDate[checkIn] || 0;
+    if (maxNightsAllowed && nights > maxNightsAllowed) {
+      return res.status(409).json({
+        error: `This property has a ${maxNightsAllowed}-night maximum for your selected dates. You selected ${nights} night${nights === 1 ? "" : "s"}.`,
+      });
     }
 
     // Check availability + calculate price
