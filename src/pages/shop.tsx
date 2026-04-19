@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "../lib/toast";
 import { useRouter } from "next/router";
 import Layout from "../components/Layout";
 import CartDrawer from "../components/CartDrawer";
@@ -134,11 +135,11 @@ export default function ShopPage() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert(data.error || "Checkout failed");
+        toast.error(data.error || "Checkout failed");
         setChecking(false);
       }
     } catch {
-      alert("Connection error. Please try again.");
+      toast.error("Connection error. Please try again.");
       setChecking(false);
     }
   };

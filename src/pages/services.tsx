@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { toast } from "../lib/toast";
 import Link from "next/link";
 import { GetStaticProps } from "next";
 import Layout from "../components/Layout";
@@ -136,7 +137,7 @@ export default function Services({ dbServices }: ServicesPageProps) {
 
   const handlePay = async (serviceId: string) => {
     if (!unitLabel) {
-      alert("Please select your unit number.");
+      toast.error("Please select your unit number.");
       return;
     }
     setLoading(serviceId);
@@ -159,7 +160,7 @@ export default function Services({ dbServices }: ServicesPageProps) {
     } catch (err) {
       setLoading(null);
       const message = err instanceof Error ? err.message : "Something went wrong";
-      alert(`Payment error: ${message}. Please call (510) 822-7060.`);
+      toast.error(`Payment error: ${message}. Please call (510) 822-7060.`);
     }
   };
 

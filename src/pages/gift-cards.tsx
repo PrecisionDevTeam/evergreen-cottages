@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "../lib/toast";
 import Layout from "../components/Layout";
 import Breadcrumbs from "../components/Breadcrumbs";
 
@@ -29,7 +30,7 @@ export default function GiftCards() {
     } catch (err) {
       setLoading(false);
       const msg = err instanceof Error ? err.message : "Something went wrong";
-      alert(`Error: ${msg}. Please call (510) 822-7060.`);
+      toast.error(`Error: ${msg}. Please call (510) 822-7060.`);
     }
   };
 

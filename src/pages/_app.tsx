@@ -1,6 +1,7 @@
 import ProgressBar from "@badrap/bar-of-progress";
 import type { AppProps } from "next/app";
 import { Router } from "next/router";
+import Toaster from "../components/Toaster";
 import "../styles/globals.css";
 
 const progress = new ProgressBar({
@@ -15,7 +16,12 @@ Router.events.on("routeChangeComplete", progress.finish);
 Router.events.on("routeChangeError", progress.finish);
 
 const MyApp = ({ Component, pageProps }: AppProps) => {
-  return <Component {...pageProps} />;
+  return (
+    <>
+      <Component {...pageProps} />
+      <Toaster />
+    </>
+  );
 };
 
 export default MyApp;

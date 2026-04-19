@@ -1,4 +1,5 @@
 import { GetServerSideProps } from "next";
+import { toast } from "../../lib/toast";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useMemo, useEffect } from "react";
@@ -288,7 +289,7 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNig
     } catch (err) {
       setBookingLoading(false);
       const message = err instanceof Error ? err.message : "Something went wrong";
-      alert(`Booking error: ${message}. Please call (510) 822-7060 to book.`);
+      toast.error(`Booking error: ${message}. Please call (510) 822-7060 to book.`);
     }
   };
 
