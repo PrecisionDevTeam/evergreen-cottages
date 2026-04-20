@@ -6,8 +6,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  const expectedKey = process.env.ADMIN_EXPORT_KEY;
+  if (!expectedKey) {
+    return res.status(500).json({ error: "Export not configured" });
+  }
   const key = req.query.key;
-  if (key !== process.env.ADMIN_EXPORT_KEY && key !== "precision2026") {
+  if (typeof key !== "string" || key !== expectedKey) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
@@ -20,28 +24,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const headers = [
       "Name", "Email", "Phone", "Unit", "Overall", "Cleanliness", "Check-in", "Value",
-      "Book Direct?", "Used Laundry?", "Wash & Fold?", "W&F Price",
-      "Birthday", "Suggestions", "Gift Card Email", "Gift Card Sent?", "Date"
+      "Traveled From", "Book Direct?", "Airport Pickup?", "Would Buy Items",
+      "Used Laundry?", "Wash & Fold?", "W&F Price", "Discount",
+      "Birthday", "What Liked", "What Different", "Gift Card Email", "Gift Card Type", "Gift Card Sent?", "Date"
     ];
+
+    const csvEscape = (v: unknown) =>
+      `"${String(v ?? "").replace(/"/g, '""').replace(/\r?\n/g, " ")}"`;
 
     let csv = headers.join(",") + "\n";
     for (const r of rows) {
       csv += [
-        `"${(r.guest_name || "").replace(/"/g, '""')}"`,
-        r.guest_email || "",
-        r.guest_phone || "",
-        `"${(r.property_name || "").replace(/"/g, '""')}"`,
-        r.overall_rating || "",
-        r.cleanliness_rating || "",
-        r.checkin_rating || "",
-        r.value_rating || "",
-        r.would_book_direct || "",
+        csvEscape(r.guest_name),
+        csvEscape(r.guest_email),
+        csvEscape(r.guest_phone),
+        csvEscape(r.property_name),
+        r.overall_rating ?? "",
+        r.cleanliness_rating ?? "",
+        r.checkin_rating ?? "",
+        r.value_rating ?? "",
+        csvEscape(r.traveled_from),
+        csvEscape(r.would_book_direct),
+        r.airport_pickup ? "Yes" : "No",
+        csvEscape(r.would_buy_items),
         r.used_laundry ? "Yes" : "No",
         r.would_pay_wash_fold ? "Yes" : "No",
-        r.wash_fold_price || "",
+        csvEscape(r.wash_fold_price),
+        csvEscape(r.preferred_discount),
         r.birthday ? new Date(r.birthday).toISOString().split("T")[0] : "",
-        `"${(r.suggestions || "").replace(/"/g, '""').replace(/\n/g, " ")}"`,
-        r.gift_card_email || "",
+        csvEscape(r.what_liked),
+        csvEscape(r.what_different),
+        csvEscape(r.gift_card_email),
+        csvEscape(r.gift_card_type),
         r.gift_card_sent ? "Yes" : "No",
         r.created_at ? new Date(r.created_at).toISOString().split("T")[0] : "",
       ].join(",") + "\n";
@@ -68,6 +82,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   return res.status(200).json({
     total: stats[0]?.total || 0,
     stats: stats[0],
-    csvUrl: `/api/survey-export?key=${key}&format=csv`,
+    csvUrl: `/api/survey-export?key=${encodeURIComponent(key)}&format=csv`,
   });
 }

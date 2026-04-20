@@ -1,9 +1,43 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../lib/db";
 
+const BOOK_DIRECT_VALUES = new Set(["yes", "maybe", "no"]);
+const DISCOUNT_VALUES = new Set(["10_off_3nights", "15_off_5nights", "neither"]);
+const GIFT_CARD_TYPES = new Set(["amazon", "starbucks"]);
+const WASH_FOLD_PRICES = new Set(["", "$5", "$10", "$15", "$20+"]);
+
+const clampRating = (n: unknown) => {
+  const x = Number(n);
+  return Number.isFinite(x) ? Math.min(Math.max(1, Math.round(x)), 5) : null;
+};
+
+type RateBucket = { count: number; reset: number };
+const rateBuckets = new Map<string, RateBucket>();
+const RATE_LIMIT = 5;
+const RATE_WINDOW_MS = 10 * 60 * 1000;
+
+const checkRate = (ip: string) => {
+  const now = Date.now();
+  const bucket = rateBuckets.get(ip);
+  if (!bucket || bucket.reset < now) {
+    rateBuckets.set(ip, { count: 1, reset: now + RATE_WINDOW_MS });
+    return true;
+  }
+  bucket.count += 1;
+  return bucket.count <= RATE_LIMIT;
+};
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  const ip =
+    (req.headers["x-forwarded-for"] as string | undefined)?.split(",")[0]?.trim() ||
+    req.socket.remoteAddress ||
+    "unknown";
+  if (!checkRate(ip)) {
+    return res.status(429).json({ error: "Too many submissions. Please try again later." });
   }
 
   const {
@@ -13,9 +47,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     bookDirect, airportPickup, wouldBuyItems,
     usedLaundry, washFold, washFoldPrice,
     discount, birthday, giftCardEmail, giftCardType,
-  } = req.body;
+  } = req.body ?? {};
 
-  if (!name || !email || !overall || !cleanliness || !checkin || !value) {
+  const overallRating = clampRating(overall);
+  const cleanlinessRating = clampRating(cleanliness);
+  const checkinRating = clampRating(checkin);
+  const valueRating = clampRating(value);
+
+  if (!name || !email || !overallRating || !cleanlinessRating || !checkinRating || !valueRating) {
     return res.status(400).json({ error: "Name, email, and all ratings are required" });
   }
   if (!traveledFrom?.trim() || !whatLiked?.trim() || !bookDirect || !discount) {
@@ -23,8 +62,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
+  if (!emailRegex.test(email) || email.length > 254) {
     return res.status(400).json({ error: "Invalid email address" });
+  }
+  const giftCardEmailValue = (giftCardEmail || email).toString();
+  if (giftCardEmailValue && (!emailRegex.test(giftCardEmailValue) || giftCardEmailValue.length > 254)) {
+    return res.status(400).json({ error: "Invalid gift card email" });
+  }
+
+  const bookDirectValue = String(bookDirect).toLowerCase();
+  if (!BOOK_DIRECT_VALUES.has(bookDirectValue)) {
+    return res.status(400).json({ error: "Invalid book direct value" });
+  }
+  const discountValue = String(discount);
+  if (!DISCOUNT_VALUES.has(discountValue)) {
+    return res.status(400).json({ error: "Invalid discount preference" });
+  }
+  const giftCardTypeValue = String(giftCardType || "amazon").toLowerCase();
+  if (!GIFT_CARD_TYPES.has(giftCardTypeValue)) {
+    return res.status(400).json({ error: "Invalid gift card type" });
+  }
+  const washFoldPriceValue = String(washFoldPrice || "");
+  if (!WASH_FOLD_PRICES.has(washFoldPriceValue)) {
+    return res.status(400).json({ error: "Invalid wash & fold price" });
   }
 
   const birthdayValue = birthday && /^\d{4}-\d{2}-\d{2}$/.test(birthday) ? birthday : null;
@@ -39,27 +99,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
          used_laundry, would_pay_wash_fold, wash_fold_price,
          preferred_discount, birthday, gift_card_email, gift_card_type)
        VALUES (
-         ${(name || "").slice(0, 100)},
-         ${(phone || "").slice(0, 20)},
-         ${(email || "").slice(0, 100)},
-         ${(property || "").slice(0, 100)},
-         ${Math.min(Math.max(1, overall || 1), 5)},
-         ${Math.min(Math.max(1, cleanliness || 1), 5)},
-         ${checkin ? Math.min(Math.max(1, checkin), 5) : null},
-         ${value ? Math.min(Math.max(1, value), 5) : null},
-         ${(traveledFrom || "").slice(0, 200)},
-         ${(whatLiked || "").slice(0, 1000)},
-         ${(whatDifferent || "").slice(0, 1000)},
-         ${(bookDirect || "").slice(0, 20)},
-         ${airportPickup || false},
-         ${(wouldBuyItems || "nothing").slice(0, 500)},
-         ${usedLaundry || false},
-         ${washFold || false},
-         ${(washFoldPrice || "").slice(0, 10)},
-         ${(discount || "").slice(0, 50)},
+         ${String(name).slice(0, 100)},
+         ${String(phone || "").slice(0, 20)},
+         ${String(email).slice(0, 254)},
+         ${String(property || "").slice(0, 100)},
+         ${overallRating},
+         ${cleanlinessRating},
+         ${checkinRating},
+         ${valueRating},
+         ${String(traveledFrom).slice(0, 200)},
+         ${String(whatLiked).slice(0, 1000)},
+         ${String(whatDifferent || "").slice(0, 1000)},
+         ${bookDirectValue},
+         ${Boolean(airportPickup)},
+         ${String(wouldBuyItems || "nothing").slice(0, 500)},
+         ${Boolean(usedLaundry)},
+         ${Boolean(washFold)},
+         ${washFoldPriceValue},
+         ${discountValue},
          ${birthdayValue ? new Date(birthdayValue) : null},
-         ${(giftCardEmail || email || "").slice(0, 100)},
-         ${(giftCardType || "amazon").slice(0, 20)}
+         ${giftCardEmailValue.slice(0, 254)},
+         ${giftCardTypeValue}
        )`;
 
     // Discord notification
@@ -71,14 +131,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             content: `New Survey Response\n` +
-              `Guest: ${(name || "").slice(0, 50)}\n` +
-              `Unit: ${(property || "N/A").slice(0, 50)} | From: ${(traveledFrom || "N/A").slice(0, 50)}\n` +
-              `Overall: ${overall}/5 | Cleanliness: ${cleanliness}/5\n` +
-              `Book direct: ${bookDirect || "N/A"} | Airport pickup: ${airportPickup ? "Yes" : "No"}\n` +
-              `Laundry: ${usedLaundry ? "Yes" : "No"} | W&F: ${washFold ? `Yes (${washFoldPrice})` : "No"}\n` +
-              `Discount: ${discount || "N/A"} | Gift card: ${giftCardType || "amazon"}\n` +
-              (whatLiked ? `Liked: "${(whatLiked || "").slice(0, 150)}"\n` : "") +
-              (whatDifferent ? `Different: "${(whatDifferent || "").slice(0, 150)}"` : ""),
+              `Guest: ${String(name).slice(0, 50)}\n` +
+              `Unit: ${String(property || "N/A").slice(0, 50)} | From: ${String(traveledFrom).slice(0, 50)}\n` +
+              `Overall: ${overallRating}/5 | Cleanliness: ${cleanlinessRating}/5\n` +
+              `Book direct: ${bookDirectValue} | Airport pickup: ${airportPickup ? "Yes" : "No"}\n` +
+              `Laundry: ${usedLaundry ? "Yes" : "No"} | W&F: ${washFold ? `Yes (${washFoldPriceValue})` : "No"}\n` +
+              `Discount: ${discountValue} | Gift card: ${giftCardTypeValue}\n` +
+              (whatLiked ? `Liked: "${String(whatLiked).slice(0, 150)}"\n` : "") +
+              (whatDifferent ? `Different: "${String(whatDifferent).slice(0, 150)}"` : ""),
           }),
         });
       }
