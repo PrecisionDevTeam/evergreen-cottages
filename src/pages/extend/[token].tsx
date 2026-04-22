@@ -154,6 +154,7 @@ function ExtendCalendar({
 }
 
 function ExtendStayCombined({
+  propertyId,
   propertyName,
   propertyImage,
   currentCheckout,
@@ -278,7 +279,7 @@ function ExtendStayCombined({
     setError("");
     try {
       const body = selectedDate
-        ? { token, checkIn: currentCheckout, checkOut: selectedDate, guests, originalReservationId, variant: "same" }
+        ? { token, propertyId, checkIn: currentCheckout, checkOut: selectedDate, guests, originalReservationId, variant: "same" }
         : { token, propertyId: selectedUnit!.propertyId, checkIn: currentCheckout, checkOut: selectedOtherDate!, guests, originalReservationId, variant: "other" };
 
       const resp = await fetch("/api/extension-checkout", {
