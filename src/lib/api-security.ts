@@ -1,7 +1,13 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://evergreencottages.com";
-const ALLOWED_ORIGINS = [BASE_URL, "https://evergreencottages.com", "http://localhost:3000"];
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://evergreencottagespensacola.com";
+const ALLOWED_ORIGINS = [
+  BASE_URL,
+  "https://evergreencottagespensacola.com",
+  "https://www.evergreencottagespensacola.com",
+  "https://evergreencottages.com",
+  "https://www.evergreencottages.com",
+];
 
 /**
  * Verify the request origin matches our domain (CSRF protection).
@@ -9,7 +15,8 @@ const ALLOWED_ORIGINS = [BASE_URL, "https://evergreencottages.com", "http://loca
  */
 export function verifyOrigin(req: NextApiRequest, res: NextApiResponse): boolean {
   const origin = req.headers.origin || req.headers.referer || "";
-  const isAllowed = ALLOWED_ORIGINS.some((allowed) => origin.startsWith(allowed));
+  const isAllowed = ALLOWED_ORIGINS.some((allowed) => origin.startsWith(allowed))
+    || /^http:\/\/localhost(:\d+)?/.test(origin);
   if (!isAllowed) {
     res.status(403).json({ error: "Forbidden" });
     return false;

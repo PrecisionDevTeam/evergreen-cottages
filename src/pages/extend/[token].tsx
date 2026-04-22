@@ -15,6 +15,7 @@ type VacantUnit = {
   name: string;
   hostawayListingId: string;
   nightlyPrice: number;
+  calendar: CalendarDay[];
 };
 
 type Props = {
@@ -29,7 +30,6 @@ type Props = {
   hostawayListingId: string;
   calendar: CalendarDay[];
   basePrice: number;
-  // other-unit only
   vacantUnits: VacantUnit[];
   discountPercent: number;
   unitChangeCleaningFee: number;
@@ -70,7 +70,6 @@ function ExtendCalendar({
     return map;
   }, [availableDates, basePrice]);
 
-  // Parse once to avoid timezone drift from repeated Date construction
   const firstAvailableAnchor = useMemo(() => {
     const first = availableDates[0];
     return first
@@ -84,7 +83,6 @@ function ExtendCalendar({
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
 
-  // Block going back past the first month that has selectable dates
   const canGoPrev = viewYear > startYear || (viewYear === startYear && viewMonth > startMonth);
 
   const prevMonth = () => {
@@ -105,7 +103,7 @@ function ExtendCalendar({
   }
 
   return (
-    <div className="bg-white border border-sand-200 rounded-2xl p-4 mb-6 shadow-sm">
+    <div className="bg-white border border-sand-200 rounded-2xl p-4 mb-4 shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <button onClick={prevMonth} disabled={!canGoPrev}
           className="p-2 rounded-lg hover:bg-sand-100 disabled:opacity-30 disabled:cursor-default transition-colors">
@@ -156,7 +154,6 @@ function ExtendCalendar({
 }
 
 function ExtendStayCombined({
-  propertyId,
   propertyName,
   propertyImage,
   currentCheckout,
@@ -172,6 +169,7 @@ function ExtendStayCombined({
 }: Props) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedUnitId, setSelectedUnitId] = useState<number | null>(null);
+  const [selectedOtherDate, setSelectedOtherDate] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -179,7 +177,7 @@ function ExtendStayCombined({
     weekday: "short", month: "short", day: "numeric",
   });
 
-  // Break on the first unavailable day — can't skip over a blocked night on the same unit.
+  // Same-unit: consecutive available nights from current checkout
   const availableDates = useMemo(() => {
     const dates: CalendarDay[] = [];
     for (const day of calendar) {
@@ -194,22 +192,41 @@ function ExtendStayCombined({
   const [viewMonth, setViewMonth] = useState(firstAvailAnchor.getMonth());
   const [viewYear, setViewYear] = useState(firstAvailAnchor.getFullYear());
 
-  const tomorrow = useMemo(() => {
-    const d = new Date(currentCheckout + "T12:00:00");
-    d.setDate(d.getDate() + 1);
-    return d.toISOString().split("T")[0];
-  }, [currentCheckout]);
+  // Other-unit calendar navigation state (reset when a new unit is picked)
+  const [otherViewMonth, setOtherViewMonth] = useState(firstAvailAnchor.getMonth());
+  const [otherViewYear, setOtherViewYear] = useState(firstAvailAnchor.getFullYear());
 
   const selectedUnit = vacantUnits.find((u) => u.propertyId === selectedUnitId) ?? null;
+
+  // Consecutive available nights for the selected other unit
+  const otherAvailableDates = useMemo(() => {
+    if (!selectedUnit) return [];
+    const dates: CalendarDay[] = [];
+    for (const day of selectedUnit.calendar) {
+      if (!day.available) break;
+      dates.push(day);
+    }
+    return dates;
+  }, [selectedUnit]);
 
   // Picking a date clears unit selection and vice versa
   function pickDate(date: string) {
     setSelectedDate(date);
     setSelectedUnitId(null);
+    setSelectedOtherDate(null);
   }
+
   function pickUnit(id: number) {
+    const unit = vacantUnits.find((u) => u.propertyId === id);
     setSelectedUnitId(id);
     setSelectedDate(null);
+    setSelectedOtherDate(null);
+    if (unit && unit.calendar.length > 0) {
+      const first = unit.calendar[0];
+      const anchor = new Date(first.date + "T12:00:00");
+      setOtherViewMonth(anchor.getMonth());
+      setOtherViewYear(anchor.getFullYear());
+    }
   }
 
   const samePricing = useMemo(() => {
@@ -232,18 +249,27 @@ function ExtendStayCombined({
   }, [selectedDate, availableDates, basePrice, discountPercent]);
 
   const otherPricing = useMemo(() => {
-    if (!selectedUnit) return null;
-    const subtotal = Math.round(selectedUnit.nightlyPrice);
-    const discount = Math.round(subtotal * (discountPercent / 100));
+    if (!selectedUnit || !selectedOtherDate) return null;
+    let subtotal = 0;
+    let nights = 0;
+    for (const day of otherAvailableDates) {
+      nights++;
+      subtotal += day.price || selectedUnit.nightlyPrice;
+      if (day.date === selectedOtherDate) break;
+    }
+    if (nights === 0) return null;
+    const discountAmount = Math.round(subtotal * (discountPercent / 100));
     return {
+      nights,
       subtotal,
-      discount,
+      discount: discountAmount,
       cleaningFee: unitChangeCleaningFee,
-      total: subtotal - discount + unitChangeCleaningFee,
+      total: subtotal - discountAmount + unitChangeCleaningFee,
+      perNight: nights > 0 ? Math.round(subtotal / nights) : 0,
     };
-  }, [selectedUnit, discountPercent, unitChangeCleaningFee]);
+  }, [selectedUnit, selectedOtherDate, otherAvailableDates, discountPercent, unitChangeCleaningFee]);
 
-  const canSubmit = (selectedDate && !!samePricing) || (!!selectedUnit && !!otherPricing);
+  const canSubmit = (!!selectedDate && !!samePricing) || (!!selectedUnit && !!selectedOtherDate && !!otherPricing);
   const totalToPay = selectedDate ? (samePricing?.total ?? 0) : (otherPricing?.total ?? 0);
 
   async function handleSubmit() {
@@ -252,8 +278,9 @@ function ExtendStayCombined({
     setError("");
     try {
       const body = selectedDate
-        ? { token, propertyId, checkIn: currentCheckout, checkOut: selectedDate, guests, originalReservationId, variant: "same" }
-        : { token, propertyId: selectedUnit!.propertyId, checkIn: currentCheckout, checkOut: tomorrow, guests, originalReservationId, variant: "other" };
+        ? { token, checkIn: currentCheckout, checkOut: selectedDate, guests, originalReservationId, variant: "same" }
+        : { token, propertyId: selectedUnit!.propertyId, checkIn: currentCheckout, checkOut: selectedOtherDate!, guests, originalReservationId, variant: "other" };
+
       const resp = await fetch("/api/extension-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -315,6 +342,28 @@ function ExtendStayCombined({
               setViewMonth={setViewMonth}
               setViewYear={setViewYear}
             />
+            {samePricing && selectedDate && (
+              <div className="bg-white border border-sand-200 rounded-xl p-5 shadow-sm mb-2">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-ocean-600">${samePricing.perNight} × {samePricing.nights} night{samePricing.nights > 1 ? "s" : ""}</span>
+                  <span className="text-ocean-900">${samePricing.subtotal}</span>
+                </div>
+                {discountPercent > 0 && samePricing.discount > 0 && (
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-evergreen-700">Extension discount ({discountPercent}%)</span>
+                    <span className="text-evergreen-600 font-semibold">−${samePricing.discount}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-ocean-600">Cleaning fee</span>
+                  <span className="text-evergreen-600 font-semibold">Waived</span>
+                </div>
+                <div className="border-t border-sand-200 pt-3 flex justify-between items-center">
+                  <span className="text-ocean-900 font-bold">Total</span>
+                  <span className="text-ocean-900 font-bold text-xl">${samePricing.total}</span>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="bg-coral-50 border border-coral-200 rounded-xl p-4 mb-6 text-center">
@@ -327,8 +376,8 @@ function ExtendStayCombined({
         {vacantUnits.length > 0 && (
           <div className="mb-6">
             <h2 className="font-display text-lg text-ocean-900 mb-1">Or move to another unit</h2>
-            <p className="text-sm text-sand-400 mb-3">{discountPercent}% off · ${unitChangeCleaningFee} cleaning fee · 1 night</p>
-            <div className="space-y-2">
+            <p className="text-sm text-sand-400 mb-3">{discountPercent}% off · ${unitChangeCleaningFee} cleaning fee</p>
+            <div className="space-y-2 mb-4">
               {vacantUnits.map((unit) => {
                 const isSelected = selectedUnitId === unit.propertyId;
                 const discounted = Math.round(unit.nightlyPrice * (1 - discountPercent / 100));
@@ -349,53 +398,53 @@ function ExtendStayCombined({
                 );
               })}
             </div>
-          </div>
-        )}
 
-        {/* Pricing summary */}
-        {samePricing && selectedDate && (
-          <div className="bg-white border border-sand-200 rounded-xl p-5 mb-6 shadow-sm">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-ocean-600">${samePricing.perNight} × {samePricing.nights} night{samePricing.nights > 1 ? "s" : ""}</span>
-              <span className="text-ocean-900">${samePricing.subtotal}</span>
-            </div>
-            {discountPercent > 0 && samePricing.discount > 0 && (
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-evergreen-700">Extension discount ({discountPercent}%)</span>
-                <span className="text-evergreen-600 font-semibold">−${samePricing.discount}</span>
+            {/* Calendar for selected other unit */}
+            {selectedUnit && (
+              <div className="mt-1">
+                {otherAvailableDates.length > 0 ? (
+                  <>
+                    <p className="text-sm text-ocean-600 font-medium mb-2">Pick your new checkout date</p>
+                    <ExtendCalendar
+                      currentCheckout={currentCheckout}
+                      availableDates={otherAvailableDates}
+                      basePrice={selectedUnit.nightlyPrice}
+                      selectedDate={selectedOtherDate}
+                      onSelect={setSelectedOtherDate}
+                      viewMonth={otherViewMonth}
+                      viewYear={otherViewYear}
+                      setViewMonth={setOtherViewMonth}
+                      setViewYear={setOtherViewYear}
+                    />
+                  </>
+                ) : (
+                  <p className="text-sm text-sand-400 mb-4">Only 1 night available in this unit.</p>
+                )}
+
+                {otherPricing && selectedOtherDate && (
+                  <div className="bg-white border border-sand-200 rounded-xl p-5 shadow-sm">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-ocean-600">${otherPricing.perNight} × {otherPricing.nights} night{otherPricing.nights > 1 ? "s" : ""} — {selectedUnit.name}</span>
+                      <span className="text-ocean-900">${otherPricing.subtotal}</span>
+                    </div>
+                    {discountPercent > 0 && (
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-evergreen-700">Extension discount ({discountPercent}%)</span>
+                        <span className="text-evergreen-600 font-semibold">−${otherPricing.discount}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-ocean-600">Cleaning fee</span>
+                      <span className="text-ocean-900">${otherPricing.cleaningFee}</span>
+                    </div>
+                    <div className="border-t border-sand-200 pt-3 flex justify-between items-center">
+                      <span className="text-ocean-900 font-bold">Total</span>
+                      <span className="text-ocean-900 font-bold text-xl">${otherPricing.total}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-ocean-600">Cleaning fee</span>
-              <span className="text-evergreen-600 font-semibold">Waived</span>
-            </div>
-            <div className="border-t border-sand-200 pt-3 flex justify-between items-center">
-              <span className="text-ocean-900 font-bold">Total</span>
-              <span className="text-ocean-900 font-bold text-xl">${samePricing.total}</span>
-            </div>
-          </div>
-        )}
-
-        {otherPricing && selectedUnit && (
-          <div className="bg-white border border-sand-200 rounded-xl p-5 mb-6 shadow-sm">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-ocean-600">1 night — {selectedUnit.name}</span>
-              <span className="text-ocean-900">${otherPricing.subtotal}</span>
-            </div>
-            {discountPercent > 0 && (
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-evergreen-700">Extension discount ({discountPercent}%)</span>
-                <span className="text-evergreen-600 font-semibold">−${otherPricing.discount}</span>
-              </div>
-            )}
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-ocean-600">Cleaning fee</span>
-              <span className="text-ocean-900">${otherPricing.cleaningFee}</span>
-            </div>
-            <div className="border-t border-sand-200 pt-3 flex justify-between items-center">
-              <span className="text-ocean-900 font-bold">Total</span>
-              <span className="text-ocean-900 font-bold text-xl">${otherPricing.total}</span>
-            </div>
           </div>
         )}
 
@@ -414,7 +463,7 @@ function ExtendStayCombined({
               : "bg-sand-200 text-sand-400 cursor-not-allowed"
           }`}
         >
-          {loading ? "Processing..." : canSubmit ? `Pay $${totalToPay} & Extend` : "Select dates or a unit"}
+          {loading ? "Processing..." : canSubmit ? `Pay $${totalToPay} & Extend` : "Select a checkout date"}
         </button>
 
         <p className="text-center text-ocean-400 text-xs mt-4 leading-relaxed">
@@ -466,7 +515,7 @@ function verifyToken(token: string): Decoded | null {
       if (exp < Math.floor(Date.now() / 1000)) return null;
       const payload = `v2:${resId}:${guestId}:${variant}:${exp}`;
       const expected = crypto.createHmac("sha256", secret).update(payload).digest("hex");
-      if (!crypto.timingSafeEqual(Buffer.from(sig, "hex"), Buffer.from(expected, "hex"))) return null;
+      if (!crypto.timingSafeEqual(new Uint8Array(Buffer.from(sig, "hex")), new Uint8Array(Buffer.from(expected, "hex")))) return null;
       return { reservationId: resId, guestId, variant, version: 2 };
     } catch {
       return null;
@@ -483,7 +532,7 @@ function verifyToken(token: string): Decoded | null {
       if (!/^[0-9a-f]{64}$/i.test(sig)) return null;
       const payload = `${resId}:${guestId}`;
       const expected = crypto.createHmac("sha256", secret).update(payload).digest("hex");
-      if (!crypto.timingSafeEqual(Buffer.from(sig, "hex"), Buffer.from(expected, "hex"))) return null;
+      if (!crypto.timingSafeEqual(new Uint8Array(Buffer.from(sig, "hex")), new Uint8Array(Buffer.from(expected, "hex")))) return null;
       return { reservationId: resId, guestId, variant: "same", version: 1 };
     } catch {
       return null;
@@ -499,7 +548,7 @@ async function fetchExtensionSettings(): Promise<{
 }> {
   const dataHubUrl = process.env.DATA_HUB_URL || "";
   const webhookSecret = process.env.WEBHOOK_SECRET || "";
-  const fallback = { discount_percent: 10, unit_change_cleaning_fee: 40 };
+  const fallback = { discount_percent: 5, unit_change_cleaning_fee: 40 };
   if (!dataHubUrl || !webhookSecret) return fallback;
   try {
     const resp = await fetch(`${dataHubUrl}/admin/api/settings/extension`, {
@@ -535,8 +584,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     return { notFound: true };
   }
 
-  // Block clicks for cancelled/declined reservations — a guest could have
-  // received an SMS at 10 AM, cancelled at 11 AM, then tapped the link at 9 PM.
   const DEAD_STATUSES = new Set(["cancelled", "canceled", "declined", "inquiry", "expired"]);
   if (reservation.status && DEAD_STATUSES.has(reservation.status.toLowerCase())) {
     return { notFound: true };
@@ -551,7 +598,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const hostawayListingId = reservation.property.hostaway_property_id || "";
   const checkoutStr = checkout.toISOString().split("T")[0];
   const calendarEnd = new Date(checkout);
-  calendarEnd.setDate(calendarEnd.getDate() + 14);
+  calendarEnd.setDate(calendarEnd.getDate() + 30);
 
   const calendarRows = await prisma.calendarDay.findMany({
     where: { hostaway_listing_id: hostawayListingId, date: { gte: checkout, lte: calendarEnd } },
@@ -582,8 +629,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   const settings = await fetchExtensionSettings();
 
-  // Always fetch vacant Pensacola units — shown as alternative options on the page
-  // regardless of whether the same unit has availability.
   let vacantUnits: VacantUnit[] = [];
   const isPensacola = (reservation.property.city || "").trim().toLowerCase() === "pensacola";
   if (isPensacola) {
@@ -621,12 +666,40 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       : [];
     const overrideMap = Object.fromEntries(overrides.map((o) => [o.property_id, o.website_name]));
 
-    vacantUnits = availability.map((r) => ({
-      propertyId: r.id,
-      name: overrideMap[r.id] || r.name,
-      hostawayListingId: r.hostaway_property_id || "",
-      nightlyPrice: Number(r.avg_price) || reservation.property!.base_price || 65,
-    }));
+    // Fetch 14-day calendar for each vacant unit so guest can pick multi-night checkout
+    const vacantCalendarsRaw = await Promise.all(
+      availability.map((r) =>
+        prisma.calendarDay.findMany({
+          where: {
+            hostaway_listing_id: r.hostaway_property_id || "",
+            date: { gte: checkout, lte: calendarEnd },
+          },
+          orderBy: { date: "asc" },
+        })
+      )
+    );
+
+    vacantUnits = availability.map((r, i) => {
+      const calRows = vacantCalendarsRaw[i];
+      const unitCal: CalendarDay[] = calRows
+        .filter((d) => {
+          if (!d.date) return false;
+          return d.date.toISOString().split("T")[0] > checkoutStr;
+        })
+        .map((d) => ({
+          date: d.date!.toISOString().split("T")[0],
+          price: d.price || reservation.property!.base_price || 65,
+          available: d.is_available === 1,
+        }));
+
+      return {
+        propertyId: r.id,
+        name: overrideMap[r.id] || r.name,
+        hostawayListingId: r.hostaway_property_id || "",
+        nightlyPrice: Number(r.avg_price) || reservation.property!.base_price || 65,
+        calendar: unitCal,
+      };
+    });
   }
 
   return {

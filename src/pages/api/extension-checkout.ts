@@ -196,8 +196,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         total: String(total),
         originalReservationId: String(decoded.reservationId),
       },
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://evergreencottages.com"}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://evergreencottages.com"}/extend/cancelled`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.evergreencottagespensacola.com"}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.evergreencottagespensacola.com"}/extend/cancelled`,
     });
 
     return res.status(200).json({ url: session.url });
@@ -233,7 +233,7 @@ function verifyToken(token: string): DecodedToken | null {
       if (!/^[0-9a-f]{64}$/i.test(sig)) return null;
       if (exp < Math.floor(Date.now() / 1000)) return null;
       const expected = crypto.createHmac("sha256", secret).update(`v2:${resId}:${guestId}:${variant}:${exp}`).digest("hex");
-      if (!crypto.timingSafeEqual(Buffer.from(sig, "hex"), Buffer.from(expected, "hex"))) return null;
+      if (!crypto.timingSafeEqual(new Uint8Array(Buffer.from(sig, "hex")), new Uint8Array(Buffer.from(expected, "hex")))) return null;
       return { reservationId: resId, guestId, variant, version: 2 };
     } catch {
       return null;
@@ -248,7 +248,7 @@ function verifyToken(token: string): DecodedToken | null {
       if (!Number.isInteger(resId) || !Number.isInteger(guestId)) return null;
       if (!/^[0-9a-f]{64}$/i.test(sig)) return null;
       const expected = crypto.createHmac("sha256", secret).update(`${resId}:${guestId}`).digest("hex");
-      if (!crypto.timingSafeEqual(Buffer.from(sig, "hex"), Buffer.from(expected, "hex"))) return null;
+      if (!crypto.timingSafeEqual(new Uint8Array(Buffer.from(sig, "hex")), new Uint8Array(Buffer.from(expected, "hex")))) return null;
       return { reservationId: resId, guestId, variant: "same", version: 1 };
     } catch {
       return null;
@@ -263,7 +263,7 @@ async function fetchExtensionSettings(): Promise<{
   unit_change_cleaning_fee: number;
 }> {
   const dataHubUrl = process.env.DATA_HUB_URL || "";
-  const fallback = { discount_percent: 10, unit_change_cleaning_fee: 40 };
+  const fallback = { discount_percent: 5, unit_change_cleaning_fee: 40 };
   if (!dataHubUrl) return fallback;
   try {
     // Endpoint is public-read — the values are non-sensitive (discount %,
