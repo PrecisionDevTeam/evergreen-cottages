@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import Stripe from "stripe";
 import * as crypto from "crypto";
-import { getProperty, getCalendar, prisma } from "../../lib/db";
+import { getProperty, prisma } from "../../lib/db";
 import { verifyOrigin, rateLimit } from "../../lib/api-security";
 
 // @ts-ignore
@@ -81,23 +81,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const discountPct = Math.max(0, Math.min(50, settings.discount_percent));
     const unitChangeCleaningFee = Math.max(0, settings.unit_change_cleaning_fee);
 
-    // Calendar-cached availability pass (hourly staleness is acceptable risk
-    // for now; switching to live Hostaway call is straightforward later).
-    const calendar = await getCalendar(property.hostaway_property_id, 180);
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+    const nights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / 86400000);
+    if (nights <= 0) return res.status(400).json({ error: "Invalid dates" });
+
+    // Fetch only the exact dates being charged (checkIn+1 through checkOut),
+    // matching the same range the page uses so prices are always identical.
+    const extensionStart = new Date(checkInDate);
+    extensionStart.setDate(extensionStart.getDate() + 1);
+    const calendarRows = await prisma.calendarDay.findMany({
+      where: {
+        hostaway_listing_id: property.hostaway_property_id || "",
+        date: { gte: extensionStart, lte: checkOutDate },
+      },
+    });
     const calendarPrices: Record<string, number> = {};
     const blockedDates = new Set<string>();
-    for (const day of calendar) {
+    for (const day of calendarRows) {
       const key = day.date instanceof Date
         ? day.date.toISOString().split("T")[0]
         : String(day.date).split("T")[0];
       if (day.price) calendarPrices[key] = Number(day.price);
       if (!day.is_available) blockedDates.add(key);
     }
-
-    const checkInDate = new Date(checkIn);
-    const checkOutDate = new Date(checkOut);
-    const nights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / 86400000);
-    if (nights <= 0) return res.status(400).json({ error: "Invalid dates" });
 
     // Calendar convention: the date key is the *checkout* date for that night
     // (e.g. key "Apr 27" = night Apr 26→27). Loop from checkIn+1 through checkOut
