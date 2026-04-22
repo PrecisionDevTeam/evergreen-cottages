@@ -83,7 +83,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const calendarPrices: Record<string, number> = {};
     const blockedDates = new Set<string>();
     for (const day of calendar) {
-      const key = String(day.date).split("T")[0];
+      const key = day.date instanceof Date
+        ? day.date.toISOString().split("T")[0]
+        : String(day.date).split("T")[0];
       if (day.price) calendarPrices[key] = Number(day.price);
       if (!day.is_available) blockedDates.add(key);
     }
