@@ -49,16 +49,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (origResId && origResId !== decoded.reservationId) {
     return res.status(401).json({ error: "Reservation mismatch" });
   }
-  const variant = decoded.variant;
-
-  // Guest email from the original reservation — never trust the client
+  // Guest email + original property from the reservation — never trust the client
   let resolvedEmail: string | undefined;
+  let origPropertyId: number | undefined;
   try {
     const origRes = await prisma.reservation.findUnique({
       where: { id: decoded.reservationId },
-      include: { guest: true },
+      include: { guest: true, property: { select: { id: true } } },
     });
     resolvedEmail = origRes?.guest?.primary_email || undefined;
+    origPropertyId = origRes?.property?.id ?? undefined;
   } catch {
     /* non-blocking */
   }
@@ -69,6 +69,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: "Invalid property ID" });
     }
     const property = await getProperty(id);
+
+    // Derive variant from whether the guest is staying in the same unit or switching.
+    // Token variant can be stale (page now shows both options simultaneously).
+    const variant: "same" | "other" = (origPropertyId && origPropertyId !== id) ? "other" : "same";
     if (!property) return res.status(404).json({ error: "Property not found" });
 
     // Pull live pricing settings (short cache upstream). Fallback defaults
