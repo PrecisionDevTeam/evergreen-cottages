@@ -212,8 +212,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         total: String(total),
         originalReservationId: String(decoded.reservationId),
       },
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.evergreencottagespensacola.com"}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.evergreencottagespensacola.com"}/extend/cancelled`,
+      success_url: `https://www.evergreencottagespensacola.com/booking/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `https://www.evergreencottagespensacola.com/extend/${token}`,
     });
 
     return res.status(200).json({ url: session.url });
