@@ -239,12 +239,12 @@ function ExtendStayCombined({
       subtotal += day.price || basePrice;
       if (day.date === selectedDate) break;
     }
-    const discounted = Math.round(subtotal * (1 - discountPercent / 100));
+    const discountAmount = Math.round(subtotal * (discountPercent / 100));
     return {
       nights,
       subtotal,
-      discount: subtotal - discounted,
-      total: discounted,
+      discount: discountAmount,
+      total: subtotal - discountAmount,
       perNight: nights > 0 ? Math.round(subtotal / nights) : 0,
     };
   }, [selectedDate, availableDates, basePrice, discountPercent]);
@@ -638,7 +638,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     windowEnd.setDate(windowEnd.getDate() + 1);
 
     const availability = await prisma.$queryRaw<Array<{
-      id: number; name: string; hostaway_property_id: string | null; avg_price: number | null;
+      id: number; name: string; hostaway_property_id: string | null; avg_price: number | null; base_price: number | null;
     }>>`
       WITH win AS (
         SELECT hc.hostaway_listing_id,
@@ -649,7 +649,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         WHERE hc.date >= ${windowStart} AND hc.date < ${windowEnd}
         GROUP BY hc.hostaway_listing_id
       )
-      SELECT p.id, p.name, p.hostaway_property_id, win.avg_price
+      SELECT p.id, p.name, p.hostaway_property_id, p.base_price, win.avg_price
       FROM properties p
       JOIN win ON win.hostaway_listing_id = p.hostaway_property_id
       WHERE win.total_days = 1 AND win.available_days = 1
@@ -689,15 +689,16 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         })
         .map((d) => ({
           date: d.date!.toISOString().split("T")[0],
-          price: d.price || reservation.property!.base_price || 65,
+          price: d.price || Number(r.base_price) || 65,
           available: d.is_available === 1,
         }));
 
+      const unitFallbackPrice = Number(r.base_price) || 65;
       return {
         propertyId: r.id,
         name: overrideMap[r.id] || r.name,
         hostawayListingId: r.hostaway_property_id || "",
-        nightlyPrice: Number(r.avg_price) || reservation.property!.base_price || 65,
+        nightlyPrice: Number(r.avg_price) || unitFallbackPrice,
         calendar: unitCal,
       };
     });
