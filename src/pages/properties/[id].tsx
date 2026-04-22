@@ -190,11 +190,12 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNig
     const nights = Math.ceil((end.getTime() - start.getTime()) / 86400000);
     if (nights <= 0) return null;
     const fallback = property.base_price || 65;
-    const cleaning = property.cleaning_fee || 65;
+    const cleaning = 65;
 
-    // Sum actual nightly prices from calendar
+    // Calendar convention: entry date = checkout date for that night.
+    // Loop i=1..nights so keys run checkIn+1..checkOut inclusive.
     let subtotal = 0;
-    for (let i = 0; i < nights; i++) {
+    for (let i = 1; i <= nights; i++) {
       const d = new Date(start);
       d.setDate(d.getDate() + i);
       const key = d.toISOString().split("T")[0];
@@ -701,7 +702,7 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNig
                   : <><span className="text-base font-normal text-sand-400">from </span>${property.base_price || 65}<span className="text-base font-normal text-sand-400">/night</span></>
                 }
               </div>
-              <p className="text-xs text-sand-400 mb-4">+ ${property.cleaning_fee || 65} cleaning fee</p>
+              <p className="text-xs text-sand-400 mb-4">+ $65 cleaning fee</p>
 
               {/* Calendar */}
               <AvailabilityCalendar

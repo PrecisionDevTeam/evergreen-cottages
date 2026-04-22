@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import Stripe from "stripe";
-import { getProperty, getCalendar } from "../../lib/db";
+import { getProperty, getCalendar, prisma } from "../../lib/db";
 import { verifyOrigin, rateLimit } from "../../lib/api-security";
 
 // @ts-ignore
@@ -40,7 +40,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!Number.isInteger(id) || id <= 0 || id > 100000) {
       return res.status(400).json({ error: "Invalid property ID" });
     }
-    const property = await getProperty(id);
+    const [property, websiteOverride] = await Promise.all([
+      getProperty(id),
+      prisma.websitePropertyOverride.findFirst({ where: { property_id: id } }),
+    ]);
     if (!property) {
       return res.status(404).json({ error: "Property not found" });
     }
@@ -64,7 +67,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const closedArrival = new Set<string>();
     const closedDeparture = new Set<string>();
     for (const day of calendar) {
-      const key = String(day.date).split("T")[0];
+      const key = day.date instanceof Date
+        ? day.date.toISOString().split("T")[0]
+        : String(day.date).split("T")[0];
       if (day.price) calendarPrices[key] = Number(day.price);
       if (!day.is_available) blockedDates.add(key);
       if (day.min_nights && day.min_nights > 0) minNightsByDate[key] = day.min_nights;
@@ -108,10 +113,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // Check availability + calculate price
+    // Calendar convention: entry date = checkout date for that night (Apr 27 = night Apr 26→27).
+    // Loop i=1..nights so keys run checkIn+1..checkOut inclusive.
     const fallbackPrice = property.base_price || 65;
     let subtotal = 0;
-    for (let i = 0; i < nights; i++) {
+    for (let i = 1; i <= nights; i++) {
       const d = new Date(start);
       d.setDate(d.getDate() + i);
       const key = d.toISOString().split("T")[0];
@@ -121,7 +127,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       subtotal += calendarPrices[key] || fallbackPrice;
     }
 
-    const cleaningFee = property.cleaning_fee || 65;
+    const cleaningFee = 65;
     const total = subtotal + cleaningFee;
 
     const checkInFormatted = new Date(checkIn + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -142,7 +148,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           price_data: {
             currency: "usd",
             product_data: {
-              name: `${property.name} | ${checkInFormatted} – ${checkOutFormatted}`,
+              name: `${websiteOverride?.website_name || property.name} | ${checkInFormatted} – ${checkOutFormatted}`,
               description: `${nights} night${nights > 1 ? "s" : ""} | ${guests} guest${guests > 1 ? "s" : ""} | Direct booking`,
               images: property.images[0] ? [property.images[0]] : [],
             },
