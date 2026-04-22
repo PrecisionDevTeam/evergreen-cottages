@@ -54,18 +54,18 @@ export default function Layout({ children, title, description, dark, schema }: P
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="Evergreen Cottages" />
         <meta property="og:locale" content="en_US" />
-        <meta property="og:image" content="https://evergreencottages.com/og-image.png" />
+        <meta property="og:image" content="https://www.evergreencottagespensacola.com/og-image.png" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={pageTitle} />
         {description && <meta name="twitter:description" content={description} />}
-        <meta name="twitter:image" content="https://evergreencottages.com/og-image.png" />
+        <meta name="twitter:image" content="https://www.evergreencottagespensacola.com/og-image.png" />
         <meta name="theme-color" content="#1a3a4a" />
         <link rel="icon" type="image/png" href="/image.png" />
         <link rel="apple-touch-icon" href="/image.png" />
         {schema && (
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026") }} />
         )}
-        <link rel="canonical" href={`https://evergreencottages.com${router.asPath.split("?")[0]}`} />
+        <link rel="canonical" href={`https://www.evergreencottagespensacola.com${router.asPath.split("?")[0]}`} />
       </Head>
 
       {/* Navigation */}

@@ -174,8 +174,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         total: String(total),
         occasion: typeof occasion === "string" ? occasion.slice(0, 50) : "",
       },
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://evergreencottages.com"}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://evergreencottages.com"}/properties/${property.id}`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.evergreencottagespensacola.com"}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.evergreencottagespensacola.com"}/properties/${property.id}`,
     });
 
     return res.status(200).json({ url: session.url });

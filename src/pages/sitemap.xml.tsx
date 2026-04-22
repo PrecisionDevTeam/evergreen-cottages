@@ -1,7 +1,7 @@
 import { GetServerSideProps } from "next";
 import { getProperties } from "../lib/db";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://evergreencottages.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.evergreencottagespensacola.com";
 
 function Sitemap() {
   return null;

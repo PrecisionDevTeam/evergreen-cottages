@@ -12,7 +12,7 @@ export default function Privacy() {
         <div className="prose prose-sand max-w-none text-sand-600 text-sm leading-relaxed space-y-6">
           <section>
             <h2 className="text-lg font-semibold text-ocean-700 mb-3">1. Who We Are</h2>
-            <p>Evergreen Cottages is operated by Precision Management. We manage 17 vacation rental properties at 3801 Mobile Highway, Pensacola, FL 32505. Our website is evergreencottages.com.</p>
+            <p>Evergreen Cottages is operated by Precision Management. We manage 17 vacation rental properties at 3801 Mobile Highway, Pensacola, FL 32505. Our website is evergreencottagespensacola.com.</p>
             <p>For privacy questions, contact us at hello@staywithprecision.com or call (510) 822-7060.</p>
           </section>
 

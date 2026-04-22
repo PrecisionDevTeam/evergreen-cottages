@@ -68,7 +68,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!Number.isInteger(id) || id <= 0 || id > 100000) {
       return res.status(400).json({ error: "Invalid property ID" });
     }
-    const property = await getProperty(id);
+    const [property, websiteOverride] = await Promise.all([
+      getProperty(id),
+      prisma.websitePropertyOverride.findFirst({ where: { property_id: id } }),
+    ]);
 
     // Derive variant from whether the guest is staying in the same unit or switching.
     // Token variant can be stale (page now shows both options simultaneously).
@@ -158,7 +161,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         price_data: {
           currency: "usd",
           product_data: {
-            name: `${property.name} — Stay Extension`,
+            name: `${websiteOverride?.website_name || property.name} — Stay Extension`,
             description: `${nights} night${nights > 1 ? "s" : ""} | ${checkInFormatted} – ${checkOutFormatted}${discountPct > 0 ? ` | ${discountPct}% off nightly` : ""}`,
             images: property.images[0] ? [property.images[0]] : [],
           },
@@ -190,7 +193,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ...(resolvedEmail ? { customer_email: resolvedEmail } : {}),
       payment_intent_data: {
         description:
-          `Stay Extension (${variant}) — ${property.name} | ${checkInFormatted} – ${checkOutFormatted} | ${nights}n` +
+          `Stay Extension (${variant}) — ${websiteOverride?.website_name || property.name} | ${checkInFormatted} – ${checkOutFormatted} | ${nights}n` +
           (discountPct > 0 ? ` | ${discountPct}% off` : "") +
           (cleaningFee > 0 ? ` | cleaning $${cleaningFee}` : " | no cleaning fee"),
       },

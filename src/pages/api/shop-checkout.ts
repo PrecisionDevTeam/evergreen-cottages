@@ -147,8 +147,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         serviceFeeCents: String(SERVICE_FEE_CENTS),
         totalCents: String(totalCents),
       },
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://evergreencottages.com"}/booking/shop-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://evergreencottages.com"}/shop`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.evergreencottagespensacola.com"}/booking/shop-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.evergreencottagespensacola.com"}/shop`,
     });
 
     return res.status(200).json({ url: session.url });

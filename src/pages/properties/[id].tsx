@@ -320,7 +320,7 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNig
           image: images[0] || undefined,
           priceRange: `$${property.base_price || 65}/night`,
           telephone: "+15108227060",
-          url: `https://evergreencottages.com/properties/${property.id}`,
+          url: `https://www.evergreencottagespensacola.com/properties/${property.id}`,
           ...(avgRating > 0 ? {
             aggregateRating: {
               "@type": "AggregateRating",

@@ -12,7 +12,7 @@ export default function Terms() {
         <div className="prose prose-sand max-w-none text-sand-600 text-sm leading-relaxed space-y-6">
           <section>
             <h2 className="text-lg font-semibold text-ocean-700 mb-3">1. Agreement to Terms</h2>
-            <p>By accessing or using evergreencottages.com (&quot;the Site&quot;) and booking a property through our platform, you agree to be bound by these Terms of Service. If you do not agree, please do not use our services.</p>
+            <p>By accessing or using evergreencottagespensacola.com (&quot;the Site&quot;) and booking a property through our platform, you agree to be bound by these Terms of Service. If you do not agree, please do not use our services.</p>
             <p>Evergreen Cottages is operated by Precision Management (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;), located at 3801 Mobile Highway, Pensacola, FL 32505.</p>
           </section>
 

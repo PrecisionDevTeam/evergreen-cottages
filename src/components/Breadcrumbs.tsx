@@ -20,7 +20,7 @@ export default function Breadcrumbs({ items }: Props) {
       "@type": "ListItem",
       position: i + 1,
       name: crumb.label,
-      ...(crumb.href ? { item: `https://evergreencottages.com${crumb.href}` } : {}),
+      ...(crumb.href ? { item: `https://www.evergreencottagespensacola.com${crumb.href}` } : {}),
     })),
   };
 

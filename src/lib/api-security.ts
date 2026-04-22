@@ -1,12 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://evergreencottagespensacola.com";
 const ALLOWED_ORIGINS = [
-  BASE_URL,
   "https://evergreencottagespensacola.com",
   "https://www.evergreencottagespensacola.com",
-  "https://evergreencottages.com",
-  "https://www.evergreencottages.com",
 ];
 
 /**

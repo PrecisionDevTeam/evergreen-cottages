@@ -72,7 +72,7 @@ async function createHostawayReservation(session: any): Promise<any> {
     currency: "USD",
     comment: meta.type === "extension"
       ? `✅ PAID $${((session.amount_total || 0) / 100).toFixed(2)} via Stripe — DO NOT REQUEST PAYMENT. Stay extension (extends #${meta.originalReservationId || "?"}). Session: ${session.id}`
-      : `✅ PAID $${((session.amount_total || 0) / 100).toFixed(2)} via Stripe — DO NOT REQUEST PAYMENT. Direct booking via evergreencottages.com.${meta.occasion ? ` Occasion: ${meta.occasion}.` : ""} Session: ${session.id}`,
+      : `✅ PAID $${((session.amount_total || 0) / 100).toFixed(2)} via Stripe — DO NOT REQUEST PAYMENT. Direct booking via evergreencottagespensacola.com.${meta.occasion ? ` Occasion: ${meta.occasion}.` : ""} Session: ${session.id}`,
   };
 
   const resp = await fetch(`${HOSTAWAY_API}/reservations`, {

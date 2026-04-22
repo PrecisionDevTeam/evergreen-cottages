@@ -34,7 +34,7 @@ const Home = ({ properties, reviews, reviewCount, avgRating, hero }: Props) => {
         },
         telephone: "+15108227060",
         email: "hello@staywithprecision.com",
-        url: "https://evergreencottages.com",
+        url: "https://www.evergreencottagespensacola.com",
         priceRange: "$$",
         ...(reviewCount > 0 ? {
           aggregateRating: {
