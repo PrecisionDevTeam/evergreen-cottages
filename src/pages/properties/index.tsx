@@ -225,7 +225,7 @@ const Properties = ({ properties, popularIds }: Props) => {
                 <tbody className="divide-y divide-sand-100">
                   {[
                     { label: "Price/night", render: (p: Property) => `$${p.base_price || 65}` },
-                    { label: "Cleaning fee", render: (p: Property) => `$${p.cleaning_fee || 65}` },
+                    { label: "Cleaning fee", render: () => "$65" },
                     { label: "Guests", render: (p: Property) => `${p.person_capacity || 2}` },
                     { label: "Bedrooms", render: (p: Property) => `${p.bedrooms_number || 0}` },
                     { label: "Bathrooms", render: (p: Property) => `${p.bathrooms_number || 1}` },

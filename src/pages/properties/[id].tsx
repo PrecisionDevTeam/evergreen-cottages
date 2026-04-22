@@ -204,7 +204,7 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNig
     const nightly = Math.round(subtotal / nights);
     const total = subtotal + cleaning;
     return { nights, nightly, cleaning, subtotal, total };
-  }, [checkIn, checkOut, calendarPrices, property.base_price, property.cleaning_fee]);
+  }, [checkIn, checkOut, calendarPrices, property.base_price]);
 
   // Blocked dates
   const blockedDates = useMemo(() => {

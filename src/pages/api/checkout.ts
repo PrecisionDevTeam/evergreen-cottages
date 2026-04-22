@@ -69,7 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     for (const day of calendar) {
       const key = day.date instanceof Date
         ? day.date.toISOString().split("T")[0]
-        : String(day.date).split("T")[0];
+        : (day.date as string).split("T")[0];
       if (day.price) calendarPrices[key] = Number(day.price);
       if (!day.is_available) blockedDates.add(key);
       if (day.min_nights && day.min_nights > 0) minNightsByDate[key] = day.min_nights;
@@ -141,7 +141,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       billing_address_collection: "required",
       phone_number_collection: { enabled: true },
       payment_intent_data: {
-        description: `${property.name} | ${checkInFormatted} – ${checkOutFormatted} | ${nights} nights | ${guests} guest${Number(guests) > 1 ? "s" : ""}`,
+        description: `${websiteOverride?.website_name || property.name} | ${checkInFormatted} – ${checkOutFormatted} | ${nights} nights | ${guests} guest${Number(guests) > 1 ? "s" : ""}`,
       },
       line_items: [
         {
@@ -170,7 +170,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       metadata: {
         propertyId: String(property.id),
         hostawayListingId: property.hostaway_property_id || "",
-        propertyName: property.name,
+        propertyName: websiteOverride?.website_name || property.name,
         checkIn,
         checkOut,
         guests: String(guests),
