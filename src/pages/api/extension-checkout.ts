@@ -94,15 +94,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (!day.is_available) blockedDates.add(key);
     }
 
-    const start = new Date(checkIn);
-    const end = new Date(checkOut);
-    const nights = Math.ceil((end.getTime() - start.getTime()) / 86400000);
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+    const nights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / 86400000);
     if (nights <= 0) return res.status(400).json({ error: "Invalid dates" });
 
+    // Calendar convention: the date key is the *checkout* date for that night
+    // (e.g. key "Apr 27" = night Apr 26→27). Loop from checkIn+1 through checkOut
+    // inclusive so the keys match what the page displays and prices.
     const fallbackPrice = property.base_price || 65;
     let subtotal = 0;
-    for (let i = 0; i < nights; i++) {
-      const d = new Date(start);
+    for (let i = 1; i <= nights; i++) {
+      const d = new Date(checkInDate);
       d.setDate(d.getDate() + i);
       const key = d.toISOString().split("T")[0];
       if (blockedDates.has(key)) {
