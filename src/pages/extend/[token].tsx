@@ -43,6 +43,121 @@ export default function ExtendStay(props: Props) {
   return <ExtendStaySameUnit {...props} />;
 }
 
+const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+function ExtendCalendar({
+  currentCheckout,
+  availableDates,
+  basePrice,
+  selectedDate,
+  onSelect,
+  viewMonth,
+  viewYear,
+  setViewMonth,
+  setViewYear,
+}: {
+  currentCheckout: string;
+  availableDates: CalendarDay[];
+  basePrice: number;
+  selectedDate: string | null;
+  onSelect: (date: string) => void;
+  viewMonth: number;
+  viewYear: number;
+  setViewMonth: (m: number) => void;
+  setViewYear: (y: number) => void;
+}) {
+  const availableSet = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const d of availableDates) map[d.date] = d.price || basePrice;
+    return map;
+  }, [availableDates, basePrice]);
+
+  // Parse once to avoid timezone drift from repeated Date construction
+  const firstAvailableAnchor = useMemo(() => {
+    const first = availableDates[0];
+    return first
+      ? new Date(first.date + "T12:00:00")
+      : new Date(currentCheckout + "T12:00:00");
+  }, [availableDates, currentCheckout]);
+
+  const startMonth = firstAvailableAnchor.getMonth();
+  const startYear = firstAvailableAnchor.getFullYear();
+
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
+
+  // Block going back past the first month that has selectable dates
+  const canGoPrev = viewYear > startYear || (viewYear === startYear && viewMonth > startMonth);
+
+  const prevMonth = () => {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1); }
+    else setViewMonth(viewMonth - 1);
+  };
+  const nextMonth = () => {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1); }
+    else setViewMonth(viewMonth + 1);
+  };
+
+  const cells: Array<null | { day: number; dateStr: string; price: number | null; selectable: boolean }> = [];
+  for (let i = 0; i < firstDayOfWeek; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const price = availableSet[dateStr] ?? null;
+    cells.push({ day: d, dateStr, price, selectable: price !== null });
+  }
+
+  return (
+    <div className="bg-white border border-sand-200 rounded-2xl p-4 mb-6 shadow-sm">
+      <div className="flex items-center justify-between mb-3">
+        <button onClick={prevMonth} disabled={!canGoPrev}
+          className="p-2 rounded-lg hover:bg-sand-100 disabled:opacity-30 disabled:cursor-default transition-colors">
+          <svg className="w-4 h-4 text-ocean-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <span className="text-sm font-semibold text-ocean-700">{MONTHS[viewMonth]} {viewYear}</span>
+        <button onClick={nextMonth}
+          className="p-2 rounded-lg hover:bg-sand-100 transition-colors">
+          <svg className="w-4 h-4 text-ocean-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+      <div className="grid grid-cols-7 mb-1">
+        {DAYS.map((d) => (
+          <div key={d} className="text-center text-[11px] text-sand-400 font-medium py-1">{d}</div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-y-1">
+        {cells.map((cell, i) => {
+          if (!cell) return <div key={`e-${i}`} />;
+          const { day, dateStr, price, selectable } = cell;
+          const isSelected = selectedDate === dateStr;
+          return (
+            <button key={dateStr} disabled={!selectable} onClick={() => selectable && onSelect(dateStr)}
+              className={`flex flex-col items-center justify-center rounded-xl py-2 transition-all ${
+                isSelected
+                  ? "bg-ocean-500 text-white"
+                  : selectable
+                  ? "hover:bg-ocean-50 text-ocean-700 cursor-pointer"
+                  : "text-sand-300 cursor-default"
+              }`}
+            >
+              <span className={`text-sm font-medium leading-tight ${isSelected ? "text-white" : ""}`}>{day}</span>
+              {selectable && (
+                <span className={`text-[10px] leading-tight mt-0.5 ${isSelected ? "text-ocean-100" : "text-sand-400"}`}>
+                  ${Math.round(price!)}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function ExtendStaySameUnit({
   propertyId,
   propertyName,
@@ -64,6 +179,8 @@ function ExtendStaySameUnit({
     weekday: "short", month: "short", day: "numeric",
   });
 
+  // Break on the first unavailable day — you can't skip over a blocked night
+  // on the same unit. Dates after the gap are excluded intentionally.
   const availableDates = useMemo(() => {
     const dates: CalendarDay[] = [];
     for (const day of calendar) {
@@ -72,6 +189,13 @@ function ExtendStaySameUnit({
     }
     return dates;
   }, [calendar]);
+
+  // Start the calendar on the month of the first available date so the guest
+  // never lands on an empty month (checkout month may have no available nights).
+  const firstAvailDate = availableDates[0]?.date ?? currentCheckout;
+  const firstAvailAnchor = new Date(firstAvailDate + "T12:00:00");
+  const [viewMonth, setViewMonth] = useState(firstAvailAnchor.getMonth());
+  const [viewYear, setViewYear] = useState(firstAvailAnchor.getFullYear());
 
   const pricing = useMemo(() => {
     if (!selectedDate) return null;
@@ -145,7 +269,7 @@ function ExtendStaySameUnit({
             </svg>
           </div>
           <div>
-            <p className="text-sm text-ocean-500">Current checkout</p>
+            <p className="text-sm text-ocean-500">Original booking ends</p>
             <p className="font-semibold text-ocean-900">{currentCheckoutFormatted}</p>
           </div>
         </div>
@@ -153,27 +277,17 @@ function ExtendStaySameUnit({
         {availableDates.length > 0 ? (
           <>
             <h2 className="font-display text-lg text-ocean-900 mb-3">Pick your new checkout date</h2>
-            <div className="grid grid-cols-3 gap-2 mb-6">
-              {availableDates.map((day) => {
-                const d = new Date(day.date + "T12:00:00");
-                const dayLabel = d.toLocaleDateString("en-US", { weekday: "short" });
-                const dateLabel = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-                const isSelected = selectedDate === day.date;
-                return (
-                  <button
-                    key={day.date}
-                    onClick={() => setSelectedDate(day.date)}
-                    className={`p-3 rounded-xl border-2 text-center transition-all ${
-                      isSelected ? "border-ocean-500 bg-ocean-50 shadow-sm" : "border-sand-200 bg-white hover:border-ocean-300"
-                    }`}
-                  >
-                    <p className={`text-xs ${isSelected ? "text-ocean-600 font-semibold" : "text-ocean-400"}`}>{dayLabel}</p>
-                    <p className={`font-semibold ${isSelected ? "text-ocean-900" : "text-ocean-700"}`}>{dateLabel}</p>
-                    <p className="text-xs text-ocean-400 mt-1">${Math.round(day.price || basePrice)}/nt</p>
-                  </button>
-                );
-              })}
-            </div>
+            <ExtendCalendar
+              currentCheckout={currentCheckout}
+              availableDates={availableDates}
+              basePrice={basePrice}
+              selectedDate={selectedDate}
+              onSelect={setSelectedDate}
+              viewMonth={viewMonth}
+              viewYear={viewYear}
+              setViewMonth={setViewMonth}
+              setViewYear={setViewYear}
+            />
           </>
         ) : (
           <div className="bg-coral-50 border border-coral-200 rounded-xl p-4 mb-6 text-center">
@@ -510,7 +624,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const reservation = await prisma.reservation.findUnique({
     where: { id: decoded.reservationId },
     include: {
-      property: { include: { knowledge: true } },
+      property: { include: { knowledge: true, websiteOverride: true } },
       guest: true,
     },
   });
@@ -544,11 +658,12 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   const calendar: CalendarDay[] = calendarRows
     .filter((d) => {
-      const dStr = String(d.date).split("T")[0];
+      if (!d.date) return false;
+      const dStr = d.date.toISOString().split("T")[0];
       return dStr > checkoutStr;
     })
     .map((d) => ({
-      date: String(d.date).split("T")[0],
+      date: d.date!.toISOString().split("T")[0],
       price: d.price || reservation.property!.base_price || 65,
       available: d.is_available === 1,
     }));
@@ -610,7 +725,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     props: {
       variant: decoded.variant,
       propertyId: reservation.property.id,
-      propertyName: reservation.property.name,
+      propertyName: reservation.property.websiteOverride?.website_name || reservation.property.name,
       propertyImage,
       currentCheckout: checkoutStr,
       guestFirstName: reservation.guest?.first_name || "",
