@@ -37,10 +37,7 @@ type Props = {
 };
 
 export default function ExtendStay(props: Props) {
-  if (props.variant === "other") {
-    return <ExtendStayOtherUnit {...props} />;
-  }
-  return <ExtendStaySameUnit {...props} />;
+  return <ExtendStayCombined {...props} />;
 }
 
 const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -158,7 +155,7 @@ function ExtendCalendar({
   );
 }
 
-function ExtendStaySameUnit({
+function ExtendStayCombined({
   propertyId,
   propertyName,
   propertyImage,
@@ -169,9 +166,12 @@ function ExtendStaySameUnit({
   calendar,
   basePrice,
   discountPercent,
+  unitChangeCleaningFee,
+  vacantUnits,
   token,
 }: Props) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedUnitId, setSelectedUnitId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -179,8 +179,7 @@ function ExtendStaySameUnit({
     weekday: "short", month: "short", day: "numeric",
   });
 
-  // Break on the first unavailable day — you can't skip over a blocked night
-  // on the same unit. Dates after the gap are excluded intentionally.
+  // Break on the first unavailable day — can't skip over a blocked night on the same unit.
   const availableDates = useMemo(() => {
     const dates: CalendarDay[] = [];
     for (const day of calendar) {
@@ -190,14 +189,30 @@ function ExtendStaySameUnit({
     return dates;
   }, [calendar]);
 
-  // Start the calendar on the month of the first available date so the guest
-  // never lands on an empty month (checkout month may have no available nights).
   const firstAvailDate = availableDates[0]?.date ?? currentCheckout;
   const firstAvailAnchor = new Date(firstAvailDate + "T12:00:00");
   const [viewMonth, setViewMonth] = useState(firstAvailAnchor.getMonth());
   const [viewYear, setViewYear] = useState(firstAvailAnchor.getFullYear());
 
-  const pricing = useMemo(() => {
+  const tomorrow = useMemo(() => {
+    const d = new Date(currentCheckout + "T12:00:00");
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split("T")[0];
+  }, [currentCheckout]);
+
+  const selectedUnit = vacantUnits.find((u) => u.propertyId === selectedUnitId) ?? null;
+
+  // Picking a date clears unit selection and vice versa
+  function pickDate(date: string) {
+    setSelectedDate(date);
+    setSelectedUnitId(null);
+  }
+  function pickUnit(id: number) {
+    setSelectedUnitId(id);
+    setSelectedDate(null);
+  }
+
+  const samePricing = useMemo(() => {
     if (!selectedDate) return null;
     let subtotal = 0;
     let nights = 0;
@@ -216,23 +231,33 @@ function ExtendStaySameUnit({
     };
   }, [selectedDate, availableDates, basePrice, discountPercent]);
 
-  async function handleExtend() {
-    if (!selectedDate || !pricing) return;
+  const otherPricing = useMemo(() => {
+    if (!selectedUnit) return null;
+    const subtotal = Math.round(selectedUnit.nightlyPrice);
+    const discount = Math.round(subtotal * (discountPercent / 100));
+    return {
+      subtotal,
+      discount,
+      cleaningFee: unitChangeCleaningFee,
+      total: subtotal - discount + unitChangeCleaningFee,
+    };
+  }, [selectedUnit, discountPercent, unitChangeCleaningFee]);
+
+  const canSubmit = (selectedDate && !!samePricing) || (!!selectedUnit && !!otherPricing);
+  const totalToPay = selectedDate ? (samePricing?.total ?? 0) : (otherPricing?.total ?? 0);
+
+  async function handleSubmit() {
+    if (!canSubmit) return;
     setLoading(true);
     setError("");
     try {
+      const body = selectedDate
+        ? { token, propertyId, checkIn: currentCheckout, checkOut: selectedDate, guests, originalReservationId, variant: "same" }
+        : { token, propertyId: selectedUnit!.propertyId, checkIn: currentCheckout, checkOut: tomorrow, guests, originalReservationId, variant: "other" };
       const resp = await fetch("/api/extension-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token,
-          propertyId,
-          checkIn: currentCheckout,
-          checkOut: selectedDate,
-          guests,
-          originalReservationId,
-          variant: "same",
-        }),
+        body: JSON.stringify(body),
       });
       const data = await resp.json();
       if (data.url) {
@@ -248,7 +273,7 @@ function ExtendStaySameUnit({
   }
 
   return (
-    <Layout title={`Extend Your Stay — ${propertyName}`} description="Extend your stay with no extra cleaning fee.">
+    <Layout title={`Extend Your Stay — ${propertyName}`} description="Extend your stay or move to another unit.">
       <div className="max-w-lg mx-auto px-5 sm:px-8 py-16">
         <div className="text-center mb-8">
           <h1 className="font-display text-3xl text-ocean-900 mb-2">Extend Your Stay</h1>
@@ -274,38 +299,70 @@ function ExtendStaySameUnit({
           </div>
         </div>
 
+        {/* Same-unit section */}
         {availableDates.length > 0 ? (
-          <>
-            <h2 className="font-display text-lg text-ocean-900 mb-3">Pick your new checkout date</h2>
+          <div className="mb-6">
+            <h2 className="font-display text-lg text-ocean-900 mb-1">Stay in {propertyName}</h2>
+            <p className="text-sm text-sand-400 mb-3">No cleaning fee — you&apos;re already here</p>
             <ExtendCalendar
               currentCheckout={currentCheckout}
               availableDates={availableDates}
               basePrice={basePrice}
               selectedDate={selectedDate}
-              onSelect={setSelectedDate}
+              onSelect={pickDate}
               viewMonth={viewMonth}
               viewYear={viewYear}
               setViewMonth={setViewMonth}
               setViewYear={setViewYear}
             />
-          </>
+          </div>
         ) : (
           <div className="bg-coral-50 border border-coral-200 rounded-xl p-4 mb-6 text-center">
-            <p className="text-coral-700 font-medium">No available dates for extension</p>
-            <p className="text-coral-500 text-sm mt-1">Another guest is checking in after you, or dates are blocked.</p>
+            <p className="text-coral-700 font-medium">No more nights available in this unit</p>
+            <p className="text-coral-500 text-sm mt-1">Another guest is checking in — see other units below.</p>
           </div>
         )}
 
-        {pricing && (
+        {/* Other units section */}
+        {vacantUnits.length > 0 && (
+          <div className="mb-6">
+            <h2 className="font-display text-lg text-ocean-900 mb-1">Or move to another unit</h2>
+            <p className="text-sm text-sand-400 mb-3">{discountPercent}% off · ${unitChangeCleaningFee} cleaning fee · 1 night</p>
+            <div className="space-y-2">
+              {vacantUnits.map((unit) => {
+                const isSelected = selectedUnitId === unit.propertyId;
+                const discounted = Math.round(unit.nightlyPrice * (1 - discountPercent / 100));
+                return (
+                  <button
+                    key={unit.propertyId}
+                    onClick={() => pickUnit(unit.propertyId)}
+                    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                      isSelected ? "border-ocean-500 bg-ocean-50 shadow-sm" : "border-sand-200 bg-white hover:border-ocean-300"
+                    }`}
+                  >
+                    <p className={`font-semibold ${isSelected ? "text-ocean-900" : "text-ocean-800"}`}>{unit.name}</p>
+                    <p className="text-ocean-500 text-sm mt-0.5">
+                      <span className="line-through text-sand-400 mr-2">${Math.round(unit.nightlyPrice)}/nt</span>
+                      <span className="text-evergreen-600 font-semibold">${discounted}/nt</span>
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Pricing summary */}
+        {samePricing && selectedDate && (
           <div className="bg-white border border-sand-200 rounded-xl p-5 mb-6 shadow-sm">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-ocean-600">${pricing.perNight} x {pricing.nights} night{pricing.nights > 1 ? "s" : ""}</span>
-              <span className="text-ocean-900">${pricing.subtotal}</span>
+              <span className="text-ocean-600">${samePricing.perNight} × {samePricing.nights} night{samePricing.nights > 1 ? "s" : ""}</span>
+              <span className="text-ocean-900">${samePricing.subtotal}</span>
             </div>
-            {discountPercent > 0 && pricing.discount > 0 && (
+            {discountPercent > 0 && samePricing.discount > 0 && (
               <div className="flex justify-between items-center mb-2">
                 <span className="text-evergreen-700">Extension discount ({discountPercent}%)</span>
-                <span className="text-evergreen-600 font-semibold">-${pricing.discount}</span>
+                <span className="text-evergreen-600 font-semibold">−${samePricing.discount}</span>
               </div>
             )}
             <div className="flex justify-between items-center mb-3">
@@ -314,187 +371,30 @@ function ExtendStaySameUnit({
             </div>
             <div className="border-t border-sand-200 pt-3 flex justify-between items-center">
               <span className="text-ocean-900 font-bold">Total</span>
-              <span className="text-ocean-900 font-bold text-xl">${pricing.total}</span>
+              <span className="text-ocean-900 font-bold text-xl">${samePricing.total}</span>
             </div>
           </div>
         )}
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 text-center">
-            <p className="text-red-700 text-sm">{error}</p>
-          </div>
-        )}
-
-        <button
-          onClick={handleExtend}
-          disabled={!selectedDate || loading}
-          className={`w-full py-4 rounded-xl font-semibold text-lg transition-all ${
-            selectedDate && !loading
-              ? "bg-ocean-800 text-white hover:bg-ocean-900 shadow-md hover:shadow-lg"
-              : "bg-sand-200 text-sand-400 cursor-not-allowed"
-          }`}
-        >
-          {loading ? "Processing..." : selectedDate ? `Pay $${pricing?.total || 0} & Extend` : "Select a checkout date"}
-        </button>
-
-        <p className="text-center text-ocean-400 text-xs mt-4 leading-relaxed">
-          No extra cleaning fee since you&apos;re already here. Your door code stays the same.
-          {guestFirstName && <> Hi {guestFirstName}!</>}
-        </p>
-
-        <div className="text-center mt-8">
-          <a href="tel:+15108227060" className="text-ocean-500 text-sm hover:text-ocean-700">
-            Questions? Call (510) 822-7060
-          </a>
-        </div>
-      </div>
-    </Layout>
-  );
-}
-
-function ExtendStayOtherUnit({
-  propertyName,
-  currentCheckout,
-  guestFirstName,
-  guests,
-  originalReservationId,
-  vacantUnits,
-  discountPercent,
-  unitChangeCleaningFee,
-  token,
-}: Props) {
-  const [selectedUnitId, setSelectedUnitId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const tomorrow = useMemo(() => {
-    const d = new Date(currentCheckout + "T12:00:00");
-    d.setDate(d.getDate() + 1);
-    return d.toISOString().split("T")[0];
-  }, [currentCheckout]);
-
-  const selected = vacantUnits.find((u) => u.propertyId === selectedUnitId) || null;
-
-  const pricing = useMemo(() => {
-    if (!selected) return null;
-    const subtotal = Math.round(selected.nightlyPrice);
-    const discount = Math.round(subtotal * (discountPercent / 100));
-    const total = subtotal - discount + unitChangeCleaningFee;
-    return { subtotal, discount, cleaningFee: unitChangeCleaningFee, total };
-  }, [selected, discountPercent, unitChangeCleaningFee]);
-
-  async function handleExtend() {
-    if (!selected || !pricing) return;
-    setLoading(true);
-    setError("");
-    try {
-      const resp = await fetch("/api/extension-checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token,
-          propertyId: selected.propertyId,
-          checkIn: currentCheckout,
-          checkOut: tomorrow,
-          guests,
-          originalReservationId,
-          variant: "other",
-        }),
-      });
-      const data = await resp.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        setError(data.error || "Something went wrong. Please try again.");
-        setLoading(false);
-      }
-    } catch {
-      setError("Connection error. Please try again.");
-      setLoading(false);
-    }
-  }
-
-  const currentCheckoutFormatted = new Date(currentCheckout + "T12:00:00").toLocaleDateString("en-US", {
-    weekday: "short", month: "short", day: "numeric",
-  });
-
-  return (
-    <Layout title="Extend Your Stay — Pick a Unit" description="Your unit is booked, but we have others open.">
-      <div className="max-w-lg mx-auto px-5 sm:px-8 py-16">
-        <div className="text-center mb-8">
-          <h1 className="font-display text-3xl text-ocean-900 mb-2">Extend Your Stay</h1>
-          <p className="text-ocean-600">
-            {propertyName} is booked tomorrow — but these units are open
-          </p>
-        </div>
-
-        <div className="bg-sand-100 rounded-xl p-4 mb-6">
-          <p className="text-sm text-ocean-500">You check out</p>
-          <p className="font-semibold text-ocean-900">{currentCheckoutFormatted}</p>
-          <p className="text-xs text-ocean-500 mt-1">
-            Move to one of these for +1 night. {discountPercent}% off nightly, reduced cleaning fee (${unitChangeCleaningFee}).
-          </p>
-        </div>
-
-        {vacantUnits.length === 0 ? (
-          <div className="bg-coral-50 border border-coral-200 rounded-xl p-4 mb-6 text-center">
-            <p className="text-coral-700 font-medium">No units available right now</p>
-            <p className="text-coral-500 text-sm mt-1">Check back soon or call us to see options.</p>
-          </div>
-        ) : (
-          <div className="space-y-3 mb-6">
-            {vacantUnits.map((unit) => {
-              const isSelected = selectedUnitId === unit.propertyId;
-              const discounted = Math.round(unit.nightlyPrice * (1 - discountPercent / 100));
-              return (
-                <button
-                  key={unit.propertyId}
-                  onClick={() => setSelectedUnitId(unit.propertyId)}
-                  className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                    isSelected ? "border-ocean-500 bg-ocean-50 shadow-sm" : "border-sand-200 bg-white hover:border-ocean-300"
-                  }`}
-                >
-                  <p className={`font-semibold ${isSelected ? "text-ocean-900" : "text-ocean-800"}`}>
-                    {unit.name}
-                  </p>
-                  <div className="flex justify-between items-baseline mt-1">
-                    <p className="text-ocean-500 text-sm">
-                      <span className="line-through text-sand-400 mr-2">
-                        ${Math.round(unit.nightlyPrice)}/nt
-                      </span>
-                      <span className="text-evergreen-600 font-semibold">
-                        ${discounted}/nt
-                      </span>
-                    </p>
-                    {isSelected && (
-                      <span className="text-xs text-ocean-600 font-semibold">Selected</span>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {pricing && (
+        {otherPricing && selectedUnit && (
           <div className="bg-white border border-sand-200 rounded-xl p-5 mb-6 shadow-sm">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-ocean-600">1 night</span>
-              <span className="text-ocean-900">${pricing.subtotal}</span>
+              <span className="text-ocean-600">1 night — {selectedUnit.name}</span>
+              <span className="text-ocean-900">${otherPricing.subtotal}</span>
             </div>
             {discountPercent > 0 && (
               <div className="flex justify-between items-center mb-2">
                 <span className="text-evergreen-700">Extension discount ({discountPercent}%)</span>
-                <span className="text-evergreen-600 font-semibold">-${pricing.discount}</span>
+                <span className="text-evergreen-600 font-semibold">−${otherPricing.discount}</span>
               </div>
             )}
             <div className="flex justify-between items-center mb-3">
-              <span className="text-ocean-600">Cleaning fee (unit swap)</span>
-              <span className="text-ocean-900">${pricing.cleaningFee}</span>
+              <span className="text-ocean-600">Cleaning fee</span>
+              <span className="text-ocean-900">${otherPricing.cleaningFee}</span>
             </div>
             <div className="border-t border-sand-200 pt-3 flex justify-between items-center">
               <span className="text-ocean-900 font-bold">Total</span>
-              <span className="text-ocean-900 font-bold text-xl">${pricing.total}</span>
+              <span className="text-ocean-900 font-bold text-xl">${otherPricing.total}</span>
             </div>
           </div>
         )}
@@ -506,19 +406,21 @@ function ExtendStayOtherUnit({
         )}
 
         <button
-          onClick={handleExtend}
-          disabled={!selected || loading}
+          onClick={handleSubmit}
+          disabled={!canSubmit || loading}
           className={`w-full py-4 rounded-xl font-semibold text-lg transition-all ${
-            selected && !loading
+            canSubmit && !loading
               ? "bg-ocean-800 text-white hover:bg-ocean-900 shadow-md hover:shadow-lg"
               : "bg-sand-200 text-sand-400 cursor-not-allowed"
           }`}
         >
-          {loading ? "Processing..." : selected ? `Pay $${pricing?.total || 0} & Book` : "Pick a unit"}
+          {loading ? "Processing..." : canSubmit ? `Pay $${totalToPay} & Extend` : "Select dates or a unit"}
         </button>
 
         <p className="text-center text-ocean-400 text-xs mt-4 leading-relaxed">
-          Switching units means a new door code will be texted to you and a reduced cleaning fee applies.
+          {selectedUnit
+            ? "Switching units — a new door code will be texted to you."
+            : "No extra cleaning fee since you're already here. Your door code stays the same."}
           {guestFirstName && <> Hi {guestFirstName}!</>}
         </p>
 
@@ -680,14 +582,11 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   const settings = await fetchExtensionSettings();
 
-  // For variant=other: query all vacant Pensacola units for the +1 night window.
-  // Assertion: guest's own reservation must be Pensacola — otherwise the SMS
-  // code path should never have sent an "other" token in the first place.
+  // Always fetch vacant Pensacola units — shown as alternative options on the page
+  // regardless of whether the same unit has availability.
   let vacantUnits: VacantUnit[] = [];
-  if (decoded.variant === "other") {
-    const isPensacola = (reservation.property.city || "").trim().toLowerCase() === "pensacola";
-    if (!isPensacola) return { notFound: true };
-
+  const isPensacola = (reservation.property.city || "").trim().toLowerCase() === "pensacola";
+  if (isPensacola) {
     const windowStart = checkout;
     const windowEnd = new Date(checkout);
     windowEnd.setDate(windowEnd.getDate() + 1);
@@ -713,9 +612,18 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       ORDER BY p.name
     `;
 
+    const propIds = availability.map((r) => r.id);
+    const overrides = propIds.length > 0
+      ? await prisma.websitePropertyOverride.findMany({
+          where: { property_id: { in: propIds } },
+          select: { property_id: true, website_name: true },
+        })
+      : [];
+    const overrideMap = Object.fromEntries(overrides.map((o) => [o.property_id, o.website_name]));
+
     vacantUnits = availability.map((r) => ({
       propertyId: r.id,
-      name: r.name,
+      name: overrideMap[r.id] || r.name,
       hostawayListingId: r.hostaway_property_id || "",
       nightlyPrice: Number(r.avg_price) || reservation.property!.base_price || 65,
     }));
