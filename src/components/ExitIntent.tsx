@@ -24,13 +24,13 @@ export default function ExitIntent() {
       }
     };
 
-    // Mobile: show after 30s
+    // Mobile: show after 90s
     const timer = setTimeout(() => {
       if (!sessionStorage.getItem(EXIT_KEY)) {
         setVisible(true);
         sessionStorage.setItem(EXIT_KEY, "1");
       }
-    }, 30000);
+    }, 90000);
 
     document.addEventListener("mouseout", handleMouseLeave);
 
