@@ -49,7 +49,7 @@ evergreen-cottages/
 │   │   └── api/
 │   │       ├── checkout.ts        # Stripe session for property bookings
 │   │       ├── extension-checkout.ts  # Stripe session for stay extensions (same/other unit)
-│   │       ├── service-checkout.ts    # Stripe session for services (pre-fills guest email from DB)
+│   │       ├── service-checkout.ts    # Stripe session for services (name + unit pre-filled from URL params; server-side date lookup from DB by unit; no email pre-fill on unauthenticated form)
 │   │       ├── shop-checkout.ts       # Stripe session for shop items
 │   │       ├── webhook.ts         # Stripe webhook → Hostaway reservation + service/extension notifications
 │   │       ├── gift-card.ts       # Gift card purchase
@@ -135,6 +135,20 @@ Hardcoded `$65` for all units everywhere — do NOT read `property.cleaning_fee`
 
 ### Website Display Names
 Always use `WebsitePropertyOverride.website_name` for Stripe line item names, payment descriptions, and metadata — NOT `property.name` (which is the raw internal Hostaway name like "Cozy Stay and Modern Comforts Unit 14").
+
+## Services Page (`/services`)
+
+Guest pays for add-ons (early check-in, pet fee, gaming WiFi, etc.).
+
+### URL Param Pre-fill
+Check-in page passes `?service=`, `?property=`, `?unit=`, `?name=` when guest taps a service card. `services.tsx` reads these on mount and pre-fills the form — guest only needs to tap Pay.
+
+### `service-checkout.ts` Security Rules
+- `unitLabel` is stripped to digits-only before DB lookup (`replace(/\D/g, "")`) — prevents substring injection across unit names
+- DB lookup uses `equals` (not `contains`) on property name to prevent matching "Unit 1" when "10" is typed
+- **No email pre-fill** — unauthenticated form; pre-filling email from DB would expose prior guest's email
+- Lookup finds **current active stay only** (`check_in <= now AND check_out >= now`) — prevents leaking a future guest's dates
+- `checkInDate` + `checkOutDate` passed to Stripe metadata for SMS/Discord notification context (looked up server-side, not from form input)
 
 ## Security
 

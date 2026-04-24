@@ -13,7 +13,7 @@ Guest-facing website for Evergreen Cottages, 17 vacation rentals in Pensacola, F
 | Property Detail | `/properties/[id]` | Full gallery (up to 41 photos), live price calculator, booking card, amenities, reviews |
 | Stay Extension | `/extend/[token]` | HMAC-verified extension page — same-unit or unit-swap, calendar picker, Stripe checkout |
 | My Stay | `/stay/[token]` | Private guest page — door code, WiFi, gate code, parking, rules, troubleshooting link |
-| Services | `/services` | Airport shuttle, early check-in, late checkout, pet fee, pack-n-play |
+| Services | `/services` | Add-on services — early check-in, pet fee, gaming WiFi, etc. Name + unit pre-filled from URL params when arriving from check-in page |
 | Gift Cards | `/gift-cards` | Gift card purchase via Stripe |
 | Shop | `/shop` | Add-on shop (wine, snacks, extras) via Stripe |
 | About | `/about` | Company info, stats from DB (review count + avg rating), location |
