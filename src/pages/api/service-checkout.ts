@@ -26,8 +26,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const guestName = safeString(req.body.guestName) || "Guest";
   const propertyName = safeString(req.body.propertyName);
   const unitLabel = safeString(req.body.unitLabel) || "";
-  const checkInDate = safeString(req.body.checkInDate) || "";
-  const checkOutDate = safeString(req.body.checkOutDate) || "";
   const flightInfo = safeString(req.body.flightInfo) || "";
   const quantity = Math.min(Math.max(1, Math.floor(Number(rawQty) || 1)), 10);
 
@@ -37,28 +35,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Resolve guest email server-side from current reservation for this property
+    // Look up current/upcoming reservation by unit number to get dates + email
     let resolvedEmail: string | undefined;
-    if (propertyName) {
+    let checkInDate = "";
+    let checkOutDate = "";
+    // Digits-only to prevent substring injection across unit names
+    const sanitizedUnit = unitLabel.replace(/\D/g, "");
+    if (sanitizedUnit) {
       try {
+        const now = new Date();
         const property = await prisma.property.findFirst({
-          where: { name: { contains: propertyName } },
+          where: { name: { equals: `unit ${sanitizedUnit}`, mode: "insensitive" } },
         });
         if (property) {
+          // Current active stay only — avoids leaking a future guest's data
           const reservation = await prisma.reservation.findFirst({
             where: {
               property_id: property.id,
               status: { notIn: ["cancelled", "canceled", "declined", "inquiry"] },
-              check_in: { lte: new Date() },
-              check_out: { gte: new Date() },
+              check_in: { lte: now },
+              check_out: { gte: now },
             },
-            include: { guest: true },
             orderBy: { check_in: "desc" },
           });
-          resolvedEmail = reservation?.guest?.primary_email || undefined;
+          if (reservation) {
+            // No email pre-fill on unauthenticated form — only capture dates for notification
+            checkInDate = reservation.check_in?.toISOString().split("T")[0] ?? "";
+            checkOutDate = reservation.check_out?.toISOString().split("T")[0] ?? "";
+          }
         }
       } catch {
-        // Non-blocking — Stripe will collect email if not resolved
+        // Non-blocking
       }
     }
 
