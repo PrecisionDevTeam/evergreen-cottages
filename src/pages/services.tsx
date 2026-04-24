@@ -114,16 +114,19 @@ export default function Services({ dbServices }: ServicesPageProps) {
 
   const autoOpened = useRef(false);
 
-  // Auto-open form + scroll to the service if ?service= is in URL
+  // Pre-fill name + unit from URL params (set by check-in page) and auto-open service form
   useEffect(() => {
     if (autoOpened.current) return;
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
+    const nameParam = params.get("name") || "";
+    const unitParam = params.get("unit") || "";
+    if (nameParam) setGuestName(nameParam);
+    if (unitParam) setUnitLabel(unitParam);
     const serviceParam = params.get("service") || "";
     if (serviceParam && services.some((s) => s.serviceId === serviceParam)) {
       autoOpened.current = true;
       setShowForm(serviceParam);
-      // Scroll to the card after render
       setTimeout(() => {
         const el = document.getElementById(`service-${serviceParam}`);
         if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
