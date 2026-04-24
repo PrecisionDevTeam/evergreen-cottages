@@ -27,6 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const propertyName = safeString(req.body.propertyName);
   const unitLabel = safeString(req.body.unitLabel) || "";
   const checkInDate = safeString(req.body.checkInDate) || "";
+  const checkOutDate = safeString(req.body.checkOutDate) || "";
   const flightInfo = safeString(req.body.flightInfo) || "";
   const quantity = Math.min(Math.max(1, Math.floor(Number(rawQty) || 1)), 10);
 
@@ -90,6 +91,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         propertyName: propertyName || "",
         unitLabel: unitLabel || "",
         checkInDate: checkInDate || "",
+        checkOutDate: checkOutDate || "",
         flightInfo: flightInfo || "",
         quantity: String(quantity),
       },

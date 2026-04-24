@@ -105,6 +105,9 @@ export default function Services({ dbServices }: ServicesPageProps) {
   const [loading, setLoading] = useState<string | null>(null);
   const [showForm, setShowForm] = useState<string | null>(null);
   const [unitLabel, setUnitLabel] = useState("");
+  const [guestName, setGuestName] = useState("");
+  const [checkInDate, setCheckInDate] = useState("");
+  const [checkOutDate, setCheckOutDate] = useState("");
 
   const getPropertyName = () => {
     if (typeof window === "undefined") return "";
@@ -133,11 +136,18 @@ export default function Services({ dbServices }: ServicesPageProps) {
   const handleBuyClick = (serviceId: string) => {
     setShowForm(serviceId);
     setUnitLabel("");
+    setGuestName("");
+    setCheckInDate("");
+    setCheckOutDate("");
   };
 
   const handlePay = async (serviceId: string) => {
     if (!unitLabel) {
-      toast.error("Please select your unit number.");
+      toast.error("Please enter your unit number.");
+      return;
+    }
+    if (!guestName.trim()) {
+      toast.error("Please enter your name.");
       return;
     }
     setLoading(serviceId);
@@ -148,7 +158,10 @@ export default function Services({ dbServices }: ServicesPageProps) {
         body: JSON.stringify({
           serviceId,
           propertyName: getPropertyName(),
-          unitLabel: unitLabel,
+          unitLabel,
+          guestName: guestName.trim(),
+          checkInDate,
+          checkOutDate,
         }),
       });
       const data = await res.json();
@@ -207,6 +220,16 @@ export default function Services({ dbServices }: ServicesPageProps) {
               {s.serviceId && showForm === s.serviceId ? (
                 <div className="space-y-2 mt-2">
                   <div>
+                    <label className="block text-xs text-sand-400 mb-1">Your name *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Jane Smith"
+                      value={guestName}
+                      onChange={(e) => setGuestName(e.target.value)}
+                      className="w-full border border-sand-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-ocean-400"
+                    />
+                  </div>
+                  <div>
                     <label className="block text-xs text-sand-400 mb-1">Unit number *</label>
                     <input
                       type="number"
@@ -217,6 +240,26 @@ export default function Services({ dbServices }: ServicesPageProps) {
                       onChange={(e) => setUnitLabel(e.target.value)}
                       className="w-full border border-sand-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-ocean-400"
                     />
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <label className="block text-xs text-sand-400 mb-1">Check-in</label>
+                      <input
+                        type="date"
+                        value={checkInDate}
+                        onChange={(e) => setCheckInDate(e.target.value)}
+                        className="w-full border border-sand-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-ocean-400"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs text-sand-400 mb-1">Check-out</label>
+                      <input
+                        type="date"
+                        value={checkOutDate}
+                        onChange={(e) => setCheckOutDate(e.target.value)}
+                        className="w-full border border-sand-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-ocean-400"
+                      />
+                    </div>
                   </div>
                   <button
                     onClick={() => handlePay(s.serviceId!)}
