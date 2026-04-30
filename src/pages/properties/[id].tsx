@@ -2,7 +2,7 @@ import { GetServerSideProps } from "next";
 import { toast } from "../../lib/toast";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Layout from "../../components/Layout";
 import AvailabilityCalendar from "../../components/AvailabilityCalendar";
 import { getPropertyWithOverride, getCalendar, getPropertyReviews, getTotalGuestCounts, getAvailableNightsThisMonth, getLastBookedMap } from "../../lib/db";
@@ -161,6 +161,7 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNig
   const [guests, setGuests] = useState(1);
   const [occasion, setOccasion] = useState("");
 
+  const calendarRef = useRef<HTMLDivElement>(null);
   const { recentlyViewed, addViewed } = useRecentlyViewed();
 
   useEffect(() => {
@@ -695,7 +696,7 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNig
 
           {/* Right — Booking Card */}
           <div className="lg:col-span-1">
-            <div className="bg-white border border-sand-200 rounded-2xl p-5 sticky top-24 shadow-sm">
+            <div ref={calendarRef} className="bg-white border border-sand-200 rounded-2xl p-5 sticky top-24 shadow-sm">
               <div className="text-2xl font-bold text-ocean-500 mb-0.5 font-serif">
                 {priceCalc
                   ? <>${Math.round(priceCalc.nightly)}<span className="text-base font-normal text-sand-400">/night</span></>
@@ -899,12 +900,17 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNig
           )}
         </div>
         <button
-          onClick={handleBookNow}
-          disabled={!checkIn || !checkOut}
+          onClick={() => {
+            if (!checkIn || !checkOut) {
+              calendarRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+            } else {
+              handleBookNow();
+            }
+          }}
           className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors ${
             checkIn && checkOut
               ? "bg-ocean-500 text-white hover:bg-ocean-600"
-              : "bg-sand-200 text-sand-400 cursor-not-allowed"
+              : "bg-ocean-500 text-white hover:bg-ocean-600"
           }`}
         >
           {bookingLoading ? "Processing..." : priceCalc ? `Book — $${priceCalc.total}` : "Select dates"}
@@ -924,7 +930,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   if (!property) return { notFound: true };
 
   const [calendar, reviews, guestCounts, availableNights, lastBookedMap] = await Promise.all([
-    getCalendar(property.hostaway_property_id, 180).catch(() => []),
+    getCalendar(property.hostaway_property_id, 365).catch(() => []),
     getPropertyReviews(property.hostaway_property_id, 6).catch(() => []),
     getTotalGuestCounts().catch(() => ({})),
     getAvailableNightsThisMonth().catch(() => ({})),
