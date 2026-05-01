@@ -51,6 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   // Guest email + original property from the reservation — never trust the client
   let resolvedEmail: string | undefined;
+  let resolvedGuestName: string = "";
   let origPropertyId: number | undefined;
   try {
     const origRes = await prisma.reservation.findUnique({
@@ -59,6 +60,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
     resolvedEmail = origRes?.guest?.primary_email || undefined;
     origPropertyId = origRes?.property?.id ?? undefined;
+    const first = origRes?.guest?.first_name || "";
+    const last = origRes?.guest?.last_name || "";
+    resolvedGuestName = [first, last].filter(Boolean).join(" ");
   } catch {
     /* non-blocking */
   }
@@ -201,6 +205,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       metadata: {
         type: "extension",
         variant,
+        guest_name: resolvedGuestName,
         propertyId: String(property.id),
         hostawayListingId: property.hostaway_property_id || "",
         propertyName: property.name,
