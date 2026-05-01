@@ -160,6 +160,7 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNig
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState(1);
   const [occasion, setOccasion] = useState("");
+  const [guestName, setGuestName] = useState("");
 
   const calendarRef = useRef<HTMLDivElement>(null);
   const { recentlyViewed, addViewed } = useRecentlyViewed();
@@ -278,6 +279,7 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNig
           checkIn,
           checkOut,
           guests,
+          guestName: guestName.trim() || undefined,
           occasion: occasion || undefined,
           promoId: promoResult?.promoId || undefined,
         }),
@@ -800,6 +802,22 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNig
                     </p>
                   )}
                   {promoError && <p className="text-xs text-coral-500 mt-1">{promoError}</p>}
+                </div>
+              )}
+
+              {/* Guest name */}
+              {priceCalc && (
+                <div className="mb-3">
+                  <label className="block text-xs text-sand-400 mb-1">Your full name</label>
+                  <input
+                    type="text"
+                    value={guestName}
+                    onChange={(e) => setGuestName(e.target.value)}
+                    placeholder="First and last name"
+                    maxLength={100}
+                    className="w-full border border-sand-200 rounded-lg px-3 py-2 text-sm text-sand-800 bg-sand-50 focus:ring-2 focus:ring-ocean-500 outline-none"
+                    autoComplete="name"
+                  />
                 </div>
               )}
 

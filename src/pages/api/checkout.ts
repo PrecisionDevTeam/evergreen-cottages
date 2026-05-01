@@ -20,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!verifyOrigin(req, res)) return;
   if (!rateLimit(req, res, 10)) return;
 
-  const { propertyId, checkIn, checkOut, guests, promoId, occasion } = req.body;
+  const { propertyId, checkIn, checkOut, guests, promoId, occasion, guestName } = req.body;
 
   // Input validation
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -133,6 +133,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const checkInFormatted = new Date(checkIn + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     const checkOutFormatted = new Date(checkOut + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
+    const sanitizedGuestName = typeof guestName === "string" ? guestName.trim().slice(0, 100) : "";
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -140,6 +142,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Collect guest info for Hostaway reservation creation
       billing_address_collection: "required",
       phone_number_collection: { enabled: true },
+      // Always show a name field so customer_details.name is populated
+      customer_name_collection: { policy: "always" },
       payment_intent_data: {
         description: `${websiteOverride?.website_name || property.name} | ${checkInFormatted} – ${checkOutFormatted} | ${nights} nights | ${guests} guest${Number(guests) > 1 ? "s" : ""}`,
       },
@@ -179,6 +183,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         cleaningFee: String(cleaningFee),
         total: String(total),
         occasion: typeof occasion === "string" ? occasion.slice(0, 50) : "",
+        guest_name: sanitizedGuestName,
       },
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.evergreencottagespensacola.com"}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.evergreencottagespensacola.com"}/properties/${property.id}`,
