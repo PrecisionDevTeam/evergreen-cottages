@@ -61,6 +61,7 @@ async function createHostawayReservation(session: any): Promise<any> {
     departureDate: meta.checkOut,
     adults: parseInt(meta.guests, 10) || 1,
     children: 0,
+    guestName: nameSource,
     guestFirstName: firstName,
     guestLastName: lastName,
     guestEmail: customer.email || "",
