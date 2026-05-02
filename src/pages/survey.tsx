@@ -378,7 +378,7 @@ export default function Survey() {
 
       case 6:
         return (
-          <ScreenWrap title="Refer a friend" subtitle="They'll get 10% off their first stay. You'll get a $10 credit.">
+          <ScreenWrap title="Know someone who'd love Pensacola?" subtitle="Share a friend's email and we'll reach out to them.">
             <TextInput value={referralEmail} onChange={setReferralEmail} placeholder="Friend's email (optional)" />
           </ScreenWrap>
         );
