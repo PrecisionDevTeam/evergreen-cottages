@@ -2,17 +2,16 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../lib/db";
 
 const SEGMENTS = new Set(["a", "b", "c"]);
-const RECOMMEND_VALUES = new Set(["yes", "no", "already"]);
+const BOOK_DIRECT_VALUES = new Set(["yes", "maybe", "no"]);
 const RETURN_INTENT_VALUES = new Set(["yes", "maybe", "no"]);
-const DISCOUNT_VALUES = new Set(["10_off_3nights", "15_off_5nights", "neither"]);
-const GIFT_CARD_TYPES = new Set(["amazon", "starbucks"]);
+const DISCOUNT_VALUES = new Set(["10_off_3nights", "15_off_5nights", "no_preference"]);
+const AIRPORT_VALUES = new Set(["uber_lyft", "rental_car", "friend_family", "didnt_fly", "other"]);
+const AIRPORT_COST_VALUES = new Set(["under_20", "20_35", "35_50", "over_50", "dont_remember"]);
+const AIRPORT_INTEREST_VALUES = new Set(["yes_definitely", "maybe", "no"]);
+const GIFT_CARD_CHOICES = new Set(["amazon_10", "starbucks_10", "stay_credit_20"]);
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const clampRating = (n: unknown) => {
-  const x = Number(n);
-  return Number.isFinite(x) ? Math.min(Math.max(1, Math.round(x)), 5) : null;
-};
+const tokenRegex = /^[a-zA-Z0-9_-]{16,64}$/;
 
 type RateBucket = { count: number; reset: number };
 const rateBuckets = new Map<string, RateBucket>();
@@ -30,10 +29,15 @@ const checkRate = (ip: string) => {
   return bucket.count <= RATE_LIMIT;
 };
 
-const validateEmail = (v: unknown): string | null => {
+const str = (v: unknown, max = 500): string | null => {
   if (!v || typeof v !== "string") return null;
   const s = v.trim();
-  return emailRegex.test(s) && s.length <= 254 ? s : null;
+  return s.length > 0 ? s.slice(0, max) : null;
+};
+
+const inSet = (s: Set<string>, v: unknown): string | null => {
+  const x = str(v as string);
+  return x && s.has(x) ? x : null;
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -47,119 +51,180 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const body = req.body ?? {};
 
-  // --- Base fields ---
-  const name = typeof body.name === "string" ? body.name.trim().slice(0, 100) : "";
-  const emailRaw = typeof body.email === "string" ? body.email.trim() : "";
-  const phone = typeof body.phone === "string" ? body.phone.trim().slice(0, 20) : "";
-  const property = typeof body.property === "string" ? body.property.trim().slice(0, 100) : "";
-  const traveledFrom = typeof body.traveledFrom === "string" ? body.traveledFrom.trim().slice(0, 200) : "";
-
-  if (!name || !emailRaw || !property || !traveledFrom) {
-    return res.status(400).json({ error: "Name, email, unit, and where you traveled from are required" });
+  // --- Token: validate and look up server-side identity ---
+  const tokenRaw = str(body.token, 64);
+  const token = tokenRaw && tokenRegex.test(tokenRaw) ? tokenRaw : null;
+  if (!token) {
+    return res.status(400).json({ error: "A valid survey token is required" });
   }
-  if (!emailRegex.test(emailRaw) || emailRaw.length > 254) {
+
+  const tokenRows: any[] = await prisma.$queryRaw`
+    SELECT guest_email, guest_name, guest_phone, unit, origin_city,
+           segment, review_rating, used_at, expires_at
+    FROM survey_tokens WHERE token = ${token} LIMIT 1
+  `;
+  if (!tokenRows.length) {
+    return res.status(404).json({ error: "Invalid survey token" });
+  }
+  const tokenRow = tokenRows[0];
+  if (tokenRow.used_at) {
+    return res.status(410).json({ error: "Survey already completed" });
+  }
+  if (tokenRow.expires_at && new Date(tokenRow.expires_at) < new Date()) {
+    return res.status(410).json({ error: "Survey link has expired" });
+  }
+
+  // Use server-side identity — prevents gift card redirect via tampered body
+  const emailRaw: string = tokenRow.guest_email ?? str(body.email, 254) ?? "";
+  const name: string = tokenRow.guest_name ?? str(body.name, 100) ?? "";
+  const phone: string = tokenRow.guest_phone ?? str(body.phone, 20) ?? "";
+  const property: string = tokenRow.unit ?? str(body.property, 100) ?? "";
+  const traveledFrom = tokenRow.origin_city ?? str(body.traveledFrom, 200);
+
+  if (!name || !emailRaw) {
+    return res.status(400).json({ error: "Name and email are required" });
+  }
+  if (!emailRegex.test(emailRaw)) {
     return res.status(400).json({ error: "Invalid email address" });
   }
 
-  const overallRating = clampRating(body.overall);
-  const cleanlinessRating = clampRating(body.cleanliness);
-  const checkinRating = clampRating(body.checkin);
-  const valueRating = clampRating(body.value);
-  if (!overallRating || !cleanlinessRating || !checkinRating || !valueRating) {
-    return res.status(400).json({ error: "All ratings are required" });
+  // --- Segment from token (not body) ---
+  const segmentRaw = tokenRow.segment as string;
+  if (!SEGMENTS.has(segmentRaw)) {
+    return res.status(400).json({ error: "Invalid segment in token" });
   }
 
-  // --- Segment ---
-  const segmentRaw = typeof body.segment === "string" ? body.segment.toLowerCase() : "";
-  const segment = SEGMENTS.has(segmentRaw) ? segmentRaw : null;
+  // --- Review rating from token ---
+  const reviewRating = tokenRow.review_rating ? Number(tokenRow.review_rating) : null;
+  const overallRating = reviewRating != null && Number.isFinite(reviewRating)
+    ? Math.min(Math.max(1, Math.round(reviewRating)), 5)
+    : 0;
 
-  // --- Segment A fields ---
-  const highlight = segment === "a" && typeof body.highlight === "string"
-    ? body.highlight.trim().slice(0, 1000) : null;
-  const wouldRecommend = segment === "a" && typeof body.wouldRecommend === "string"
-    ? body.wouldRecommend.toLowerCase() : null;
-  if (wouldRecommend && !RECOMMEND_VALUES.has(wouldRecommend)) {
-    return res.status(400).json({ error: "Invalid recommend value" });
-  }
-  const referralEmail = segment === "a" ? validateEmail(body.referralEmail) : null;
-  const wouldBuyItems = segment === "a" && typeof body.wouldBuyItems === "string"
-    ? body.wouldBuyItems.trim().slice(0, 500) : null;
+  // --- Shared ---
+  const stoodOut = str(body.stoodOut, 1000);
+  const oneChange = str(body.oneChange, 1000);
 
-  // --- Segment B fields ---
-  const whatLiked = segment === "b" && typeof body.whatLiked === "string"
-    ? body.whatLiked.trim().slice(0, 1000) : null;
-  const fiveStarImprovement = segment === "b" && typeof body.fiveStarImprovement === "string"
-    ? body.fiveStarImprovement.trim().slice(0, 1000) : null;
-  const returnIntent = segment === "b" && typeof body.returnIntent === "string"
-    ? body.returnIntent.toLowerCase() : null;
-  if (returnIntent && !RETURN_INTENT_VALUES.has(returnIntent)) {
-    return res.status(400).json({ error: "Invalid return intent value" });
-  }
-  const preferredDiscount = segment === "b" && typeof body.preferredDiscount === "string"
-    ? body.preferredDiscount : null;
-  if (preferredDiscount && !DISCOUNT_VALUES.has(preferredDiscount)) {
-    return res.status(400).json({ error: "Invalid discount preference" });
+  // --- Survey A ---
+  const bookDirect = inSet(BOOK_DIRECT_VALUES, body.bookDirect);
+  const discountPref = inSet(DISCOUNT_VALUES, body.discountPref);
+  const bookDirectReason = str(body.bookDirectReason, 1000);
+  const wouldBuyItems = str(body.wouldBuyItems, 500);
+  const airportMethod = inSet(AIRPORT_VALUES, body.airportMethod);
+  const airportCost = inSet(AIRPORT_COST_VALUES, body.airportCost);
+  const airportInterest = inSet(AIRPORT_INTEREST_VALUES, body.airportInterest);
+  const usedLaundry = Boolean(body.usedLaundry);
+  const washFoldRaw = str(body.washFold, 10);
+  const wouldPayWashFold = washFoldRaw === "yes" || washFoldRaw === "maybe";
+  const washFoldPriceBucket =
+    typeof body.washFoldPriceBucket === "number" ? body.washFoldPriceBucket : null;
+  const washFoldPrice = washFoldPriceBucket ? `$${washFoldPriceBucket}` : null;
+  const referralCode = str(body.referralCode, 20);
+
+  // Birthday — month + day without year, store as 2000-MM-DD
+  const MONTH_MAP: Record<string, string> = {
+    January: "01", February: "02", March: "03", April: "04",
+    May: "05", June: "06", July: "07", August: "08",
+    September: "09", October: "10", November: "11", December: "12",
+  };
+  const birthdayMonthRaw = str(body.birthdayMonth, 20);
+  const birthdayDayRaw = str(body.birthdayDay, 5);
+  let birthday: Date | null = null;
+  if (birthdayMonthRaw && birthdayDayRaw && MONTH_MAP[birthdayMonthRaw]) {
+    const mm = MONTH_MAP[birthdayMonthRaw];
+    const dd = String(parseInt(birthdayDayRaw, 10)).padStart(2, "0");
+    birthday = new Date(`2000-${mm}-${dd}`);
+    if (isNaN(birthday.getTime())) birthday = null;
   }
 
-  // --- Segment C fields ---
-  const complaintCategories = segment === "c" && typeof body.complaintCategories === "string"
-    ? body.complaintCategories.slice(0, 500) : null;
-  const complaintDetail = segment === "c" && typeof body.complaintDetail === "string"
-    ? body.complaintDetail.trim().slice(0, 1000) : null;
-  const wantsCallback = segment === "c" ? Boolean(body.wantsCallback) : false;
+  // --- Survey B ---
+  const fiveStarFix = str(body.fiveStarFix, 1000);
+  const bookDirectB = inSet(BOOK_DIRECT_VALUES, body.bookDirectB);
+
+  // Combined: use the segment-appropriate book_direct answer
+  const wouldBookDirect = segmentRaw === "a" ? bookDirect : bookDirectB;
+
+  // stoodOut/oneChange → existing columns
+  const highlight = segmentRaw === "a" ? stoodOut : null;
+  const whatLiked = segmentRaw === "b" ? stoodOut : null;
+  const whatDifferent = oneChange;
+  const fiveStarImprovement = segmentRaw === "b" ? fiveStarFix : null;
 
   // --- Gift card ---
-  const giftCardTypeRaw = typeof body.giftCardType === "string" ? body.giftCardType.toLowerCase() : "amazon";
-  const giftCardType = GIFT_CARD_TYPES.has(giftCardTypeRaw) ? giftCardTypeRaw : "amazon";
-  const giftCardEmail = validateEmail(body.giftCardEmail) ?? emailRaw;
+  const giftCardChoice = inSet(GIFT_CARD_CHOICES, body.giftCardChoice);
+  if (!giftCardChoice) {
+    return res.status(400).json({ error: "Gift card selection is required" });
+  }
+  const giftCardType =
+    giftCardChoice === "starbucks_10" ? "starbucks"
+    : giftCardChoice === "stay_credit_20" ? "stay_credit"
+    : "amazon";
+  const giftCardEmail = emailRaw;
 
   try {
     await prisma.$executeRaw`
       INSERT INTO guest_surveys (
-        guest_name, guest_phone, guest_email, property_name,
-        overall_rating, cleanliness_rating, checkin_rating, value_rating,
+        guest_name, guest_email, guest_phone, property_name,
+        overall_rating, cleanliness_rating,
         traveled_from,
-        segment,
-        highlight, would_recommend, referral_email, would_buy_items,
-        what_liked, five_star_improvement, return_intent, preferred_discount,
-        complaint_categories, complaint_detail, wants_callback,
-        gift_card_email, gift_card_type
+        what_liked, what_different,
+        would_book_direct, would_buy_items,
+        used_laundry, would_pay_wash_fold, wash_fold_price,
+        preferred_discount, birthday,
+        gift_card_email, gift_card_type,
+        segment, highlight, five_star_improvement,
+        token, review_rating,
+        wash_fold_price_bucket, gift_card_choice, referral_code,
+        airport_method, airport_cost, airport_interest,
+        book_direct_reason, five_star_fix
       ) VALUES (
-        ${name}, ${phone}, ${emailRaw}, ${property},
-        ${overallRating}, ${cleanlinessRating}, ${checkinRating}, ${valueRating},
+        ${name}, ${emailRaw}, ${phone}, ${property},
+        ${overallRating}, ${0},
         ${traveledFrom},
-        ${segment},
-        ${highlight}, ${wouldRecommend}, ${referralEmail}, ${wouldBuyItems},
-        ${whatLiked}, ${fiveStarImprovement}, ${returnIntent}, ${preferredDiscount},
-        ${complaintCategories}, ${complaintDetail}, ${wantsCallback},
-        ${giftCardEmail}, ${giftCardType}
+        ${whatLiked}, ${whatDifferent},
+        ${wouldBookDirect}, ${wouldBuyItems},
+        ${usedLaundry}, ${wouldPayWashFold}, ${washFoldPrice},
+        ${discountPref}, ${birthday},
+        ${giftCardEmail}, ${giftCardType},
+        ${segmentRaw}, ${highlight}, ${fiveStarImprovement},
+        ${token}, ${reviewRating},
+        ${washFoldPriceBucket}, ${giftCardChoice}, ${referralCode},
+        ${airportMethod}, ${airportCost}, ${airportInterest},
+        ${bookDirectReason}, ${fiveStarFix}
       )
-      ON CONFLICT (guest_email, property_name, (created_at::date)) DO NOTHING
+      ON CONFLICT (token) DO NOTHING
     `;
+
+    // Mark token as used
+    if (token) {
+      await prisma.$executeRaw`
+        UPDATE survey_tokens SET used_at = NOW() WHERE token = ${token} AND used_at IS NULL
+      `.catch(() => null);
+    }
 
     // Discord notification
     try {
       const webhook = process.env.DISCORD_SURVEY_WEBHOOK;
       if (webhook) {
-        const segLabel = segment === "a" ? "⭐ Promoter" : segment === "b" ? "🟡 Passive" : segment === "c" ? "🔴 Detractor" : "—";
-        let segDetails = "";
-        if (segment === "a") {
-          segDetails = `Highlight: "${(highlight ?? "").slice(0, 100)}"\nRecommend: ${wouldRecommend}${referralEmail ? ` | Referral: ${referralEmail}` : ""}`;
-        } else if (segment === "b") {
-          segDetails = `Did well: "${(whatLiked ?? "").slice(0, 100)}"\n5★ fix: "${(fiveStarImprovement ?? "").slice(0, 100)}"\nReturn: ${returnIntent}`;
-        } else if (segment === "c") {
-          segDetails = `Issues: ${(complaintCategories ?? "").slice(0, 150)}\nDetail: "${(complaintDetail ?? "").slice(0, 100)}"\nCallback: ${wantsCallback ? "Yes" : "No"}`;
+        const segLabel = segmentRaw === "a" ? "⭐ Promoter" : segmentRaw === "b" ? "🟡 Passive" : "🔴 Detractor";
+        let details = "";
+        if (segmentRaw === "a") {
+          details = `Stood out: "${(stoodOut ?? "").slice(0, 100)}"\nOne change: "${(oneChange ?? "").slice(0, 80)}"`;
+          if (bookDirect) details += `\nBook direct: ${bookDirect}${discountPref ? ` | Discount pref: ${discountPref}` : ""}`;
+        } else if (segmentRaw === "b") {
+          details = `Did well: "${(stoodOut ?? "").slice(0, 100)}"\n5★ fix: "${(fiveStarFix ?? "").slice(0, 100)}"`;
+          if (bookDirectB) details += `\nBook direct: ${bookDirectB}`;
         }
+        const airportInfo = airportMethod ? `Airport: ${airportMethod}${airportInterest ? ` | Transfer interest: ${airportInterest}` : ""}` : "";
         await fetch(webhook, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             content:
               `📋 **New Survey — ${segLabel}**\n` +
-              `Guest: ${name} | Unit: ${property} | From: ${traveledFrom}\n` +
-              `Overall: ${overallRating}/5 | Clean: ${cleanlinessRating}/5 | Check-in: ${checkinRating}/5\n` +
-              (segDetails ? `${segDetails}\n` : "") +
-              `Gift card: ${giftCardType} → ${giftCardEmail}`,
+              `Guest: ${name} | Unit: ${property ?? "—"} | Rating: ${reviewRating ?? "—"}/5\n` +
+              (details ? `${details}\n` : "") +
+              (airportInfo ? `${airportInfo}\n` : "") +
+              `Gift card: ${giftCardChoice} → ${giftCardEmail}`,
           }),
         });
       }
@@ -169,7 +234,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({ success: true });
   } catch (err: unknown) {
-    // Unique constraint violation = duplicate submission — treat as success so guest isn't confused
     if (err && typeof err === "object" && "code" in err && (err as { code: string }).code === "23505") {
       return res.status(200).json({ success: true });
     }

@@ -220,10 +220,45 @@ model GuestSurvey {
   complaint_categories  String?
   complaint_detail      String?
   wants_callback        Boolean   @default(false)
+  // Token + enriched fields (v2 spec)
+  token                 String?
+  review_rating         Decimal?  @db.Decimal(3, 1)
+  wash_fold_price_bucket Int?
+  gift_card_choice      String?
+  referral_code         String?
+  airport_method        String?
+  airport_cost          String?
+  airport_interest      String?
+  book_direct_reason    String?
+  five_star_fix         String?
   created_at            DateTime  @default(now())
 
   @@index([created_at])
   @@map("guest_surveys")
+}
+
+// Per-guest signed survey tokens (pre-fill identity, segment routing)
+model SurveyToken {
+  id             Int       @id @default(autoincrement())
+  token          String    @unique
+  guest_id       Int?
+  reservation_id Int?
+  review_id      String?
+  segment        String
+  review_rating  Decimal?  @db.Decimal(3, 1)
+  guest_name     String?
+  guest_email    String?
+  guest_phone    String?
+  unit           String?
+  check_in       DateTime? @db.Date
+  check_out      DateTime? @db.Date
+  origin_city    String?
+  referral_code  String?
+  used_at        DateTime?
+  expires_at     DateTime?
+  created_at     DateTime  @default(now())
+
+  @@map("survey_tokens")
 }
 
 // Track processed Stripe events (idempotency guard)
