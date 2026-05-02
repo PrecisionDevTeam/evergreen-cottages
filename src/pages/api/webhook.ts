@@ -49,8 +49,9 @@ async function createHostawayReservation(session: any): Promise<any> {
   const nameSource = customer.name || meta.guest_name || "Guest";
   const nameParts = nameSource.split(" ");
   const firstName = nameParts[0] || "Guest";
-  const lastName = nameParts.slice(1).join(" ") || "Direct";
+  const lastName = nameParts.slice(1).join(" ") || "";
 
+  const guestCount = parseInt(meta.guests, 10) || 1;
   const reservationData = {
     listingMapId: parseInt(listingId, 10),
     channelId: 2000,
@@ -59,7 +60,8 @@ async function createHostawayReservation(session: any): Promise<any> {
     status: "new",
     arrivalDate: meta.checkIn,
     departureDate: meta.checkOut,
-    adults: parseInt(meta.guests, 10) || 1,
+    adults: guestCount,
+    numberOfGuests: guestCount,
     children: 0,
     guestName: nameSource,
     guestFirstName: firstName,
@@ -284,25 +286,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Create Hostaway reservation (only for property bookings)
       if (meta.hostawayListingId && meta.checkIn && meta.checkOut) {
-        // Idempotency check — skip if already processed
         try {
-          const existing = await prisma.processedStripeEvent.findUnique({
-            where: { stripe_session_id: session.id },
-          });
-          if (existing) {
-            console.log("STRIPE_DUPLICATE_SKIPPED:", session.id);
-            return res.status(200).json({ received: true });
+          // Atomic idempotency: write first, catch unique violation.
+          // A read-then-write check has a race window under Stripe retries.
+          try {
+            await prisma.processedStripeEvent.create({
+              data: {
+                stripe_session_id: session.id,
+                event_type: "checkout.session.completed",
+              },
+            });
+          } catch (e: any) {
+            if (e.code === "P2002") {
+              console.log("STRIPE_DUPLICATE_SKIPPED:", session.id);
+              return res.status(200).json({ received: true });
+            }
+            throw e;
           }
 
-          // Mark as processing before calling Hostaway
-          await prisma.processedStripeEvent.create({
-            data: {
-              stripe_session_id: session.id,
-              event_type: "checkout.session.completed",
-            },
-          });
-
-          const result = await createHostawayReservation(session);
+          let result: any;
+          try {
+            result = await createHostawayReservation(session);
+          } catch (hostawayErr) {
+            // Roll back the idempotency row so Stripe retries on next delivery.
+            await prisma.processedStripeEvent.delete({
+              where: { stripe_session_id: session.id },
+            }).catch(() => {});
+            throw hostawayErr;
+          }
           const hostawayId = result?.result?.id;
           console.log("HOSTAWAY_RESERVATION_CREATED:", JSON.stringify({
             hostawayId: hostawayId || null,
@@ -358,6 +369,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             sessionId: session.id,
             timestamp: new Date().toISOString(),
           }));
+          // Return 500 so Stripe retries — idempotency row was already rolled back above.
+          return res.status(500).json({ error: "Reservation creation failed — will retry" });
         }
       }
     }
