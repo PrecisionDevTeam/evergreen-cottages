@@ -23,10 +23,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     `;
 
     const headers = [
-      "Name", "Email", "Phone", "Unit", "Overall", "Cleanliness", "Check-in", "Value",
-      "Traveled From", "Book Direct?", "Airport Pickup?", "Would Buy Items",
-      "Used Laundry?", "Wash & Fold?", "W&F Price", "Discount",
-      "Birthday", "What Liked", "What Different", "Gift Card Email", "Gift Card Type", "Gift Card Sent?", "Date"
+      "Name", "Email", "Phone", "Unit", "Segment", "Overall", "Cleanliness", "Check-in", "Value",
+      "Traveled From",
+      "Highlight", "Would Recommend", "Referral Email", "Would Buy Items",
+      "What Liked", "5-Star Improvement", "Return Intent", "Discount",
+      "Complaint Categories", "Complaint Detail", "Wants Callback",
+      "Gift Card Email", "Gift Card Type", "Gift Card Sent?", "Date",
     ];
 
     const csvEscape = (v: unknown) =>
@@ -39,21 +41,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         csvEscape(r.guest_email),
         csvEscape(r.guest_phone),
         csvEscape(r.property_name),
+        csvEscape(r.segment ?? ""),
         r.overall_rating ?? "",
         r.cleanliness_rating ?? "",
         r.checkin_rating ?? "",
         r.value_rating ?? "",
         csvEscape(r.traveled_from),
-        csvEscape(r.would_book_direct),
-        r.airport_pickup ? "Yes" : "No",
-        csvEscape(r.would_buy_items),
-        r.used_laundry ? "Yes" : "No",
-        r.would_pay_wash_fold ? "Yes" : "No",
-        csvEscape(r.wash_fold_price),
-        csvEscape(r.preferred_discount),
-        r.birthday ? new Date(r.birthday).toISOString().split("T")[0] : "",
-        csvEscape(r.what_liked),
-        csvEscape(r.what_different),
+        csvEscape(r.highlight ?? ""),
+        csvEscape(r.would_recommend ?? ""),
+        csvEscape(r.referral_email ?? ""),
+        csvEscape(r.would_buy_items ?? ""),
+        csvEscape(r.what_liked ?? ""),
+        csvEscape(r.five_star_improvement ?? ""),
+        csvEscape(r.return_intent ?? ""),
+        csvEscape(r.preferred_discount ?? ""),
+        csvEscape(r.complaint_categories ?? ""),
+        csvEscape(r.complaint_detail ?? ""),
+        r.wants_callback ? "Yes" : "No",
         csvEscape(r.gift_card_email),
         csvEscape(r.gift_card_type),
         r.gift_card_sent ? "Yes" : "No",
@@ -72,9 +76,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       COUNT(*)::int as total,
       ROUND(AVG(overall_rating), 1) as avg_overall,
       ROUND(AVG(cleanliness_rating), 1) as avg_cleanliness,
-      COUNT(*) FILTER (WHERE would_book_direct = 'yes')::int as would_book_direct,
-      COUNT(*) FILTER (WHERE used_laundry = true)::int as used_laundry,
-      COUNT(*) FILTER (WHERE would_pay_wash_fold = true)::int as would_pay_wash_fold,
+      COUNT(*) FILTER (WHERE segment = 'a')::int as promoters,
+      COUNT(*) FILTER (WHERE segment = 'b')::int as passives,
+      COUNT(*) FILTER (WHERE segment = 'c')::int as detractors,
+      COUNT(*) FILTER (WHERE segment = 'c' AND wants_callback = true)::int as callback_requests,
+      COUNT(*) FILTER (WHERE referral_email IS NOT NULL AND referral_email != '')::int as referrals,
       COUNT(*) FILTER (WHERE gift_card_sent = false)::int as pending_gift_cards
     FROM guest_surveys
   `;

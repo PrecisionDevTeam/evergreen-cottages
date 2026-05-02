@@ -187,30 +187,40 @@ model ShopOrder {
 
 // Guest post-stay surveys (gift card reward flow)
 model GuestSurvey {
-  id                  Int       @id @default(autoincrement())
-  guest_name          String
-  guest_email         String
-  guest_phone         String?
-  property_name       String?
-  overall_rating      Int
-  cleanliness_rating  Int
-  checkin_rating      Int?
-  value_rating        Int?
-  traveled_from       String?
-  what_liked          String?
-  what_different      String?
-  would_book_direct   String?
-  airport_pickup      Boolean   @default(false)
-  would_buy_items     String?
-  used_laundry        Boolean   @default(false)
-  would_pay_wash_fold Boolean   @default(false)
-  wash_fold_price     String?
-  preferred_discount  String?
-  birthday            DateTime? @db.Date
-  gift_card_email     String?
-  gift_card_type      String    @default("amazon")
-  gift_card_sent      Boolean   @default(false)
-  created_at          DateTime  @default(now())
+  id                    Int       @id @default(autoincrement())
+  guest_name            String
+  guest_email           String
+  guest_phone           String?
+  property_name         String?
+  overall_rating        Int
+  cleanliness_rating    Int
+  checkin_rating        Int?
+  value_rating          Int?
+  traveled_from         String?
+  what_liked            String?
+  what_different        String?
+  would_book_direct     String?
+  airport_pickup        Boolean   @default(false)
+  would_buy_items       String?
+  used_laundry          Boolean   @default(false)
+  would_pay_wash_fold   Boolean   @default(false)
+  wash_fold_price       String?
+  preferred_discount    String?
+  birthday              DateTime? @db.Date
+  gift_card_email       String?
+  gift_card_type        String    @default("amazon")
+  gift_card_sent        Boolean   @default(false)
+  // Segment-specific fields (a=promoter/5★, b=passive/3-4★, c=detractor/1-2★)
+  segment               String?
+  highlight             String?
+  would_recommend       String?
+  referral_email        String?
+  return_intent         String?
+  five_star_improvement String?
+  complaint_categories  String?
+  complaint_detail      String?
+  wants_callback        Boolean   @default(false)
+  created_at            DateTime  @default(now())
 
   @@index([created_at])
   @@map("guest_surveys")
