@@ -112,9 +112,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const airportMethod = inSet(AIRPORT_VALUES, body.airportMethod);
   const airportCost = inSet(AIRPORT_COST_VALUES, body.airportCost);
   const airportInterest = inSet(AIRPORT_INTEREST_VALUES, body.airportInterest);
-  const usedLaundry = Boolean(body.usedLaundry);
+  const usedLaundry = body.usedLaundry !== undefined ? Boolean(body.usedLaundry) : null;
   const washFoldRaw = str(body.washFold, 10);
-  const wouldPayWashFold = washFoldRaw === "yes" || washFoldRaw === "maybe";
+  const wouldPayWashFold = washFoldRaw !== null ? (washFoldRaw === "yes" || washFoldRaw === "maybe") : null;
   const WASH_FOLD_BUCKETS = new Set([25, 35, 45]);
   const washFoldPriceBucket =
     typeof body.washFoldPriceBucket === "number" && WASH_FOLD_BUCKETS.has(body.washFoldPriceBucket)

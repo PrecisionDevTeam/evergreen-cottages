@@ -19,10 +19,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     SELECT * FROM guest_surveys ORDER BY created_at DESC LIMIT 2000
   `;
 
-  const FORMULA_CHARS = new Set(["=", "+", "-", "@", "\t", "\r"]);
+  const FORMULA_CHARS = new Set(["=", "+", "-", "@"]);
   const csvEscape = (v: unknown) => {
     let s = String(v ?? "").replace(/"/g, '""').replace(/\r?\n/g, " ");
-    if (s.length > 0 && FORMULA_CHARS.has(s[0])) s = "\t" + s;
+    if (s.length > 0 && FORMULA_CHARS.has(s[0])) s = "'" + s;
     return `"${s}"`;
   };
 
