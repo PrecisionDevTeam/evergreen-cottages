@@ -303,7 +303,7 @@ export default function Survey() {
       case "referral": return true;
       case "five_star": return fiveStarFix.trim().length > 0;
       case "book_direct_b": return !!bookDirectB;
-      case "gift_card": return !!giftCardChoice;
+      case "gift_card": return (guest?.segment === "past" && guest?.giftCardLimitReached) || !!giftCardChoice;
       case "birthday": return true; // optional
       // Past guest screens
       case "past_appreciated": return pastAppreciated.trim().length > 0;
@@ -382,8 +382,8 @@ export default function Survey() {
       travelCity: travelCity || undefined,
       airportFuture: airportFuture || undefined,
       airportPrice: airportPrice || undefined,
-      // Gift card
-      giftCardChoice,
+      // Gift card — raffle_only when past limit hit (no gift card to send)
+      giftCardChoice: (guest?.segment === "past" && guest?.giftCardLimitReached) ? "raffle_only" : giftCardChoice,
     };
 
     const res = await fetch("/api/survey", {
@@ -427,8 +427,8 @@ export default function Survey() {
 
   if (submitted) {
     const rewardMsg =
-      giftCardChoice === "free_night"
-        ? "You've been entered to win a free night stay. We'll reach out if you win!"
+      giftCardChoice === "free_night" || giftCardChoice === "raffle_only"
+        ? "You're already entered in our free night raffle. We'll reach out if you win!"
         : giftCardChoice === "stay_credit_20"
         ? "Your $10 stay credit has been noted. We'll apply it to your next booking."
         : `Your ${giftCardChoice === "starbucks_10" ? "Starbucks" : "Amazon"} $10 gift card will be sent within 24 hours.`;
@@ -702,13 +702,20 @@ export default function Survey() {
       case "gift_card": {
         const isPast = guest.segment === "past";
         const limitHit = isPast && guest.giftCardLimitReached;
+        // Past segment + cap hit: no gift card selection needed — already in raffle
+        if (limitHit) {
+          return (
+            <Wrap
+              title="You're already in the raffle!"
+              subtitle="Every guest who submits a review is automatically entered to win a free night stay. We'll reach out if you win!">
+              {submitError && <p className="text-red-500 text-sm text-center mt-4">{submitError}</p>}
+            </Wrap>
+          );
+        }
         const giftOptions = isPast
           ? [
-              ...(!limitHit ? [
-                { key: "amazon_10", label: "Amazon $10 gift card" },
-                { key: "starbucks_10", label: "Starbucks $10 gift card" },
-              ] : []),
-              { key: "free_night", label: "Enter to win a free night stay" },
+              { key: "amazon_10", label: "Amazon $10 gift card" },
+              { key: "starbucks_10", label: "Starbucks $10 gift card" },
             ]
           : [
               { key: "amazon_10", label: "Amazon $10 gift card" },
@@ -716,11 +723,7 @@ export default function Survey() {
               { key: "stay_credit_20", label: "$10 credit toward your next Evergreen stay" },
             ];
         return (
-          <Wrap
-            title="Which reward would you like?"
-            subtitle={limitHit
-              ? "Our gift cards have all been claimed — but you can still enter to win a free night."
-              : "Thank you for completing the survey."}>
+          <Wrap title="Which reward would you like?" subtitle="Thank you for completing the survey.">
             <OptionRow value={giftCardChoice} onChange={setGiftCardChoice} options={giftOptions} />
             {submitError && <p className="text-red-500 text-sm text-center mt-4">{submitError}</p>}
           </Wrap>

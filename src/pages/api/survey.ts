@@ -3,12 +3,11 @@ import { prisma } from "../../lib/db";
 
 const SEGMENTS = new Set(["a", "b", "c", "past"]);
 const BOOK_DIRECT_VALUES = new Set(["yes", "maybe", "no"]);
-const RETURN_INTENT_VALUES = new Set(["yes", "maybe", "no"]);
 const DISCOUNT_VALUES = new Set(["10_off_3nights", "15_off_5nights", "no_preference"]);
 const AIRPORT_VALUES = new Set(["uber_lyft", "rental_car", "friend_family", "didnt_fly", "other"]);
 const AIRPORT_COST_VALUES = new Set(["under_20", "20_35", "35_50", "over_50", "dont_remember"]);
 const AIRPORT_INTEREST_VALUES = new Set(["yes_definitely", "maybe", "no"]);
-const GIFT_CARD_CHOICES = new Set(["amazon_10", "starbucks_10", "stay_credit_20", "free_night"]);
+const GIFT_CARD_CHOICES = new Set(["amazon_10", "starbucks_10", "stay_credit_20", "free_night", "raffle_only"]);
 const TOTAL_WINE_VALUES = new Set(["yes", "maybe", "no"]);
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -172,7 +171,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: "Gift card selection is required" });
   }
   // Segment rules: past gets free_night or $10 cards; A/B get $10 cards or stay_credit_20
-  if (giftCardChoice === "free_night" && segmentRaw !== "past") {
+  if ((giftCardChoice === "free_night" || giftCardChoice === "raffle_only") && segmentRaw !== "past") {
     return res.status(400).json({ error: "Invalid gift card selection for this survey" });
   }
   if (giftCardChoice === "stay_credit_20" && segmentRaw === "past") {
@@ -192,6 +191,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     giftCardChoice === "starbucks_10" ? "starbucks"
     : giftCardChoice === "stay_credit_20" ? "stay_credit"
     : giftCardChoice === "free_night" ? "free_night"
+    : giftCardChoice === "raffle_only" ? "raffle_only"
     : "amazon";
   const giftCardEmail = emailRaw;
 
