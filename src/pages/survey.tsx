@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/router";
 import Layout from "../components/Layout";
 
-type Segment = "a" | "b" | "c";
+type Segment = "a" | "b" | "c" | "past";
 
 type GuestData = {
   segment: Segment;
@@ -41,6 +41,13 @@ type ScreenId =
   | "airport_b"
   | "book_direct_b"
   | "gift_card_b"
+  // Survey Past (past guest blast — Pensacola 4-5 star, max 100)
+  | "past_appreciated"
+  | "past_change"
+  | "past_wash_fold"
+  | "past_airport_q1"
+  | "past_airport_q2"
+  | "past_total_wine"
   // Shared submit
   | "gift_card";
 
@@ -169,6 +176,11 @@ export default function Survey() {
   const [fiveStarFix, setFiveStarFix] = useState("");
   const [bookDirectB, setBookDirectB] = useState("");
 
+  // Past guest answers
+  const [pastAppreciated, setPastAppreciated] = useState("");
+  const [pastChange, setPastChange] = useState("");
+  const [totalWineInterest, setTotalWineInterest] = useState("");
+
   // Load token data
   useEffect(() => {
     const t = router.query.t;
@@ -232,6 +244,22 @@ export default function Survey() {
       ];
     }
     // segment c — should not reach survey page (email only), but handle gracefully
+    if (seg === "c") return ["intro"];
+    // Past guest blast — Pensacola 4-5 star only, max 100 sends
+    if (seg === "past") {
+      const airportFollow: ScreenId[] =
+        airportQ1 === "uber_lyft" ? ["past_airport_q2"] : [];
+      return [
+        "intro",
+        "past_appreciated",
+        "past_change",
+        "past_wash_fold",
+        "past_airport_q1",
+        ...airportFollow,
+        "past_total_wine",
+        "gift_card",
+      ];
+    }
     return ["intro"];
   }, [guest, bookDirect, airportQ1]);
 
@@ -260,6 +288,13 @@ export default function Survey() {
       case "book_direct_b": return !!bookDirectB;
       case "gift_card": return !!giftCardChoice;
       case "birthday": return true; // optional
+      // Past guest screens
+      case "past_appreciated": return pastAppreciated.trim().length > 0;
+      case "past_change": return pastChange.trim().length > 0;
+      case "past_wash_fold": return !!washFold;
+      case "past_airport_q1": return !!airportQ1;
+      case "past_airport_q2": return true; // optional cost
+      case "past_total_wine": return !!totalWineInterest;
       default: return true;
     }
   };
@@ -317,6 +352,10 @@ export default function Survey() {
       // Survey B
       fiveStarFix: fiveStarFix || undefined,
       bookDirectB: bookDirectB || undefined,
+      // Past guest
+      pastAppreciated: pastAppreciated || undefined,
+      pastChange: pastChange || undefined,
+      totalWineInterest: totalWineInterest || undefined,
       // Gift card
       giftCardChoice,
     };
@@ -362,6 +401,12 @@ export default function Survey() {
 
   if (submitted) {
     const isCredit = giftCardChoice === "stay_credit_20";
+    const isFreeNight = giftCardChoice === "free_night";
+    const rewardMsg = isFreeNight
+      ? "Your free night credit has been noted. We'll apply it when you book your next stay."
+      : isCredit
+      ? "Your $20 stay credit has been noted. We'll apply it to your next booking."
+      : `Your ${giftCardChoice === "starbucks_10" ? "Starbucks" : "Amazon"} $10 gift card will be sent within 24 hours.`;
     return (
       <Layout title="Thank You!">
         <div className="max-w-lg mx-auto py-20 px-6 text-center">
@@ -371,11 +416,7 @@ export default function Survey() {
             </svg>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-3">Thank you{guest.guestName ? `, ${guest.guestName.split(" ")[0]}` : ""}!</h1>
-          <p className="text-gray-500 mb-8 text-lg">
-            {isCredit
-              ? "Your $20 stay credit has been noted. We'll apply it to your next booking."
-              : `Your ${giftCardChoice === "starbucks_10" ? "Starbucks" : "Amazon"} $10 gift card will be sent within 24 hours.`}
-          </p>
+          <p className="text-gray-500 mb-8 text-lg">{rewardMsg}</p>
           {guest.referralCode && (
             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 mb-6 text-left">
               <p className="text-sm font-semibold text-gray-700 mb-1">Your referral code</p>
@@ -406,8 +447,17 @@ export default function Survey() {
     switch (screen) {
       case "intro":
         return (
-          <Wrap title={`Thanks for the ${guest.segment === "a" ? "5-star review" : "review"}, ${firstName}.`}
-            subtitle="We wanted to ask a couple of quick questions — and send you a $10 gift card for your time.">
+          <Wrap
+            title={
+              guest.segment === "past"
+                ? `Hi ${firstName} — we'd love your feedback.`
+                : `Thanks for the ${guest.segment === "a" ? "5-star review" : "review"}, ${firstName}.`
+            }
+            subtitle={
+              guest.segment === "past"
+                ? "3 quick questions about your stay — takes 2 minutes. Pick a $10 gift card or a free night as a thank-you."
+                : "We wanted to ask a couple of quick questions — and send you a $10 gift card for your time."
+            }>
             {guest.unit && (
               <div className="mt-6 bg-gray-50 border border-gray-200 rounded-2xl p-5 text-sm text-gray-600 space-y-1">
                 <p><span className="font-medium text-gray-800">{guest.unit}</span></p>
@@ -581,14 +631,82 @@ export default function Survey() {
 
       case "gift_card":
         return (
-          <Wrap title="Which $10 reward would you like?"
+          <Wrap title="Which reward would you like?"
             subtitle="Thank you for completing the survey.">
             <OptionRow value={giftCardChoice} onChange={setGiftCardChoice} options={[
               { key: "amazon_10", label: "Amazon $10 gift card" },
               { key: "starbucks_10", label: "Starbucks $10 gift card" },
-              { key: "stay_credit_20", label: "$20 credit toward your next Evergreen stay" },
+              ...(guest.segment === "past"
+                ? [{ key: "free_night", label: "1 free night on your next Evergreen stay" }]
+                : [{ key: "stay_credit_20", label: "$20 credit toward your next Evergreen stay" }]
+              ),
             ]} />
             {submitError && <p className="text-red-500 text-sm text-center mt-4">{submitError}</p>}
+          </Wrap>
+        );
+
+      case "past_appreciated":
+        return (
+          <Wrap title="What did you appreciate most about your stay?"
+            subtitle="The thing you'll remember most.">
+            <TextArea value={pastAppreciated} onChange={setPastAppreciated} placeholder="e.g. the location, cleanliness, how easy check-in was..." />
+          </Wrap>
+        );
+
+      case "past_change":
+        return (
+          <Wrap title="What's one thing you'd change?"
+            subtitle="Be honest — this helps us improve for every guest.">
+            <TextArea value={pastChange} onChange={setPastChange} placeholder="e.g. more towels, faster WiFi, earlier check-in..." />
+          </Wrap>
+        );
+
+      case "past_wash_fold":
+        return (
+          <Wrap
+            title={`Would you pay $${washFoldBucket} for a wash & fold service?`}
+            subtitle="We pick up, wash, dry, fold, and return to your unit the next day.">
+            <OptionRow value={washFold} onChange={setWashFold} options={[
+              { key: "yes", label: "Yes" },
+              { key: "maybe", label: "Maybe" },
+              { key: "no", label: "No" },
+            ]} />
+          </Wrap>
+        );
+
+      case "past_airport_q1":
+        return (
+          <Wrap title="On that trip, how did you get from the airport to the property?">
+            <OptionRow value={airportQ1} onChange={setAirportQ1} options={[
+              { key: "uber_lyft", label: "Uber / Lyft" },
+              { key: "rental_car", label: "Rental car" },
+              { key: "friend_family", label: "Friend or family picked me up" },
+              { key: "didnt_fly", label: "Didn't fly" },
+              { key: "other", label: "Other" },
+            ]} />
+          </Wrap>
+        );
+
+      case "past_airport_q2":
+        return (
+          <Wrap title="If we offered door-to-door pickup for $25, would you have used it?">
+            <OptionRow value={airportQ3} onChange={setAirportQ3} options={[
+              { key: "yes_definitely", label: "Yes, definitely" },
+              { key: "maybe", label: "Maybe" },
+              { key: "no", label: "No" },
+            ]} />
+          </Wrap>
+        );
+
+      case "past_total_wine":
+        return (
+          <Wrap title="Would you order drinks delivered to your unit before check-in?"
+            subtitle="We're looking at same-day delivery from Total Wine — beer, wine, spirits waiting when you arrive.">
+            <OptionRow value={totalWineInterest} onChange={setTotalWineInterest} options={[
+              { key: "yes", label: "Yes, definitely" },
+              { key: "maybe", label: "Maybe" },
+              { key: "no", label: "No thanks" },
+            ]} />
           </Wrap>
         );
 

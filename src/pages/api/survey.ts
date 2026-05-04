@@ -1,14 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../lib/db";
 
-const SEGMENTS = new Set(["a", "b", "c"]);
+const SEGMENTS = new Set(["a", "b", "c", "past"]);
 const BOOK_DIRECT_VALUES = new Set(["yes", "maybe", "no"]);
 const RETURN_INTENT_VALUES = new Set(["yes", "maybe", "no"]);
 const DISCOUNT_VALUES = new Set(["10_off_3nights", "15_off_5nights", "no_preference"]);
 const AIRPORT_VALUES = new Set(["uber_lyft", "rental_car", "friend_family", "didnt_fly", "other"]);
 const AIRPORT_COST_VALUES = new Set(["under_20", "20_35", "35_50", "over_50", "dont_remember"]);
 const AIRPORT_INTEREST_VALUES = new Set(["yes_definitely", "maybe", "no"]);
-const GIFT_CARD_CHOICES = new Set(["amazon_10", "starbucks_10", "stay_credit_20"]);
+const GIFT_CARD_CHOICES = new Set(["amazon_10", "starbucks_10", "stay_credit_20", "free_night"]);
+const TOTAL_WINE_VALUES = new Set(["yes", "maybe", "no"]);
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const tokenRegex = /^[a-zA-Z0-9_-]{16,64}$/;
@@ -140,13 +141,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const fiveStarFix = str(body.fiveStarFix, 1000);
   const bookDirectB = inSet(BOOK_DIRECT_VALUES, body.bookDirectB);
 
+  // --- Past guest ---
+  const pastAppreciated = str(body.pastAppreciated, 1000);
+  const pastChange = str(body.pastChange, 1000);
+  const totalWineInterest = inSet(TOTAL_WINE_VALUES, body.totalWineInterest);
+
   // Combined: use the segment-appropriate book_direct answer
   const wouldBookDirect = segmentRaw === "a" ? bookDirect : bookDirectB;
 
   // stoodOut/oneChange → existing columns
-  const highlight = segmentRaw === "a" ? stoodOut : null;
+  const highlight = segmentRaw === "a" ? stoodOut : segmentRaw === "past" ? pastAppreciated : null;
   const whatLiked = segmentRaw === "b" ? stoodOut : null;
-  const whatDifferent = oneChange;
+  const whatDifferent = segmentRaw === "past" ? pastChange : oneChange;
   const fiveStarImprovement = segmentRaw === "b" ? fiveStarFix : null;
 
   // --- Gift card ---
@@ -157,6 +163,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const giftCardType =
     giftCardChoice === "starbucks_10" ? "starbucks"
     : giftCardChoice === "stay_credit_20" ? "stay_credit"
+    : giftCardChoice === "free_night" ? "free_night"
     : "amazon";
   const giftCardEmail = emailRaw;
 
@@ -175,7 +182,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         token, review_rating,
         wash_fold_price_bucket, gift_card_choice, referral_code,
         airport_method, airport_cost, airport_interest,
-        book_direct_reason, five_star_fix
+        book_direct_reason, five_star_fix,
+        total_wine_interest
       ) VALUES (
         ${name}, ${emailRaw}, ${phone}, ${property},
         ${overallRating}, ${0},
@@ -189,7 +197,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ${token}, ${reviewRating},
         ${washFoldPriceBucket}, ${giftCardChoice}, ${referralCode},
         ${airportMethod}, ${airportCost}, ${airportInterest},
-        ${bookDirectReason}, ${fiveStarFix}
+        ${bookDirectReason}, ${fiveStarFix},
+        ${totalWineInterest}
       )
       ON CONFLICT (token) DO NOTHING
     `;
