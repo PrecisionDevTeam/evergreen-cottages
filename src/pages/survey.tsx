@@ -485,7 +485,9 @@ export default function Survey() {
             }
             subtitle={
               guest.segment === "past"
-                ? "A few quick questions about your stay — takes 2 minutes. Pick your $10 reward and get entered to win a free night stay."
+                ? guest.giftCardLimitReached
+                  ? "A few quick questions about your stay — takes 2 minutes. You're entered to win a free night stay."
+                  : "A few quick questions about your stay — takes 2 minutes. Pick your $10 reward and get entered to win a free night stay."
                 : "We wanted to ask a couple of quick questions — and send you a $10 gift card for your time."
             }>
             {guest.unit && (
