@@ -883,7 +883,11 @@ export default function Survey() {
           {isFinalScreen ? (
             <button type="button" onClick={handleSubmit} disabled={!canAdvance() || submitting}
               className="flex-1 py-4 rounded-2xl bg-teal-600 text-white font-semibold text-lg hover:bg-teal-700 transition disabled:opacity-40">
-              {submitting ? "Submitting..." : "Submit & claim my gift card"}
+              {submitting
+                ? "Submitting..."
+                : guest?.segment === "past" && guest?.giftCardLimitReached
+                ? "Submit & enter the raffle"
+                : "Submit & claim my gift card"}
             </button>
           ) : (
             <button type="button" onClick={advance} disabled={!canAdvance()}
