@@ -54,6 +54,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(410).json({ error: "Survey link has expired" });
   }
 
+  // For past segment: check if $10 gift card cap (100) has been reached
+  let giftCardLimitReached = false;
+  if (row.segment === "past") {
+    const countRows: any[] = await prisma.$queryRaw`
+      SELECT COUNT(*)::int AS cnt FROM guest_surveys
+      WHERE gift_card_choice IN ('amazon_10', 'starbucks_10', 'stay_credit_20')
+    `;
+    giftCardLimitReached = Number(countRows[0]?.cnt ?? 0) >= 100;
+  }
+
   return res.status(200).json({
     segment: row.segment,
     reviewRating: row.review_rating ? Number(row.review_rating) : null,
@@ -65,5 +75,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     checkOut: row.check_out ? new Date(row.check_out).toISOString().split("T")[0] : null,
     originCity: row.origin_city ?? null,
     referralCode: row.referral_code ?? null,
+    giftCardLimitReached,
   });
 }

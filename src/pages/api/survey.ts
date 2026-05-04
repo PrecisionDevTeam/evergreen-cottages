@@ -171,6 +171,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!giftCardChoice) {
     return res.status(400).json({ error: "Gift card selection is required" });
   }
+  // Segment rules: past gets free_night or $10 cards; A/B get $10 cards or stay_credit_20
+  if (giftCardChoice === "free_night" && segmentRaw !== "past") {
+    return res.status(400).json({ error: "Invalid gift card selection for this survey" });
+  }
+  if (giftCardChoice === "stay_credit_20" && segmentRaw === "past") {
+    return res.status(400).json({ error: "Invalid gift card selection for this survey" });
+  }
+  // Enforce global $10 cap of 100 — applies to past segment only (A/B are unlimited)
+  if (segmentRaw === "past" && (giftCardChoice === "amazon_10" || giftCardChoice === "starbucks_10")) {
+    const capRows: any[] = await prisma.$queryRaw`
+      SELECT COUNT(*)::int AS cnt FROM guest_surveys
+      WHERE gift_card_choice IN ('amazon_10', 'starbucks_10', 'stay_credit_20')
+    `;
+    if (Number(capRows[0]?.cnt ?? 0) >= 100) {
+      return res.status(400).json({ error: "Gift cards have all been claimed. Please select the free night entry instead." });
+    }
+  }
   const giftCardType =
     giftCardChoice === "starbucks_10" ? "starbucks"
     : giftCardChoice === "stay_credit_20" ? "stay_credit"

@@ -16,6 +16,7 @@ type GuestData = {
   checkOut: string | null;
   originCity: string | null;
   referralCode: string | null;
+  giftCardLimitReached: boolean;
 };
 
 type ScreenId =
@@ -425,9 +426,12 @@ export default function Survey() {
   if (!guest) return null;
 
   if (submitted) {
-    const rewardMsg = giftCardChoice === "free_night"
-      ? "You've been entered to win a free night stay. We'll reach out if you win!"
-      : `Your ${giftCardChoice === "starbucks_10" ? "Starbucks" : "Amazon"} $10 gift card will be sent within 24 hours.`;
+    const rewardMsg =
+      giftCardChoice === "free_night"
+        ? "You've been entered to win a free night stay. We'll reach out if you win!"
+        : giftCardChoice === "stay_credit_20"
+        ? "Your $10 stay credit has been noted. We'll apply it to your next booking."
+        : `Your ${giftCardChoice === "starbucks_10" ? "Starbucks" : "Amazon"} $10 gift card will be sent within 24 hours.`;
     return (
       <Layout title="Thank You!">
         <div className="max-w-lg mx-auto py-20 px-6 text-center">
@@ -695,18 +699,33 @@ export default function Survey() {
           </Wrap>
         );
 
-      case "gift_card":
-        return (
-          <Wrap title="Which reward would you like?"
-            subtitle="Thank you for completing the survey.">
-            <OptionRow value={giftCardChoice} onChange={setGiftCardChoice} options={[
+      case "gift_card": {
+        const isPast = guest.segment === "past";
+        const limitHit = isPast && guest.giftCardLimitReached;
+        const giftOptions = isPast
+          ? [
+              ...(!limitHit ? [
+                { key: "amazon_10", label: "Amazon $10 gift card" },
+                { key: "starbucks_10", label: "Starbucks $10 gift card" },
+              ] : []),
+              { key: "free_night", label: "Enter to win a free night stay" },
+            ]
+          : [
               { key: "amazon_10", label: "Amazon $10 gift card" },
               { key: "starbucks_10", label: "Starbucks $10 gift card" },
-              { key: "free_night", label: "Enter to win a free night stay" },
-            ]} />
+              { key: "stay_credit_20", label: "$10 credit toward your next Evergreen stay" },
+            ];
+        return (
+          <Wrap
+            title="Which reward would you like?"
+            subtitle={limitHit
+              ? "Our gift cards have all been claimed — but you can still enter to win a free night."
+              : "Thank you for completing the survey."}>
+            <OptionRow value={giftCardChoice} onChange={setGiftCardChoice} options={giftOptions} />
             {submitError && <p className="text-red-500 text-sm text-center mt-4">{submitError}</p>}
           </Wrap>
         );
+      }
 
       case "past_appreciated":
         return (
