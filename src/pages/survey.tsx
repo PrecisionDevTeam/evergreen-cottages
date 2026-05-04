@@ -431,12 +431,12 @@ export default function Survey() {
   if (!guest) return null;
 
   if (submitted) {
-    const rewardMsg =
-      giftCardChoice === "free_night" || giftCardChoice === "raffle_only"
-        ? "You're already entered in our free night raffle. We'll reach out if you win!"
-        : giftCardChoice === "stay_credit_20"
-        ? "Your $10 stay credit has been noted. We'll apply it to your next booking."
-        : `Your ${giftCardChoice === "starbucks_10" ? "Starbucks" : "Amazon"} $10 gift card will be sent within 24 hours.`;
+    const isRaffleOnly = giftCardChoice === "raffle_only" || (guest.segment === "past" && guest.giftCardLimitReached);
+    const rewardMsg = isRaffleOnly
+      ? "You're entered in our free night raffle. We'll reach out if you win!"
+      : giftCardChoice === "stay_credit_20"
+      ? "Your $10 stay credit has been noted. We'll apply it to your next booking."
+      : `Your ${giftCardChoice === "starbucks_10" ? "Starbucks" : "Amazon"} $10 gift card will be sent within 24 hours.`;
     return (
       <Layout title="Thank You!">
         <div className="max-w-lg mx-auto py-20 px-6 text-center">
