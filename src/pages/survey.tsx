@@ -751,7 +751,7 @@ export default function Survey() {
         </div>
 
         {/* Screen */}
-        <div className="flex-1 relative overflow-hidden">
+        <div className="relative overflow-hidden">
           <AnimatePresence custom={dir} mode="wait">
             <motion.div key={screen} custom={dir} variants={variants}
               initial="enter" animate="center" exit="exit"
