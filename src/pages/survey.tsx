@@ -405,7 +405,7 @@ export default function Survey() {
     const isCredit = giftCardChoice === "stay_credit_20";
     const isFreeNight = giftCardChoice === "free_night";
     const rewardMsg = isFreeNight
-      ? "Your free night credit has been noted. We'll apply it when you book your next stay."
+      ? "You've been entered to win a free night stay. We'll reach out if you win!"
       : isCredit
       ? "Your $20 stay credit has been noted. We'll apply it to your next booking."
       : `Your ${giftCardChoice === "starbucks_10" ? "Starbucks" : "Amazon"} $10 gift card will be sent within 24 hours.`;
@@ -457,7 +457,7 @@ export default function Survey() {
             }
             subtitle={
               guest.segment === "past"
-                ? "3 quick questions about your stay — takes 2 minutes. Pick a $10 gift card or a free night as a thank-you."
+                ? "3 quick questions about your stay — takes 2 minutes. Pick a $10 gift card or enter to win a free night stay."
                 : "We wanted to ask a couple of quick questions — and send you a $10 gift card for your time."
             }>
             {guest.unit && (
@@ -639,7 +639,7 @@ export default function Survey() {
               { key: "amazon_10", label: "Amazon $10 gift card" },
               { key: "starbucks_10", label: "Starbucks $10 gift card" },
               ...(guest.segment === "past"
-                ? [{ key: "free_night", label: "1 free night on your next Evergreen stay" }]
+                ? [{ key: "free_night", label: "Enter to win a free night stay" }]
                 : [{ key: "stay_credit_20", label: "$20 credit toward your next Evergreen stay" }]
               ),
             ]} />
