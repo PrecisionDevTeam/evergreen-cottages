@@ -59,7 +59,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (row.segment === "past") {
     const countRows: any[] = await prisma.$queryRaw`
       SELECT COUNT(*)::int AS cnt FROM guest_surveys
-      WHERE gift_card_choice IN ('amazon_10', 'starbucks_10', 'stay_credit_20')
+      WHERE segment = 'past'
+        AND gift_card_choice IN ('amazon_10', 'starbucks_10')
     `;
     giftCardLimitReached = Number(countRows[0]?.cnt ?? 0) >= 100;
   }

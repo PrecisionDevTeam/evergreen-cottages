@@ -191,7 +191,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (segmentRaw === "past" && (giftCardChoice === "amazon_10" || giftCardChoice === "starbucks_10")) {
     const capRows: any[] = await prisma.$queryRaw`
       SELECT COUNT(*)::int AS cnt FROM guest_surveys
-      WHERE gift_card_choice IN ('amazon_10', 'starbucks_10', 'stay_credit_20')
+      WHERE segment = 'past'
+        AND gift_card_choice IN ('amazon_10', 'starbucks_10')
     `;
     if (Number(capRows[0]?.cnt ?? 0) >= 100) {
       return res.status(400).json({ error: "Gift cards have all been claimed." });
