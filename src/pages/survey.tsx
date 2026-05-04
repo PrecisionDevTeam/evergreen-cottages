@@ -180,6 +180,7 @@ export default function Survey() {
   const [pastAppreciated, setPastAppreciated] = useState("");
   const [pastChange, setPastChange] = useState("");
   const [totalWineInterest, setTotalWineInterest] = useState("");
+  const [pastAirportInterest, setPastAirportInterest] = useState("");
 
   // Load token data
   useEffect(() => {
@@ -293,7 +294,7 @@ export default function Survey() {
       case "past_change": return pastChange.trim().length > 0;
       case "past_wash_fold": return !!washFold;
       case "past_airport_q1": return !!airportQ1;
-      case "past_airport_q2": return true; // optional cost
+      case "past_airport_q2": return !!pastAirportInterest;
       case "past_total_wine": return !!totalWineInterest;
       default: return true;
     }
@@ -356,6 +357,7 @@ export default function Survey() {
       pastAppreciated: pastAppreciated || undefined,
       pastChange: pastChange || undefined,
       totalWineInterest: totalWineInterest || undefined,
+      pastAirportInterest: pastAirportInterest || undefined,
       // Gift card
       giftCardChoice,
     };
@@ -690,7 +692,7 @@ export default function Survey() {
       case "past_airport_q2":
         return (
           <Wrap title="If we offered door-to-door pickup for $25, would you have used it?">
-            <OptionRow value={airportQ3} onChange={setAirportQ3} options={[
+            <OptionRow value={pastAirportInterest} onChange={setPastAirportInterest} options={[
               { key: "yes_definitely", label: "Yes, definitely" },
               { key: "maybe", label: "Maybe" },
               { key: "no", label: "No" },

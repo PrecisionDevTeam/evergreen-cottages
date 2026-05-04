@@ -116,8 +116,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const usedLaundry = Boolean(body.usedLaundry);
   const washFoldRaw = str(body.washFold, 10);
   const wouldPayWashFold = washFoldRaw === "yes" || washFoldRaw === "maybe";
+  const WASH_FOLD_BUCKETS = new Set([25, 35, 45]);
   const washFoldPriceBucket =
-    typeof body.washFoldPriceBucket === "number" ? body.washFoldPriceBucket : null;
+    typeof body.washFoldPriceBucket === "number" && WASH_FOLD_BUCKETS.has(body.washFoldPriceBucket)
+      ? body.washFoldPriceBucket : null;
   const washFoldPrice = washFoldPriceBucket ? `$${washFoldPriceBucket}` : null;
   const referralCode = str(body.referralCode, 20);
 
@@ -145,6 +147,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const pastAppreciated = str(body.pastAppreciated, 1000);
   const pastChange = str(body.pastChange, 1000);
   const totalWineInterest = inSet(TOTAL_WINE_VALUES, body.totalWineInterest);
+  const pastAirportInterest = inSet(AIRPORT_INTEREST_VALUES, body.pastAirportInterest);
 
   // Combined: use the segment-appropriate book_direct answer
   const wouldBookDirect = segmentRaw === "a" ? bookDirect : bookDirectB;
@@ -159,6 +162,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const giftCardChoice = inSet(GIFT_CARD_CHOICES, body.giftCardChoice);
   if (!giftCardChoice) {
     return res.status(400).json({ error: "Gift card selection is required" });
+  }
+  if (giftCardChoice === "free_night" && segmentRaw !== "past") {
+    return res.status(400).json({ error: "Invalid gift card selection for this survey" });
+  }
+  if (giftCardChoice === "stay_credit_20" && segmentRaw === "past") {
+    return res.status(400).json({ error: "Invalid gift card selection for this survey" });
   }
   const giftCardType =
     giftCardChoice === "starbucks_10" ? "starbucks"
@@ -214,7 +223,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const webhook = process.env.DISCORD_SURVEY_WEBHOOK;
       if (webhook) {
-        const segLabel = segmentRaw === "a" ? "⭐ Promoter" : segmentRaw === "b" ? "🟡 Passive" : "🔴 Detractor";
+        const segLabel =
+          segmentRaw === "a" ? "⭐ Promoter"
+          : segmentRaw === "b" ? "🟡 Passive"
+          : segmentRaw === "past" ? "🕰️ Past Guest"
+          : "🔴 Detractor";
         let details = "";
         if (segmentRaw === "a") {
           details = `Stood out: "${(stoodOut ?? "").slice(0, 100)}"\nOne change: "${(oneChange ?? "").slice(0, 80)}"`;
@@ -222,8 +235,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         } else if (segmentRaw === "b") {
           details = `Did well: "${(stoodOut ?? "").slice(0, 100)}"\n5★ fix: "${(fiveStarFix ?? "").slice(0, 100)}"`;
           if (bookDirectB) details += `\nBook direct: ${bookDirectB}`;
+        } else if (segmentRaw === "past") {
+          details = `Appreciated: "${(pastAppreciated ?? "").slice(0, 100)}"\nChange: "${(pastChange ?? "").slice(0, 80)}"`;
+          if (totalWineInterest) details += `\nTotal Wine interest: ${totalWineInterest}`;
+          if (pastAirportInterest) details += `\nAirport transfer interest: ${pastAirportInterest}`;
         }
-        const airportInfo = airportMethod ? `Airport: ${airportMethod}${airportInterest ? ` | Transfer interest: ${airportInterest}` : ""}` : "";
+        const airportInfo = segmentRaw !== "past" && airportMethod
+          ? `Airport: ${airportMethod}${airportInterest ? ` | Transfer interest: ${airportInterest}` : ""}`
+          : "";
         await fetch(webhook, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
