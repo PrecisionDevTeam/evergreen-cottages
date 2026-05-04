@@ -262,15 +262,11 @@ export default function Survey() {
     if (seg === "c") return ["intro"];
     // Past guest blast — Pensacola 4-5 star only, max 100 sends
     if (seg === "past") {
-      const airportFollow: ScreenId[] =
-        airportQ1 === "uber_lyft" ? ["past_airport_q2"] : [];
       return [
         "intro",
         "past_appreciated",
         "past_change",
         "past_wash_fold",
-        "past_airport_q1",
-        ...airportFollow,
         "travel_origin",
         ...travelFollow,
         "past_total_wine",
@@ -480,7 +476,7 @@ export default function Survey() {
             }
             subtitle={
               guest.segment === "past"
-                ? "A few quick questions about your stay — takes 2 minutes. Pick a $10 gift card or enter to win a free night stay."
+                ? "A few quick questions about your stay — takes 2 minutes. Pick your $10 reward."
                 : "We wanted to ask a couple of quick questions — and send you a $10 gift card for your time."
             }>
             {guest.unit && (
