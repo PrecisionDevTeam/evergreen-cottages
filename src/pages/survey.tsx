@@ -48,6 +48,10 @@ type ScreenId =
   | "past_airport_q1"
   | "past_airport_q2"
   | "past_total_wine"
+  // Travel + future airport
+  | "travel_origin"
+  | "airport_future"
+  | "airport_price"
   // Shared submit
   | "gift_card";
 
@@ -176,6 +180,12 @@ export default function Survey() {
   const [fiveStarFix, setFiveStarFix] = useState("");
   const [bookDirectB, setBookDirectB] = useState("");
 
+  // Travel + future airport answers
+  const [travelOrigin, setTravelOrigin] = useState("");
+  const [travelCity, setTravelCity] = useState("");
+  const [airportFuture, setAirportFuture] = useState("");
+  const [airportPrice, setAirportPrice] = useState("");
+
   // Past guest answers
   const [pastAppreciated, setPastAppreciated] = useState("");
   const [pastChange, setPastChange] = useState("");
@@ -224,6 +234,9 @@ export default function Survey() {
   const screenSequence = useMemo((): ScreenId[] => {
     if (!guest) return [];
     const seg = guest.segment;
+    const travelFollow: ScreenId[] = travelOrigin === "flew"
+      ? (["airport_future"] as ScreenId[]).concat(airportFuture === "yes" ? ["airport_price"] : [])
+      : [];
     if (seg === "a") {
       const base: ScreenId[] = ["intro", "stood_out", "one_change", "book_direct"];
       const afterBookDirect: ScreenId[] =
@@ -236,12 +249,12 @@ export default function Survey() {
       const afterAirport: ScreenId[] =
         airportQ1 === "uber_lyft" ? ["airport_q2", "airport_q3"] : ["airport_q3"];
       const final: ScreenId[] = ["laundry", "wash_fold", "referral", "gift_card", "birthday"];
-      return [...base, ...afterBookDirect, ...rest, ...afterAirport, ...final];
+      return [...base, ...afterBookDirect, ...rest, ...afterAirport, "travel_origin", ...travelFollow, ...final];
     }
     if (seg === "b") {
       return [
         "intro", "five_star", "stood_out", "one_change",
-        "shop_items_b", "airport_b", "book_direct_b", "gift_card",
+        "shop_items_b", "airport_b", "travel_origin", ...travelFollow, "book_direct_b", "gift_card",
       ];
     }
     // segment c — should not reach survey page (email only), but handle gracefully
@@ -257,12 +270,14 @@ export default function Survey() {
         "past_wash_fold",
         "past_airport_q1",
         ...airportFollow,
+        "travel_origin",
+        ...travelFollow,
         "past_total_wine",
         "gift_card",
       ];
     }
     return ["intro"];
-  }, [guest, bookDirect, airportQ1]);
+  }, [guest, bookDirect, airportQ1, travelOrigin, airportFuture]);
 
   const currentIdx = screenSequence.indexOf(screen);
   const totalScreens = screenSequence.length;
@@ -296,6 +311,9 @@ export default function Survey() {
       case "past_airport_q1": return !!airportQ1;
       case "past_airport_q2": return !!pastAirportInterest;
       case "past_total_wine": return !!totalWineInterest;
+      case "travel_origin": return !!travelOrigin;
+      case "airport_future": return !!airportFuture;
+      case "airport_price": return true; // optional
       default: return true;
     }
   };
@@ -358,6 +376,11 @@ export default function Survey() {
       pastChange: pastChange || undefined,
       totalWineInterest: totalWineInterest || undefined,
       pastAirportInterest: pastAirportInterest || undefined,
+      // Travel + future airport
+      travelOrigin: travelOrigin || undefined,
+      travelCity: travelCity || undefined,
+      airportFuture: airportFuture || undefined,
+      airportPrice: airportPrice || undefined,
       // Gift card
       giftCardChoice,
     };
@@ -402,12 +425,8 @@ export default function Survey() {
   if (!guest) return null;
 
   if (submitted) {
-    const isCredit = giftCardChoice === "stay_credit_20";
-    const isFreeNight = giftCardChoice === "free_night";
-    const rewardMsg = isFreeNight
+    const rewardMsg = giftCardChoice === "free_night"
       ? "You've been entered to win a free night stay. We'll reach out if you win!"
-      : isCredit
-      ? "Your $20 stay credit has been noted. We'll apply it to your next booking."
       : `Your ${giftCardChoice === "starbucks_10" ? "Starbucks" : "Amazon"} $10 gift card will be sent within 24 hours.`;
     return (
       <Layout title="Thank You!">
@@ -457,7 +476,7 @@ export default function Survey() {
             }
             subtitle={
               guest.segment === "past"
-                ? "3 quick questions about your stay — takes 2 minutes. Pick a $10 gift card or enter to win a free night stay."
+                ? "A few quick questions about your stay — takes 2 minutes. Pick a $10 gift card or enter to win a free night stay."
                 : "We wanted to ask a couple of quick questions — and send you a $10 gift card for your time."
             }>
             {guest.unit && (
@@ -631,6 +650,51 @@ export default function Survey() {
           </Wrap>
         );
 
+      case "travel_origin":
+        return (
+          <Wrap title="How did you travel to Pensacola for this stay?">
+            <OptionRow value={travelOrigin} onChange={setTravelOrigin} options={[
+              { key: "drove", label: "Drove" },
+              { key: "flew", label: "Flew" },
+              { key: "other", label: "Other" },
+            ]} />
+            <input
+              type="text"
+              value={travelCity}
+              onChange={(e) => setTravelCity(e.target.value)}
+              placeholder="What city did you travel from? (optional)"
+              className="w-full mt-4 border-2 border-gray-200 rounded-2xl px-4 py-4 text-base focus:outline-none focus:border-teal-500 transition"
+            />
+          </Wrap>
+        );
+
+      case "airport_future":
+        return (
+          <Wrap title="For a future stay, would you consider airport pickup from us?"
+            subtitle="We pick you up at the terminal and drop you at the property.">
+            <OptionRow value={airportFuture} onChange={setAirportFuture} options={[
+              { key: "yes", label: "Yes" },
+              { key: "no", label: "No" },
+            ]} />
+          </Wrap>
+        );
+
+      case "airport_price":
+        return (
+          <Wrap title="How much would you pay for airport pickup?"
+            subtitle="Just curious what feels fair — no commitment.">
+            <input
+              type="text"
+              inputMode="decimal"
+              value={airportPrice}
+              onChange={(e) => setAirportPrice(e.target.value)}
+              placeholder="e.g. $30"
+              className="w-full mt-6 border-2 border-gray-200 rounded-2xl px-4 py-4 text-base focus:outline-none focus:border-teal-500 transition"
+            />
+            <p className="text-xs text-gray-400 mt-2">Skip if you're not sure.</p>
+          </Wrap>
+        );
+
       case "gift_card":
         return (
           <Wrap title="Which reward would you like?"
@@ -638,10 +702,7 @@ export default function Survey() {
             <OptionRow value={giftCardChoice} onChange={setGiftCardChoice} options={[
               { key: "amazon_10", label: "Amazon $10 gift card" },
               { key: "starbucks_10", label: "Starbucks $10 gift card" },
-              ...(guest.segment === "past"
-                ? [{ key: "free_night", label: "Enter to win a free night stay" }]
-                : [{ key: "stay_credit_20", label: "$20 credit toward your next Evergreen stay" }]
-              ),
+              { key: "free_night", label: "Enter to win a free night stay" },
             ]} />
             {submitError && <p className="text-red-500 text-sm text-center mt-4">{submitError}</p>}
           </Wrap>

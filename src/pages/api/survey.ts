@@ -158,16 +158,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const whatDifferent = segmentRaw === "past" ? pastChange : oneChange;
   const fiveStarImprovement = segmentRaw === "b" ? fiveStarFix : null;
 
+  // --- New travel + airport questions ---
+  const TRAVEL_ORIGIN_VALUES = new Set(["drove", "flew", "other"]);
+  const AIRPORT_FUTURE_VALUES = new Set(["yes", "no"]);
+  const travelOrigin = inSet(TRAVEL_ORIGIN_VALUES, body.travelOrigin);
+  const travelCity = str(body.travelCity, 200);
+  const airportFutureInterest = inSet(AIRPORT_FUTURE_VALUES, body.airportFuture);
+  const airportPrice = str(body.airportPrice, 100);
+
   // --- Gift card ---
   const giftCardChoice = inSet(GIFT_CARD_CHOICES, body.giftCardChoice);
   if (!giftCardChoice) {
     return res.status(400).json({ error: "Gift card selection is required" });
-  }
-  if (giftCardChoice === "free_night" && segmentRaw !== "past") {
-    return res.status(400).json({ error: "Invalid gift card selection for this survey" });
-  }
-  if (giftCardChoice === "stay_credit_20" && segmentRaw === "past") {
-    return res.status(400).json({ error: "Invalid gift card selection for this survey" });
   }
   const giftCardType =
     giftCardChoice === "starbucks_10" ? "starbucks"
@@ -192,7 +194,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         wash_fold_price_bucket, gift_card_choice, referral_code,
         airport_method, airport_cost, airport_interest,
         book_direct_reason, five_star_fix,
-        total_wine_interest
+        total_wine_interest,
+        travel_origin, travel_city, airport_future_interest, airport_price
       ) VALUES (
         ${name}, ${emailRaw}, ${phone}, ${property},
         ${overallRating}, ${0},
@@ -207,7 +210,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ${washFoldPriceBucket}, ${giftCardChoice}, ${referralCode},
         ${airportMethod}, ${airportCost}, ${airportInterest},
         ${bookDirectReason}, ${fiveStarFix},
-        ${totalWineInterest}
+        ${totalWineInterest},
+        ${travelOrigin}, ${travelCity}, ${airportFutureInterest}, ${airportPrice}
       )
       ON CONFLICT (token) DO NOTHING
     `;
@@ -243,6 +247,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const airportInfo = segmentRaw !== "past" && airportMethod
           ? `Airport: ${airportMethod}${airportInterest ? ` | Transfer interest: ${airportInterest}` : ""}`
           : "";
+        const travelInfo = travelOrigin
+          ? `Travel: ${travelOrigin}${travelCity ? ` from ${travelCity}` : ""}${airportFutureInterest ? ` | Future pickup: ${airportFutureInterest}${airportPrice ? ` ($${airportPrice})` : ""}` : ""}`
+          : "";
         await fetch(webhook, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -252,6 +259,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               `Guest: ${name} | Unit: ${property ?? "—"} | Rating: ${reviewRating ?? "—"}/5\n` +
               (details ? `${details}\n` : "") +
               (airportInfo ? `${airportInfo}\n` : "") +
+              (travelInfo ? `${travelInfo}\n` : "") +
               `Gift card: ${giftCardChoice} → ${giftCardEmail}`,
           }),
         });
