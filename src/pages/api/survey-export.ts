@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const rows: any[] = await prisma.$queryRaw`
-    SELECT * FROM guest_surveys ORDER BY created_at DESC
+    SELECT * FROM guest_surveys ORDER BY created_at DESC LIMIT 2000
   `;
 
   const FORMULA_CHARS = new Set(["=", "+", "-", "@", "\t", "\r"]);

@@ -196,6 +196,10 @@ export default function Survey() {
   const [totalWineInterest, setTotalWineInterest] = useState("");
   const [pastAirportInterest, setPastAirportInterest] = useState("");
 
+  // Clear dependent state when branching answers change to prevent stale data submission
+  useEffect(() => { if (bookDirect !== "no") setBookDirectWhy(""); }, [bookDirect]);
+  useEffect(() => { if (airportQ1 !== "uber_lyft") setAirportQ2(""); }, [airportQ1]);
+
   // Load token data
   useEffect(() => {
     const t = router.query.t;
@@ -313,8 +317,6 @@ export default function Survey() {
       case "past_return_intent": return !!pastReturnIntent;
       case "past_book_direct": return !!bookDirectB;
       case "past_wash_fold": return !!washFold;
-      case "past_airport_q1": return !!airportQ1;
-      case "past_airport_q2": return !!pastAirportInterest;
       case "past_total_wine": return !!totalWineInterest;
       case "travel_origin": return !!travelOrigin;
       case "airport_future": return !!airportFuture;
@@ -381,7 +383,6 @@ export default function Survey() {
       pastChange: pastChange || undefined,
       pastReturnIntent: pastReturnIntent || undefined,
       totalWineInterest: totalWineInterest || undefined,
-      pastAirportInterest: pastAirportInterest || undefined,
       // Travel + future airport
       travelOrigin: travelOrigin || undefined,
       travelCity: travelCity || undefined,

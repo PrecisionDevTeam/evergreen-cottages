@@ -60,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const tokenRows: any[] = await prisma.$queryRaw`
     SELECT guest_email, guest_name, guest_phone, unit, origin_city,
-           segment, review_rating, used_at, expires_at
+           segment, review_rating, referral_code, used_at, expires_at
     FROM survey_tokens WHERE token = ${token} LIMIT 1
   `;
   if (!tokenRows.length) {
@@ -120,8 +120,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     typeof body.washFoldPriceBucket === "number" && WASH_FOLD_BUCKETS.has(body.washFoldPriceBucket)
       ? body.washFoldPriceBucket : null;
   const washFoldPrice = washFoldPriceBucket ? `$${washFoldPriceBucket}` : null;
-  const referralCodeRaw = str(body.referralCode, 20);
-  const referralCode = referralCodeRaw && /^[A-Z0-9]{4,12}$/.test(referralCodeRaw) ? referralCodeRaw : null;
+  const referralCode = str(tokenRow.referral_code as string, 20) ?? null;
 
   // Birthday — month + day without year, store as 2000-MM-DD
   const MONTH_MAP: Record<string, string> = {
@@ -187,17 +186,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (giftCardChoice === "stay_credit_20" && segmentRaw === "past") {
     return res.status(400).json({ error: "Invalid gift card selection for this survey" });
   }
-  // Enforce global $10 cap of 100 — applies to past segment only (A/B are unlimited)
-  if (segmentRaw === "past" && (giftCardChoice === "amazon_10" || giftCardChoice === "starbucks_10")) {
-    const capRows: any[] = await prisma.$queryRaw`
-      SELECT COUNT(*)::int AS cnt FROM guest_surveys
-      WHERE segment = 'past'
-        AND gift_card_choice IN ('amazon_10', 'starbucks_10')
-    `;
-    if (Number(capRows[0]?.cnt ?? 0) >= 100) {
-      return res.status(400).json({ error: "Gift cards have all been claimed." });
-    }
-  }
   const giftCardType =
     giftCardChoice === "starbucks_10" ? "starbucks"
     : giftCardChoice === "stay_credit_20" ? "stay_credit"
@@ -207,51 +195,67 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const giftCardEmail = emailRaw;
 
   try {
-    await prisma.$executeRaw`
-      INSERT INTO guest_surveys (
-        guest_name, guest_email, guest_phone, property_name,
-        overall_rating, cleanliness_rating,
-        traveled_from,
-        what_liked, what_different,
-        would_book_direct, would_buy_items,
-        used_laundry, would_pay_wash_fold, wash_fold_price,
-        preferred_discount, birthday,
-        gift_card_email, gift_card_type,
-        segment, highlight, five_star_improvement,
-        token, review_rating,
-        wash_fold_price_bucket, gift_card_choice, referral_code,
-        airport_method, airport_cost, airport_interest,
-        book_direct_reason, five_star_fix,
-        total_wine_interest,
-        travel_origin, travel_city, airport_future_interest, airport_price,
-        return_intent
-      ) VALUES (
-        ${name}, ${emailRaw}, ${phone}, ${property},
-        ${overallRating}, ${0},
-        ${traveledFrom},
-        ${whatLiked}, ${whatDifferent},
-        ${wouldBookDirect}, ${wouldBuyItems},
-        ${usedLaundry}, ${wouldPayWashFold}, ${washFoldPrice},
-        ${discountPref}, ${birthday},
-        ${giftCardEmail}, ${giftCardType},
-        ${segmentRaw}, ${highlight}, ${fiveStarImprovement},
-        ${token}, ${reviewRating},
-        ${washFoldPriceBucket}, ${giftCardChoice}, ${referralCode},
-        ${airportMethod}, ${airportCost}, ${airportInterest},
-        ${bookDirectReason}, ${fiveStarFix},
-        ${totalWineInterest},
-        ${travelOrigin}, ${travelCity}, ${airportFutureInterest}, ${airportPrice},
-        ${pastReturnIntent}
-      )
-      ON CONFLICT (token) DO NOTHING
-    `;
+    const insertedRows = await prisma.$transaction(async (tx) => {
+      // Cap check inside transaction — atomic with INSERT, prevents concurrent over-redemption
+      if (segmentRaw === "past" && (giftCardChoice === "amazon_10" || giftCardChoice === "starbucks_10")) {
+        const capRows: any[] = await tx.$queryRaw`
+          SELECT COUNT(*)::int AS cnt FROM guest_surveys
+          WHERE segment = 'past'
+            AND gift_card_choice IN ('amazon_10', 'starbucks_10')
+        `;
+        if (Number(capRows[0]?.cnt ?? 0) >= 100) {
+          throw Object.assign(new Error("Gift cards have all been claimed."), { code: "CAP_HIT" });
+        }
+      }
+      return tx.$executeRaw`
+        INSERT INTO guest_surveys (
+          guest_name, guest_email, guest_phone, property_name,
+          overall_rating, cleanliness_rating,
+          traveled_from,
+          what_liked, what_different,
+          would_book_direct, would_buy_items,
+          used_laundry, would_pay_wash_fold, wash_fold_price,
+          preferred_discount, birthday,
+          gift_card_email, gift_card_type,
+          segment, highlight, five_star_improvement,
+          token, review_rating,
+          wash_fold_price_bucket, gift_card_choice, referral_code,
+          airport_method, airport_cost, airport_interest,
+          book_direct_reason, five_star_fix,
+          total_wine_interest,
+          travel_origin, travel_city, airport_future_interest, airport_price,
+          return_intent
+        ) VALUES (
+          ${name}, ${emailRaw}, ${phone}, ${property},
+          ${overallRating}, ${0},
+          ${traveledFrom},
+          ${whatLiked}, ${whatDifferent},
+          ${wouldBookDirect}, ${wouldBuyItems},
+          ${usedLaundry}, ${wouldPayWashFold}, ${washFoldPrice},
+          ${discountPref}, ${birthday},
+          ${giftCardEmail}, ${giftCardType},
+          ${segmentRaw}, ${highlight}, ${fiveStarImprovement},
+          ${token}, ${reviewRating},
+          ${washFoldPriceBucket}, ${giftCardChoice}, ${referralCode},
+          ${airportMethod}, ${airportCost}, ${airportInterest},
+          ${bookDirectReason}, ${fiveStarFix},
+          ${totalWineInterest},
+          ${travelOrigin}, ${travelCity}, ${airportFutureInterest}, ${airportPrice},
+          ${pastReturnIntent}
+        )
+        ON CONFLICT (token) DO NOTHING
+      `;
+    });
+
+    // 0 rows = duplicate token submission — return success silently, skip side effects
+    if (insertedRows === 0) {
+      return res.status(200).json({ success: true });
+    }
 
     // Mark token as used
-    if (token) {
-      await prisma.$executeRaw`
-        UPDATE survey_tokens SET used_at = NOW() WHERE token = ${token} AND used_at IS NULL
-      `.catch(() => null);
-    }
+    await prisma.$executeRaw`
+      UPDATE survey_tokens SET used_at = NOW() WHERE token = ${token} AND used_at IS NULL
+    `.catch(() => null);
 
     // Discord notification
     try {
@@ -279,9 +283,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const airportInfo = segmentRaw !== "past" && airportMethod
           ? `Airport: ${airportMethod}${airportInterest ? ` | Transfer interest: ${airportInterest}` : ""}`
           : "";
-        const priceDisplay = airportPrice ? airportPrice.replace(/^\$/, "") : "";
+        const priceDisplay = airportPrice != null ? airportPrice.replace(/^\$/, "") : "";
         const travelInfo = travelOrigin
-          ? `Travel: ${travelOrigin}${travelCity ? ` from ${sanitize(travelCity)}` : ""}${airportFutureInterest ? ` | Future pickup: ${airportFutureInterest}${priceDisplay ? ` ($${priceDisplay})` : ""}` : ""}`
+          ? `Travel: ${travelOrigin}${travelCity != null ? ` from ${sanitize(travelCity)}` : ""}${airportFutureInterest ? ` | Future pickup: ${airportFutureInterest}${priceDisplay ? ` ($${priceDisplay})` : ""}` : ""}`
           : "";
         await fetch(webhook, {
           method: "POST",
@@ -303,8 +307,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({ success: true });
   } catch (err: unknown) {
-    if (err && typeof err === "object" && "code" in err && (err as { code: string }).code === "23505") {
-      return res.status(200).json({ success: true });
+    if (err && typeof err === "object" && "code" in err) {
+      const code = (err as { code: string }).code;
+      if (code === "CAP_HIT") {
+        return res.status(400).json({ error: "Gift cards have all been claimed." });
+      }
+      if (code === "23505") {
+        return res.status(200).json({ success: true });
+      }
     }
     console.error("Survey submission error:", err);
     return res.status(500).json({ error: "Failed to save survey" });
