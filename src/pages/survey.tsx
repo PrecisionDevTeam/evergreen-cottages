@@ -45,6 +45,8 @@ type ScreenId =
   // Survey Past (past guest blast — Pensacola 4-5 star, max 100)
   | "past_appreciated"
   | "past_change"
+  | "past_return_intent"
+  | "past_book_direct"
   | "past_wash_fold"
   | "past_airport_q1"
   | "past_airport_q2"
@@ -190,6 +192,7 @@ export default function Survey() {
   // Past guest answers
   const [pastAppreciated, setPastAppreciated] = useState("");
   const [pastChange, setPastChange] = useState("");
+  const [pastReturnIntent, setPastReturnIntent] = useState("");
   const [totalWineInterest, setTotalWineInterest] = useState("");
   const [pastAirportInterest, setPastAirportInterest] = useState("");
 
@@ -266,10 +269,13 @@ export default function Survey() {
         "intro",
         "past_appreciated",
         "past_change",
+        "past_return_intent",
+        "past_book_direct",
         "past_wash_fold",
         "travel_origin",
         ...travelFollow,
         "past_total_wine",
+        "referral",
         "gift_card",
       ];
     }
@@ -304,6 +310,8 @@ export default function Survey() {
       // Past guest screens
       case "past_appreciated": return pastAppreciated.trim().length > 0;
       case "past_change": return pastChange.trim().length > 0;
+      case "past_return_intent": return !!pastReturnIntent;
+      case "past_book_direct": return !!bookDirectB;
       case "past_wash_fold": return !!washFold;
       case "past_airport_q1": return !!airportQ1;
       case "past_airport_q2": return !!pastAirportInterest;
@@ -371,6 +379,7 @@ export default function Survey() {
       // Past guest
       pastAppreciated: pastAppreciated || undefined,
       pastChange: pastChange || undefined,
+      pastReturnIntent: pastReturnIntent || undefined,
       totalWineInterest: totalWineInterest || undefined,
       pastAirportInterest: pastAirportInterest || undefined,
       // Travel + future airport
@@ -739,6 +748,29 @@ export default function Survey() {
           <Wrap title="What's one thing you'd change?"
             subtitle="Be honest — this helps us improve for every guest.">
             <TextArea value={pastChange} onChange={setPastChange} placeholder="e.g. more towels, faster WiFi, earlier check-in..." />
+          </Wrap>
+        );
+
+      case "past_return_intent":
+        return (
+          <Wrap title="Are you thinking of coming back to Pensacola?">
+            <OptionRow value={pastReturnIntent} onChange={setPastReturnIntent} options={[
+              { key: "yes", label: "Yes, definitely" },
+              { key: "maybe", label: "Maybe" },
+              { key: "no", label: "Not currently" },
+            ]} />
+          </Wrap>
+        );
+
+      case "past_book_direct":
+        return (
+          <Wrap title="Would you book directly with us next time for a lower price?"
+            subtitle="Direct guests pay less and get flexible check-in.">
+            <OptionRow value={bookDirectB} onChange={setBookDirectB} options={[
+              { key: "yes", label: "Yes" },
+              { key: "maybe", label: "Maybe" },
+              { key: "no", label: "No" },
+            ]} />
           </Wrap>
         );
 

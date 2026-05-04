@@ -120,7 +120,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     typeof body.washFoldPriceBucket === "number" && WASH_FOLD_BUCKETS.has(body.washFoldPriceBucket)
       ? body.washFoldPriceBucket : null;
   const washFoldPrice = washFoldPriceBucket ? `$${washFoldPriceBucket}` : null;
-  const referralCode = str(body.referralCode, 20);
+  const referralCodeRaw = str(body.referralCode, 20);
+  const referralCode = referralCodeRaw && /^[A-Z0-9]{4,12}$/.test(referralCodeRaw) ? referralCodeRaw : null;
 
   // Birthday — month + day without year, store as 2000-MM-DD
   const MONTH_MAP: Record<string, string> = {
@@ -145,8 +146,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // --- Past guest ---
   const pastAppreciated = str(body.pastAppreciated, 1000);
   const pastChange = str(body.pastChange, 1000);
+  const pastReturnIntent = inSet(new Set(["yes", "maybe", "no"]), body.pastReturnIntent);
+  if (segmentRaw === "past" && !pastReturnIntent) {
+    return res.status(400).json({ error: "Return intent is required" });
+  }
   const totalWineInterest = inSet(TOTAL_WINE_VALUES, body.totalWineInterest);
-  const pastAirportInterest = inSet(AIRPORT_INTEREST_VALUES, body.pastAirportInterest);
 
   // Combined: use the segment-appropriate book_direct answer
   const wouldBookDirect = segmentRaw === "a" ? bookDirect : bookDirectB;
@@ -163,7 +167,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const travelOrigin = inSet(TRAVEL_ORIGIN_VALUES, body.travelOrigin);
   const travelCity = str(body.travelCity, 200);
   const airportFutureInterest = inSet(AIRPORT_FUTURE_VALUES, body.airportFuture);
-  const airportPrice = str(body.airportPrice, 100);
+  const airportPriceRaw = str(body.airportPrice, 20);
+  const airportPrice = airportPriceRaw && /^[\d$.,\s]{1,20}$/.test(airportPriceRaw) ? airportPriceRaw : null;
 
   // --- Gift card ---
   const giftCardChoice = inSet(GIFT_CARD_CHOICES, body.giftCardChoice);
@@ -217,7 +222,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         airport_method, airport_cost, airport_interest,
         book_direct_reason, five_star_fix,
         total_wine_interest,
-        travel_origin, travel_city, airport_future_interest, airport_price
+        travel_origin, travel_city, airport_future_interest, airport_price,
+        return_intent
       ) VALUES (
         ${name}, ${emailRaw}, ${phone}, ${property},
         ${overallRating}, ${0},
@@ -233,7 +239,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ${airportMethod}, ${airportCost}, ${airportInterest},
         ${bookDirectReason}, ${fiveStarFix},
         ${totalWineInterest},
-        ${travelOrigin}, ${travelCity}, ${airportFutureInterest}, ${airportPrice}
+        ${travelOrigin}, ${travelCity}, ${airportFutureInterest}, ${airportPrice},
+        ${pastReturnIntent}
       )
       ON CONFLICT (token) DO NOTHING
     `;
@@ -254,24 +261,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           : segmentRaw === "b" ? "🟡 Passive"
           : segmentRaw === "past" ? "🕰️ Past Guest"
           : "🔴 Detractor";
+        const sanitize = (s: string) => s.replace(/@/g, "@ ");
         let details = "";
         if (segmentRaw === "a") {
-          details = `Stood out: "${(stoodOut ?? "").slice(0, 100)}"\nOne change: "${(oneChange ?? "").slice(0, 80)}"`;
+          details = `Stood out: "${sanitize((stoodOut ?? "").slice(0, 100))}"\nOne change: "${sanitize((oneChange ?? "").slice(0, 80))}"`;
           if (bookDirect) details += `\nBook direct: ${bookDirect}${discountPref ? ` | Discount pref: ${discountPref}` : ""}`;
         } else if (segmentRaw === "b") {
-          details = `Did well: "${(stoodOut ?? "").slice(0, 100)}"\n5★ fix: "${(fiveStarFix ?? "").slice(0, 100)}"`;
+          details = `Did well: "${sanitize((stoodOut ?? "").slice(0, 100))}"\n5★ fix: "${sanitize((fiveStarFix ?? "").slice(0, 100))}"`;
           if (bookDirectB) details += `\nBook direct: ${bookDirectB}`;
         } else if (segmentRaw === "past") {
-          details = `Appreciated: "${(pastAppreciated ?? "").slice(0, 100)}"\nChange: "${(pastChange ?? "").slice(0, 80)}"`;
-          if (totalWineInterest) details += `\nTotal Wine interest: ${totalWineInterest}`;
-          if (pastAirportInterest) details += `\nAirport transfer interest: ${pastAirportInterest}`;
+          details = `Appreciated: "${sanitize((pastAppreciated ?? "").slice(0, 100))}"\nChange: "${sanitize((pastChange ?? "").slice(0, 80))}"`;
+          if (pastReturnIntent) details += `\nReturn intent: ${pastReturnIntent}`;
+          if (bookDirectB) details += `\nBook direct: ${bookDirectB}`;
+          if (totalWineInterest) details += `\nTotal Wine: ${totalWineInterest}`;
         }
         const airportInfo = segmentRaw !== "past" && airportMethod
           ? `Airport: ${airportMethod}${airportInterest ? ` | Transfer interest: ${airportInterest}` : ""}`
           : "";
         const priceDisplay = airportPrice ? airportPrice.replace(/^\$/, "") : "";
         const travelInfo = travelOrigin
-          ? `Travel: ${travelOrigin}${travelCity ? ` from ${travelCity}` : ""}${airportFutureInterest ? ` | Future pickup: ${airportFutureInterest}${priceDisplay ? ` ($${priceDisplay})` : ""}` : ""}`
+          ? `Travel: ${travelOrigin}${travelCity ? ` from ${sanitize(travelCity)}` : ""}${airportFutureInterest ? ` | Future pickup: ${airportFutureInterest}${priceDisplay ? ` ($${priceDisplay})` : ""}` : ""}`
           : "";
         await fetch(webhook, {
           method: "POST",
@@ -283,7 +292,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               (details ? `${details}\n` : "") +
               (airportInfo ? `${airportInfo}\n` : "") +
               (travelInfo ? `${travelInfo}\n` : "") +
-              `Gift card: ${giftCardChoice} → ${giftCardEmail}`,
+              `Gift card: ${giftCardChoice} → ${giftCardEmail}\n📥 Download latest CSV: /api/survey-export?key=<your-key>&format=csv`,
           }),
         });
       }

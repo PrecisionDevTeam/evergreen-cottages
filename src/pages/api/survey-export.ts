@@ -15,79 +15,85 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const format = req.query.format;
-
-  if (format === "csv") {
-    const rows: any[] = await prisma.$queryRaw`
-      SELECT * FROM guest_surveys ORDER BY created_at DESC
-    `;
-
-    const headers = [
-      "Name", "Email", "Phone", "Unit", "Segment", "Overall", "Cleanliness", "Check-in", "Value",
-      "Traveled From",
-      "Highlight", "Would Recommend", "Referral Email", "Would Buy Items",
-      "What Liked", "5-Star Improvement", "Return Intent", "Discount",
-      "Complaint Categories", "Complaint Detail", "Wants Callback",
-      "Gift Card Email", "Gift Card Type", "Gift Card Sent?", "Date",
-    ];
-
-    const csvEscape = (v: unknown) =>
-      `"${String(v ?? "").replace(/"/g, '""').replace(/\r?\n/g, " ")}"`;
-
-    let csv = headers.join(",") + "\n";
-    for (const r of rows) {
-      csv += [
-        csvEscape(r.guest_name),
-        csvEscape(r.guest_email),
-        csvEscape(r.guest_phone),
-        csvEscape(r.property_name),
-        csvEscape(r.segment ?? ""),
-        r.overall_rating ?? "",
-        r.cleanliness_rating ?? "",
-        r.checkin_rating ?? "",
-        r.value_rating ?? "",
-        csvEscape(r.traveled_from),
-        csvEscape(r.highlight ?? ""),
-        csvEscape(r.would_recommend ?? ""),
-        csvEscape(r.referral_email ?? ""),
-        csvEscape(r.would_buy_items ?? ""),
-        csvEscape(r.what_liked ?? ""),
-        csvEscape(r.five_star_improvement ?? ""),
-        csvEscape(r.return_intent ?? ""),
-        csvEscape(r.preferred_discount ?? ""),
-        csvEscape(r.complaint_categories ?? ""),
-        csvEscape(r.complaint_detail ?? ""),
-        r.wants_callback ? "Yes" : "No",
-        csvEscape(r.gift_card_email),
-        csvEscape(r.gift_card_type),
-        r.gift_card_sent ? "Yes" : "No",
-        r.created_at ? new Date(r.created_at).toISOString().split("T")[0] : "",
-      ].join(",") + "\n";
-    }
-
-    res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", `attachment; filename=survey_responses_${new Date().toISOString().split("T")[0]}.csv`);
-    return res.status(200).send(csv);
-  }
-
-  // JSON summary
-  const stats: any[] = await prisma.$queryRaw`
-    SELECT
-      COUNT(*)::int as total,
-      ROUND(AVG(overall_rating), 1) as avg_overall,
-      ROUND(AVG(cleanliness_rating), 1) as avg_cleanliness,
-      COUNT(*) FILTER (WHERE segment = 'a')::int as promoters,
-      COUNT(*) FILTER (WHERE segment = 'b')::int as passives,
-      COUNT(*) FILTER (WHERE segment = 'c')::int as detractors,
-      COUNT(*) FILTER (WHERE segment = 'c' AND wants_callback = true)::int as callback_requests,
-      COUNT(*) FILTER (WHERE referral_email IS NOT NULL AND referral_email != '')::int as referrals,
-      COUNT(*) FILTER (WHERE gift_card_sent = false)::int as pending_gift_cards
-    FROM guest_surveys
+  const rows: any[] = await prisma.$queryRaw`
+    SELECT * FROM guest_surveys ORDER BY created_at DESC
   `;
 
-  return res.status(200).json({
-    total: stats[0]?.total || 0,
-    stats: stats[0],
-    csvUrl: `/api/survey-export?key=${encodeURIComponent(key)}&format=csv`,
-  });
+  const FORMULA_CHARS = new Set(["=", "+", "-", "@", "\t", "\r"]);
+  const csvEscape = (v: unknown) => {
+    let s = String(v ?? "").replace(/"/g, '""').replace(/\r?\n/g, " ");
+    if (s.length > 0 && FORMULA_CHARS.has(s[0])) s = "\t" + s;
+    return `"${s}"`;
+  };
+
+  const headers = [
+    "Date", "Segment", "Name", "Email", "Phone", "Unit",
+    "Review Rating", "Traveled From",
+    // Open-text answers
+    "What Stood Out / Appreciated", "One Change",
+    "5-Star Fix",
+    // Intent
+    "Return Intent", "Would Book Direct",
+    // Airport + travel
+    "Travel Origin", "Travel City", "Airport Future Interest", "Airport Price",
+    "Airport Method", "Airport Cost", "Airport Interest",
+    // Services
+    "Used Laundry", "Would Pay Wash Fold", "Wash Fold Price", "Wash Fold Bucket",
+    "Would Buy Items",
+    // Wine / past
+    "Total Wine Interest",
+    // Gift card
+    "Gift Card Choice", "Gift Card Email", "Gift Card Type",
+    // Misc
+    "Preferred Discount", "Book Direct Reason", "Referral Code", "Birthday",
+  ];
+
+  let csv = headers.join(",") + "\n";
+  for (const r of rows) {
+    const birthday = r.birthday
+      ? new Date(r.birthday).toLocaleDateString("en-US", { month: "long", day: "numeric" })
+      : "";
+    csv += [
+      r.created_at ? new Date(r.created_at).toISOString().split("T")[0] : "",
+      csvEscape(r.segment ?? ""),
+      csvEscape(r.guest_name),
+      csvEscape(r.guest_email),
+      csvEscape(r.guest_phone),
+      csvEscape(r.property_name),
+      r.review_rating ?? "",
+      csvEscape(r.traveled_from),
+      csvEscape(r.highlight ?? r.what_liked ?? ""),
+      csvEscape(r.what_different ?? ""),
+      csvEscape(r.five_star_improvement ?? r.five_star_fix ?? ""),
+      csvEscape(r.return_intent ?? ""),
+      csvEscape(r.would_book_direct ?? ""),
+      csvEscape(r.travel_origin ?? ""),
+      csvEscape(r.travel_city ?? ""),
+      csvEscape(r.airport_future_interest ?? ""),
+      csvEscape(r.airport_price ?? ""),
+      csvEscape(r.airport_method ?? ""),
+      csvEscape(r.airport_cost ?? ""),
+      csvEscape(r.airport_interest ?? ""),
+      r.used_laundry ? "Yes" : "No",
+      r.would_pay_wash_fold ? "Yes" : "No",
+      csvEscape(r.wash_fold_price ?? ""),
+      r.wash_fold_price_bucket ?? "",
+      csvEscape(r.would_buy_items ?? ""),
+      csvEscape(r.total_wine_interest ?? ""),
+      csvEscape(r.gift_card_choice ?? ""),
+      csvEscape(r.gift_card_email ?? ""),
+      csvEscape(r.gift_card_type ?? ""),
+      csvEscape(r.preferred_discount ?? ""),
+      csvEscape(r.book_direct_reason ?? ""),
+      csvEscape(r.referral_code ?? ""),
+      csvEscape(birthday),
+    ].join(",") + "\n";
+  }
+
+  res.setHeader("Content-Type", "text/csv");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=survey_responses_${new Date().toISOString().split("T")[0]}.csv`,
+  );
+  return res.status(200).send(csv);
 }
