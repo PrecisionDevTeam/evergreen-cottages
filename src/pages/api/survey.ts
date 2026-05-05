@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../lib/db";
 import { verifyOrigin } from "../../lib/api-security";
+import { sendGiftCard, type GiftCardChoice } from "../../lib/tremendous";
 
 const SEGMENTS = new Set(["a", "b", "c", "past"]);
 const BOOK_DIRECT_VALUES = new Set(["yes", "maybe", "no"]);
@@ -194,7 +195,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     : giftCardChoice === "free_night" ? "free_night"
     : giftCardChoice === "raffle_only" ? "raffle_only"
     : "amazon";
-  const giftCardEmail = emailRaw;
+
+  // Past segment: guest enters delivery email + phone on gift_card_contact screen
+  const deliveryEmailRaw = str(body.giftCardDeliveryEmail, 254);
+  const deliveryEmail = deliveryEmailRaw && emailRegex.test(deliveryEmailRaw) ? deliveryEmailRaw : null;
+  const deliveryPhone = str(body.giftCardPhone, 20)?.replace(/[\r\n\t]/g, " ").trim() || null;
+  const giftCardEmail = (segmentRaw === "past" && deliveryEmail) ? deliveryEmail : emailRaw;
 
   try {
     const insertedRows = await prisma.$transaction(async (tx) => {
@@ -281,6 +287,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           if (pastReturnIntent) details += `\nReturn intent: ${pastReturnIntent}`;
           if (bookDirectB) details += `\nBook direct: ${bookDirectB}`;
           if (totalWineInterest) details += `\nTotal Wine: ${totalWineInterest}`;
+          if (deliveryPhone) details += `\nPhone: ${deliveryPhone}`;
         }
         const airportInfo = segmentRaw !== "past" && airportMethod
           ? `Airport: ${airportMethod}${airportInterest ? ` | Transfer interest: ${airportInterest}` : ""}`
@@ -305,6 +312,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     } catch {
       // Non-critical
+    }
+
+    // Send gift card via Tremendous (past segment, real choice, key present)
+    if (
+      segmentRaw === "past" &&
+      (giftCardChoice === "amazon_10" || giftCardChoice === "starbucks_10") &&
+      giftCardEmail
+    ) {
+      try {
+        const gcResult = await sendGiftCard({
+          guestName: name,
+          email: giftCardEmail,
+          phone: deliveryPhone || undefined,
+          choice: giftCardChoice as GiftCardChoice,
+          token,
+        });
+        if (gcResult.success) {
+          await prisma.$executeRaw`
+            UPDATE guest_surveys SET gift_card_sent = true WHERE token = ${token}
+          `.catch(() => null);
+        } else {
+          console.error("TREMENDOUS_FAILED:", gcResult.error, "| token:", token, "| email:", giftCardEmail, "| choice:", giftCardChoice);
+        }
+      } catch (err) {
+        console.error("TREMENDOUS_EXCEPTION:", err instanceof Error ? err.message : "Unknown", "| token:", token);
+      }
     }
 
     return res.status(200).json({ success: true });

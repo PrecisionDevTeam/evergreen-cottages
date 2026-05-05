@@ -56,7 +56,8 @@ type ScreenId =
   | "airport_future"
   | "airport_price"
   // Shared submit
-  | "gift_card";
+  | "gift_card"
+  | "gift_card_contact";
 
 const SHOP_ITEMS = [
   "Welcome snack basket",
@@ -175,6 +176,8 @@ export default function Survey() {
   const [washFold, setWashFold] = useState("");
   const [washFoldBucket] = useState(() => [25, 35, 45][Math.floor(Math.random() * 3)]);
   const [giftCardChoice, setGiftCardChoice] = useState("");
+  const [giftCardEmail, setGiftCardEmail] = useState("");
+  const [giftCardPhone, setGiftCardPhone] = useState("");
   const [birthdayMonth, setBirthdayMonth] = useState("");
   const [birthdayDay, setBirthdayDay] = useState("");
   const [copied, setCopied] = useState(false);
@@ -230,6 +233,7 @@ export default function Survey() {
           return;
         }
         setGuest(data as GuestData);
+        if (data.guestEmail) setGiftCardEmail(data.guestEmail);
         setLoading(false);
       })
       .catch(() => {
@@ -269,6 +273,10 @@ export default function Survey() {
     if (seg === "c") return ["intro"];
     // Past guest blast — Pensacola 4-5 star only, max 100 sends
     if (seg === "past") {
+      const giftCardScreens: ScreenId[] =
+        guest.giftCardLimitReached
+          ? ["gift_card"]
+          : ["gift_card", "gift_card_contact"];
       return [
         "intro",
         "past_appreciated",
@@ -280,7 +288,7 @@ export default function Survey() {
         ...travelFollow,
         "past_total_wine",
         "referral",
-        "gift_card",
+        ...giftCardScreens,
       ];
     }
     return ["intro"];
@@ -310,6 +318,7 @@ export default function Survey() {
       case "five_star": return fiveStarFix.trim().length > 0;
       case "book_direct_b": return !!bookDirectB;
       case "gift_card": return (guest?.segment === "past" && guest?.giftCardLimitReached) || !!giftCardChoice;
+      case "gift_card_contact": return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(giftCardEmail.trim());
       case "birthday": return true; // optional
       // Past guest screens
       case "past_appreciated": return pastAppreciated.trim().length > 0;
@@ -390,6 +399,10 @@ export default function Survey() {
       airportPrice: airportPrice || undefined,
       // Gift card — raffle_only when past limit hit (no gift card to send)
       giftCardChoice: (guest?.segment === "past" && guest?.giftCardLimitReached) ? "raffle_only" : giftCardChoice,
+      // Past segment: delivery email + phone from gift_card_contact screen
+      ...(guest?.segment === "past" && !guest?.giftCardLimitReached
+        ? { giftCardDeliveryEmail: giftCardEmail.trim(), giftCardPhone: giftCardPhone.trim() || undefined }
+        : {}),
     };
 
     const res = await fetch("/api/survey", {
@@ -737,6 +750,40 @@ export default function Survey() {
           </Wrap>
         );
       }
+
+      case "gift_card_contact":
+        return (
+          <Wrap
+            title="Where should we send your gift card?"
+            subtitle={`We'll email your ${giftCardChoice === "starbucks_10" ? "Starbucks" : "Amazon"} $10 gift card within 24 hours.`}>
+            <div className="mt-6 flex flex-col gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Email address <span className="text-red-500">*</span></label>
+                <input
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  value={giftCardEmail}
+                  onChange={(e) => setGiftCardEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  className="w-full border-2 border-gray-200 rounded-2xl px-4 py-4 text-base focus:outline-none focus:border-teal-500 transition"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Phone number <span className="text-gray-400 font-normal">(optional)</span></label>
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  value={giftCardPhone}
+                  onChange={(e) => setGiftCardPhone(e.target.value)}
+                  placeholder="e.g. (850) 555-0123"
+                  className="w-full border-2 border-gray-200 rounded-2xl px-4 py-4 text-base focus:outline-none focus:border-teal-500 transition"
+                />
+              </div>
+            </div>
+          </Wrap>
+        );
 
       case "past_appreciated":
         return (
