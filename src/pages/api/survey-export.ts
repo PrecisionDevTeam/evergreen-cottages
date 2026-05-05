@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import * as crypto from "crypto";
 import { prisma } from "../../lib/db";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -11,7 +12,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: "Export not configured" });
   }
   const key = req.query.key;
-  if (typeof key !== "string" || key !== expectedKey) {
+  if (
+    typeof key !== "string" ||
+    key.length !== expectedKey.length ||
+    !crypto.timingSafeEqual(Buffer.from(key), Buffer.from(expectedKey))
+  ) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 

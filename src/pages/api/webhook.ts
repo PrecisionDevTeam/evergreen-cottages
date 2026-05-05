@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { buffer } from "micro";
 import { prisma } from "../../lib/db";
 import { getItemById } from "../../lib/shop-catalog";
+import "../../lib/config";
 
 // @ts-ignore
 const stripe = new Stripe(process.env.STRIPE_API_KEY || "");
@@ -232,7 +233,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const propName = meta.propertyName || "";
         if (propName && propName.length >= 5) {
           try {
-            const prop = await prisma.property.findFirst({ where: { name: { contains: propName } } });
+            const prop = await prisma.property.findFirst({ where: { name: { equals: propName, mode: "insensitive" } } });
             if (prop) {
               const rez = await prisma.reservation.findFirst({
                 where: {

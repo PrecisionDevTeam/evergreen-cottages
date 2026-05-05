@@ -273,6 +273,8 @@ function verifyToken(token: string): DecodedToken | null {
       if (!/^[0-9a-f]{64}$/i.test(sig)) return null;
       const expected = crypto.createHmac("sha256", secret).update(`${resId}:${guestId}`).digest("hex");
       if (!crypto.timingSafeEqual(new Uint8Array(Buffer.from(sig, "hex")), new Uint8Array(Buffer.from(expected, "hex")))) return null;
+      const LEGACY_SUNSET_UNIX = Math.floor(new Date("2026-09-01").getTime() / 1000);
+      if (Math.floor(Date.now() / 1000) > LEGACY_SUNSET_UNIX) return null;
       return { reservationId: resId, guestId, variant: "same", version: 1 };
     } catch {
       return null;

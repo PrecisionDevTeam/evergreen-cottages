@@ -70,7 +70,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     reviewRating: row.review_rating ? Number(row.review_rating) : null,
     guestName: row.guest_name ?? null,
     guestEmail: row.guest_email ?? null,
-    guestPhone: row.guest_phone ?? null,
     unit: row.unit ?? null,
     checkIn: row.check_in ? new Date(row.check_in).toISOString().split("T")[0] : null,
     checkOut: row.check_out ? new Date(row.check_out).toISOString().split("T")[0] : null,

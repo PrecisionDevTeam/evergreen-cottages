@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import * as crypto from "crypto";
 
 /**
  * On-demand ISR revalidation endpoint.
@@ -18,7 +19,12 @@ export default async function handler(
   const { path, secret } = req.body || {};
   const expectedSecret = process.env.REVALIDATE_SECRET;
 
-  if (!expectedSecret || secret !== expectedSecret) {
+  if (
+    !expectedSecret ||
+    typeof secret !== "string" ||
+    secret.length !== expectedSecret.length ||
+    !crypto.timingSafeEqual(Buffer.from(secret), Buffer.from(expectedSecret))
+  ) {
     return res.status(401).json({ error: "Invalid secret" });
   }
 

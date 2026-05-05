@@ -213,7 +213,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query }) => {
         checkOut: meta.checkOut || "",
         guests: meta.guests || "1",
         nights: meta.nights || "1",
-        total: meta.total || String((session.amount_total || 0) / 100),
+        total: String(((session.amount_total || 0) / 100).toFixed(2)),
         guestName: guestFullName,
         guestEmail: customer.email || "",
         sessionId: sessionId,

@@ -10,7 +10,7 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
+      "script-src 'self' 'unsafe-inline' https://js.stripe.com",
       "frame-src https://js.stripe.com https://checkout.stripe.com https://www.openstreetmap.org",
       "img-src 'self' data: https://hostaway-platform.s3.us-west-2.amazonaws.com https://images.unsplash.com",
       "connect-src 'self' https://api.stripe.com",

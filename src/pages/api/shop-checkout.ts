@@ -101,7 +101,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (propertyName && propertyName.length >= 5) {
     try {
       const property = await prisma.property.findFirst({
-        where: { name: { contains: propertyName } },
+        where: { name: { equals: propertyName, mode: "insensitive" } },
       });
       if (property) {
         const reservation = await prisma.reservation.findFirst({

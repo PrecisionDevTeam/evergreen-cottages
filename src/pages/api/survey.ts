@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../lib/db";
+import { verifyOrigin } from "../../lib/api-security";
 
 const SEGMENTS = new Set(["a", "b", "c", "past"]);
 const BOOK_DIRECT_VALUES = new Set(["yes", "maybe", "no"]);
@@ -42,6 +43,7 @@ const inSet = (s: Set<string>, v: unknown): string | null => {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (!verifyOrigin(req, res)) return;
 
   const ip =
     (req.headers["x-forwarded-for"] as string | undefined)?.split(",")[0]?.trim() ||
