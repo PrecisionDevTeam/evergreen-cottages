@@ -234,6 +234,7 @@ export default function Survey() {
         }
         setGuest(data as GuestData);
         if (data.guestEmail) setGiftCardEmail(data.guestEmail);
+        if (data.guestPhone) setGiftCardPhone(data.guestPhone);
         setLoading(false);
       })
       .catch(() => {
