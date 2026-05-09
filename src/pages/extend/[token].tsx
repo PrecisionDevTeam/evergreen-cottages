@@ -1,5 +1,5 @@
 import { GetServerSideProps } from "next";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Layout from "../../components/Layout";
 import { prisma } from "../../lib/db";
 import * as crypto from "crypto";
@@ -34,6 +34,7 @@ type Props = {
   discountPercent: number;
   unitChangeCleaningFee: number;
   token: string;
+  defaultUnitId?: number | null;
 };
 
 export default function ExtendStay(props: Props) {
@@ -167,12 +168,26 @@ function ExtendStayCombined({
   unitChangeCleaningFee,
   vacantUnits,
   token,
+  defaultUnitId,
 }: Props) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedUnitId, setSelectedUnitId] = useState<number | null>(null);
   const [selectedOtherDate, setSelectedOtherDate] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Auto-select target unit when ?unit= is in the link (mount-only: props are stable from SSR)
+  useEffect(() => {
+    if (!defaultUnitId) return;
+    const unit = vacantUnits.find((u) => u.propertyId === defaultUnitId);
+    if (!unit) return;
+    setSelectedUnitId(defaultUnitId);
+    if (unit.calendar.length > 0) {
+      const anchor = new Date(unit.calendar[0].date + "T12:00:00");
+      setOtherViewMonth(anchor.getMonth());
+      setOtherViewYear(anchor.getFullYear());
+    }
+  }, [defaultUnitId, vacantUnits]);
 
   const currentCheckoutFormatted = new Date(currentCheckout + "T12:00:00").toLocaleDateString("en-US", {
     weekday: "short", month: "short", day: "numeric",
@@ -571,6 +586,8 @@ async function fetchExtensionSettings(): Promise<{
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const token = context.params?.token as string;
   if (!token) return { notFound: true };
+  const rawUnit = context.query.unit;
+  const defaultUnitId = rawUnit && !Array.isArray(rawUnit) ? (parseInt(rawUnit, 10) || null) : null;
 
   const decoded = verifyToken(token);
   if (!decoded) return { notFound: true };
@@ -723,6 +740,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       discountPercent: settings.discount_percent,
       unitChangeCleaningFee: settings.unit_change_cleaning_fee,
       token,
+      defaultUnitId: defaultUnitId ?? null,
     },
   };
 };
