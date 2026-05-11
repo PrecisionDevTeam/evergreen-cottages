@@ -326,7 +326,7 @@ export default function Survey() {
       case "past_total_wine": return !!totalWineInterest;
       case "travel_origin": return !!travelOrigin;
       case "airport_future": return !!airportFuture;
-      case "airport_price": return true; // optional
+      case "airport_price": return airportPrice.trim().length > 0;
       default: return true;
     }
   };
