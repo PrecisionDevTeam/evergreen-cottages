@@ -722,12 +722,16 @@ export default function Survey() {
           return (
             <Wrap
               title="You're entered to win a free night stay!"
-              subtitle="We'll choose one winner from all survey responses and reach out directly.">
-              <div className="mt-6 bg-gray-50 border border-gray-200 rounded-2xl p-5 space-y-2 text-sm text-gray-600">
-                <p>🗓 Valid for <span className="font-medium text-gray-800">12 months</span></p>
-                <p>🏠 Requires a <span className="font-medium text-gray-800">3+ night stay</span></p>
-                <p>🎁 Can be <span className="font-medium text-gray-800">gifted to a friend or family member</span></p>
-                <p>🔗 Must book through a <span className="font-medium text-gray-800">special link we provide</span></p>
+              subtitle="We'll choose winners from all survey responses and reach out directly.">
+              <div className="mt-6 bg-gray-50 border border-gray-200 rounded-2xl p-5 space-y-3 text-sm text-gray-600">
+                {[
+                  { icon: <svg className="w-4 h-4 text-teal-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>, text: <span>Valid for <span className="font-medium text-gray-800">12 months</span></span> },
+                  { icon: <svg className="w-4 h-4 text-teal-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>, text: <span>Requires a <span className="font-medium text-gray-800">3+ night stay</span></span> },
+                  { icon: <svg className="w-4 h-4 text-teal-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" /></svg>, text: <span>Can be <span className="font-medium text-gray-800">gifted to a friend or family member</span></span> },
+                  { icon: <svg className="w-4 h-4 text-teal-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>, text: <span>Must book through a <span className="font-medium text-gray-800">special link we provide</span></span> },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3">{item.icon}<p>{item.text}</p></div>
+                ))}
                 <p className="text-xs text-gray-400 pt-1">Some restrictions apply.</p>
               </div>
               {submitError && <p className="text-red-500 text-sm text-center mt-4">{submitError}</p>}
