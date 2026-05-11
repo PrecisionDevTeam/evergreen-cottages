@@ -422,7 +422,7 @@ export default function Survey() {
 
   if (loading) {
     return (
-      <Layout title="Guest Survey">
+      <Layout title="Guest Survey" hideExitIntent>
         <div className="max-w-lg mx-auto py-32 px-6 text-center">
           <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto" />
         </div>
@@ -432,7 +432,7 @@ export default function Survey() {
 
   if (tokenError) {
     return (
-      <Layout title="Survey">
+      <Layout title="Survey" hideExitIntent>
         <div className="max-w-lg mx-auto py-20 px-6 text-center">
           <p className="text-gray-500 text-lg">{tokenError}</p>
         </div>
@@ -450,7 +450,7 @@ export default function Survey() {
       ? "Your $10 stay credit has been noted. We'll apply it to your next booking."
       : `Your ${giftCardChoice === "starbucks_10" ? "Starbucks" : "Amazon"} $10 gift card will be sent within 24 hours.`;
     return (
-      <Layout title="Thank You!">
+      <Layout title="Thank You!" hideExitIntent>
         <div className="max-w-lg mx-auto py-20 px-6 text-center">
           <div className="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg className="w-10 h-10 text-teal-600" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -896,7 +896,7 @@ export default function Survey() {
   };
 
   return (
-    <Layout title="Guest Survey">
+    <Layout title="Guest Survey" hideExitIntent>
       <div className="max-w-lg mx-auto px-6 py-8 min-h-screen flex flex-col">
         {/* Progress */}
         <div className="mb-8">

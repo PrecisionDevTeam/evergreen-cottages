@@ -12,6 +12,7 @@ type Props = {
   description?: string;
   dark?: boolean;
   schema?: Record<string, unknown>;
+  hideExitIntent?: boolean;
 };
 
 const navLinks = [
@@ -23,7 +24,7 @@ const navLinks = [
   { href: "/contact", label: "Contact" },
 ];
 
-export default function Layout({ children, title, description, dark, schema }: Props) {
+export default function Layout({ children, title, description, dark, schema, hideExitIntent }: Props) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const router = useRouter();
@@ -263,7 +264,7 @@ export default function Layout({ children, title, description, dark, schema }: P
       </footer>
 
       <CookieConsent />
-      <ExitIntent />
+      {!hideExitIntent && <ExitIntent />}
     </div>
   );
 }
