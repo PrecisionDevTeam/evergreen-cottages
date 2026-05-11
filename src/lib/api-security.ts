@@ -3,6 +3,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 const ALLOWED_ORIGINS = [
   "https://evergreencottagespensacola.com",
   "https://www.evergreencottagespensacola.com",
+  "https://evergreen-cottages-production.up.railway.app",
 ];
 
 /**
