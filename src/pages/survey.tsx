@@ -487,18 +487,29 @@ export default function Survey() {
   const renderScreen = () => {
     switch (screen) {
       case "intro":
+        if (guest.segment === "past") {
+          const stayMonth = guest.checkIn
+            ? new Date(guest.checkIn + "T12:00:00").toLocaleDateString("en-US", { month: "long", year: "numeric" })
+            : null;
+          return (
+            <div className="py-2">
+              <div className="flex justify-center mb-6">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/image.png" alt="Evergreen Cottages" className="w-24 h-24 rounded-full object-cover border-2 border-teal-200 shadow-md" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 leading-tight mb-3">Hello {firstName},</h2>
+              <p className="text-gray-700 text-base leading-relaxed">
+                You stayed with us at <span className="font-semibold">Evergreen Cottages</span>, 3801 Mobile Highway, Pensacola, FL
+                {stayMonth ? ` in ${stayMonth}` : ""}.
+              </p>
+              <p className="text-gray-500 mt-3 text-base">A few quick questions about your stay — takes 2 minutes. Complete the survey for a chance to win a free night stay.</p>
+            </div>
+          );
+        }
         return (
           <Wrap
-            title={
-              guest.segment === "past"
-                ? `Hi ${firstName} — we'd love your feedback.`
-                : `Thanks for the ${guest.segment === "a" ? "5-star review" : "review"}, ${firstName}.`
-            }
-            subtitle={
-              guest.segment === "past"
-                ? "A few quick questions about your stay — takes 2 minutes. Complete the survey for a chance to win a free night stay."
-                : "We wanted to ask a couple of quick questions — and send you a $10 gift card for your time."
-            }>
+            title={`Thanks for the ${guest.segment === "a" ? "5-star review" : "review"}, ${firstName}.`}
+            subtitle="We wanted to ask a couple of quick questions — and send you a $10 gift card for your time.">
             {guest.unit && (
               <div className="mt-6 bg-gray-50 border border-gray-200 rounded-2xl p-5 text-sm text-gray-600 space-y-1">
                 <p><span className="font-medium text-gray-800">{guest.unit}</span></p>
