@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!verifyOrigin(req, res)) return;
   if (!rateLimit(req, res, 10)) return;
 
-  const { token, propertyId, checkIn, checkOut, guests, originalReservationId } = req.body;
+  const { token, propertyId, checkIn, checkOut, guests, originalReservationId, nightly_price_override, nps } = req.body;
 
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
   if (!propertyId || !checkIn || !checkOut) return res.status(400).json({ error: "Missing required fields" });
@@ -41,6 +41,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const origResId = originalReservationId ? parseInt(String(originalReservationId), 10) : null;
   if (origResId !== null && (!Number.isInteger(origResId) || origResId <= 0)) {
     return res.status(400).json({ error: "Invalid originalReservationId" });
+  }
+
+  // Verify price override HMAC if provided. Reject tampered values.
+  let verifiedNightlyPrice: number | null = null;
+  if (nightly_price_override != null && nps != null) {
+    const secret = process.env.EXTENSION_SECRET || "";
+    if (!secret) return res.status(500).json({ error: "Price override not available" });
+    const priceStr = String(nightly_price_override);
+    const sigStr = String(nps);
+    if (!/^[0-9a-f]{64}$/i.test(sigStr)) {
+      return res.status(400).json({ error: "Invalid price override signature" });
+    }
+    try {
+      const price = parseFloat(priceStr);
+      if (!Number.isFinite(price) || price <= 0 || price > 10000) {
+        return res.status(400).json({ error: "Invalid price override value" });
+      }
+      // Use the canonical 2-decimal string as payload to match Python's f"{price:.2f}"
+      const canonical = price.toFixed(2);
+      const payload = `price:${canonical}`;
+      const expected = crypto.createHmac("sha256", secret).update(payload).digest("hex");
+      if (!crypto.timingSafeEqual(Buffer.from(sigStr, "hex"), Buffer.from(expected, "hex"))) {
+        return res.status(401).json({ error: "Price override signature invalid" });
+      }
+      verifiedNightlyPrice = price;
+    } catch {
+      return res.status(400).json({ error: "Malformed price override" });
+    }
   }
 
   // Verify token — tolerate legacy; variant in token is authoritative
@@ -125,7 +153,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (blockedDates.has(key)) {
         return res.status(409).json({ error: "One or more selected dates are not available." });
       }
-      subtotal += calendarPrices[key] || fallbackPrice;
+      subtotal += (variant === "same" && verifiedNightlyPrice !== null)
+        ? verifiedNightlyPrice
+        : calendarPrices[key] ?? fallbackPrice;
     }
 
     // Live availability re-check for unit-swap (variant=other). Guest has
@@ -219,6 +249,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         cleaningFee: String(cleaningFee),
         total: String(total),
         originalReservationId: String(decoded.reservationId),
+        ...(verifiedNightlyPrice != null ? { nightly_price_override: String(verifiedNightlyPrice) } : {}),
       },
       success_url: `https://www.evergreencottagespensacola.com/booking/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `https://www.evergreencottagespensacola.com/extend/${token}`,

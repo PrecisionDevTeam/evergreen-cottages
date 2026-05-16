@@ -35,6 +35,8 @@ type Props = {
   unitChangeCleaningFee: number;
   token: string;
   defaultUnitId?: number | null;
+  priceOverride?: number | null;
+  priceOverrideSig?: string | null;
 };
 
 export default function ExtendStay(props: Props) {
@@ -169,6 +171,8 @@ function ExtendStayCombined({
   vacantUnits,
   token,
   defaultUnitId,
+  priceOverride,
+  priceOverrideSig,
 }: Props) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedUnitId, setSelectedUnitId] = useState<number | null>(null);
@@ -247,22 +251,32 @@ function ExtendStayCombined({
 
   const samePricing = useMemo(() => {
     if (!selectedDate) return null;
-    let subtotal = 0;
     let nights = 0;
     for (const day of availableDates) {
       nights++;
-      subtotal += day.price || basePrice;
       if (day.date === selectedDate) break;
     }
+    const nightlyRate = priceOverride ?? null;
+    const subtotal = nightlyRate !== null ? nightlyRate * nights : (() => {
+      let s = 0;
+      let n = 0;
+      for (const day of availableDates) {
+        n++;
+        s += day.price || basePrice;
+        if (day.date === selectedDate) break;
+      }
+      return s;
+    })();
+    const effectivePerNight = nights > 0 ? Math.round(subtotal / nights) : 0;
     const discountAmount = Math.round(subtotal * (discountPercent / 100));
     return {
       nights,
       subtotal,
       discount: discountAmount,
       total: subtotal - discountAmount,
-      perNight: nights > 0 ? Math.round(subtotal / nights) : 0,
+      perNight: effectivePerNight,
     };
-  }, [selectedDate, availableDates, basePrice, discountPercent]);
+  }, [selectedDate, availableDates, basePrice, discountPercent, priceOverride]);
 
   const otherPricing = useMemo(() => {
     if (!selectedUnit || !selectedOtherDate) return null;
@@ -293,8 +307,11 @@ function ExtendStayCombined({
     setLoading(true);
     setError("");
     try {
+      const sameUnitOverride = (selectedDate && priceOverride != null && priceOverrideSig)
+        ? { nightly_price_override: priceOverride.toFixed(2), nps: priceOverrideSig }
+        : {};
       const body = selectedDate
-        ? { token, propertyId, checkIn: currentCheckout, checkOut: selectedDate, guests, originalReservationId, variant: "same" }
+        ? { token, propertyId, checkIn: currentCheckout, checkOut: selectedDate, guests, originalReservationId, variant: "same", ...sameUnitOverride }
         : { token, propertyId: selectedUnit!.propertyId, checkIn: currentCheckout, checkOut: selectedOtherDate!, guests, originalReservationId, variant: "other" };
 
       const resp = await fetch("/api/extension-checkout", {
@@ -583,11 +600,30 @@ async function fetchExtensionSettings(): Promise<{
   }
 }
 
+function verifyPriceOverride(priceStr: string | string[] | undefined, sig: string | string[] | undefined): number | null {
+  if (!priceStr || Array.isArray(priceStr) || !sig || Array.isArray(sig)) return null;
+  const secret = process.env.EXTENSION_SECRET || "";
+  if (!secret) return null;
+  try {
+    const price = parseFloat(priceStr);
+    if (!Number.isFinite(price) || price <= 0 || price > 10000) return null;
+    const payload = `price:${price.toFixed(2)}`;
+    const expected = crypto.createHmac("sha256", secret).update(payload).digest("hex");
+    if (!crypto.timingSafeEqual(Buffer.from(sig, "hex"), Buffer.from(expected, "hex"))) return null;
+    return price;
+  } catch {
+    return null;
+  }
+}
+
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const token = context.params?.token as string;
   if (!token) return { notFound: true };
   const rawUnit = context.query.unit;
   const defaultUnitId = rawUnit && !Array.isArray(rawUnit) ? (parseInt(rawUnit, 10) || null) : null;
+  const rawPs = !Array.isArray(context.query.ps) ? (context.query.ps ?? null) : null;
+  const priceOverride = verifyPriceOverride(context.query.p, context.query.ps);
+  const priceOverrideSig = priceOverride != null ? rawPs : null;
 
   const decoded = verifyToken(token);
   if (!decoded) return { notFound: true };
@@ -741,6 +777,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       unitChangeCleaningFee: settings.unit_change_cleaning_fee,
       token,
       defaultUnitId: defaultUnitId ?? null,
+      priceOverride: priceOverride ?? null,
+      priceOverrideSig: priceOverrideSig ?? null,
     },
   };
 };
