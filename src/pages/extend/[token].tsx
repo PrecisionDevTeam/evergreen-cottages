@@ -1,5 +1,5 @@
 import { GetServerSideProps } from "next";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import Layout from "../../components/Layout";
 import { prisma } from "../../lib/db";
 import * as crypto from "crypto";
@@ -167,31 +167,13 @@ function ExtendStayCombined({
   calendar,
   basePrice,
   discountPercent,
-  unitChangeCleaningFee,
-  vacantUnits,
   token,
-  defaultUnitId,
   priceOverride,
   priceOverrideSig,
 }: Props) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [selectedUnitId, setSelectedUnitId] = useState<number | null>(null);
-  const [selectedOtherDate, setSelectedOtherDate] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  // Auto-select target unit when ?unit= is in the link (mount-only: props are stable from SSR)
-  useEffect(() => {
-    if (!defaultUnitId) return;
-    const unit = vacantUnits.find((u) => u.propertyId === defaultUnitId);
-    if (!unit) return;
-    setSelectedUnitId(defaultUnitId);
-    if (unit.calendar.length > 0) {
-      const anchor = new Date(unit.calendar[0].date + "T12:00:00");
-      setOtherViewMonth(anchor.getMonth());
-      setOtherViewYear(anchor.getFullYear());
-    }
-  }, [defaultUnitId, vacantUnits]);
 
   const currentCheckoutFormatted = new Date(currentCheckout + "T12:00:00").toLocaleDateString("en-US", {
     weekday: "short", month: "short", day: "numeric",
@@ -212,41 +194,8 @@ function ExtendStayCombined({
   const [viewMonth, setViewMonth] = useState(firstAvailAnchor.getMonth());
   const [viewYear, setViewYear] = useState(firstAvailAnchor.getFullYear());
 
-  // Other-unit calendar navigation state (reset when a new unit is picked)
-  const [otherViewMonth, setOtherViewMonth] = useState(firstAvailAnchor.getMonth());
-  const [otherViewYear, setOtherViewYear] = useState(firstAvailAnchor.getFullYear());
-
-  const selectedUnit = vacantUnits.find((u) => u.propertyId === selectedUnitId) ?? null;
-
-  // Consecutive available nights for the selected other unit
-  const otherAvailableDates = useMemo(() => {
-    if (!selectedUnit) return [];
-    const dates: CalendarDay[] = [];
-    for (const day of selectedUnit.calendar) {
-      if (!day.available) break;
-      dates.push(day);
-    }
-    return dates;
-  }, [selectedUnit]);
-
-  // Picking a date clears unit selection and vice versa
   function pickDate(date: string) {
     setSelectedDate(date);
-    setSelectedUnitId(null);
-    setSelectedOtherDate(null);
-  }
-
-  function pickUnit(id: number) {
-    const unit = vacantUnits.find((u) => u.propertyId === id);
-    setSelectedUnitId(id);
-    setSelectedDate(null);
-    setSelectedOtherDate(null);
-    if (unit && unit.calendar.length > 0) {
-      const first = unit.calendar[0];
-      const anchor = new Date(first.date + "T12:00:00");
-      setOtherViewMonth(anchor.getMonth());
-      setOtherViewYear(anchor.getFullYear());
-    }
   }
 
   const samePricing = useMemo(() => {
@@ -278,41 +227,18 @@ function ExtendStayCombined({
     };
   }, [selectedDate, availableDates, basePrice, discountPercent, priceOverride]);
 
-  const otherPricing = useMemo(() => {
-    if (!selectedUnit || !selectedOtherDate) return null;
-    let subtotal = 0;
-    let nights = 0;
-    for (const day of otherAvailableDates) {
-      nights++;
-      subtotal += day.price || selectedUnit.nightlyPrice;
-      if (day.date === selectedOtherDate) break;
-    }
-    if (nights === 0) return null;
-    const discountAmount = Math.round(subtotal * (discountPercent / 100));
-    return {
-      nights,
-      subtotal,
-      discount: discountAmount,
-      cleaningFee: unitChangeCleaningFee,
-      total: subtotal - discountAmount + unitChangeCleaningFee,
-      perNight: nights > 0 ? Math.round(subtotal / nights) : 0,
-    };
-  }, [selectedUnit, selectedOtherDate, otherAvailableDates, discountPercent, unitChangeCleaningFee]);
-
-  const canSubmit = (!!selectedDate && !!samePricing) || (!!selectedUnit && !!selectedOtherDate && !!otherPricing);
-  const totalToPay = selectedDate ? (samePricing?.total ?? 0) : (otherPricing?.total ?? 0);
+  const canSubmit = !!selectedDate && !!samePricing;
+  const totalToPay = samePricing?.total ?? 0;
 
   async function handleSubmit() {
     if (!canSubmit) return;
     setLoading(true);
     setError("");
     try {
-      const sameUnitOverride = (selectedDate && priceOverride != null && priceOverrideSig)
+      const sameUnitOverride = (priceOverride != null && priceOverrideSig)
         ? { nightly_price_override: priceOverride.toFixed(2), nps: priceOverrideSig }
         : {};
-      const body = selectedDate
-        ? { token, propertyId, checkIn: currentCheckout, checkOut: selectedDate, guests, originalReservationId, variant: "same", ...sameUnitOverride }
-        : { token, propertyId: selectedUnit!.propertyId, checkIn: currentCheckout, checkOut: selectedOtherDate!, guests, originalReservationId, variant: "other" };
+      const body = { token, propertyId, checkIn: currentCheckout, checkOut: selectedDate!, guests, originalReservationId, variant: "same", ...sameUnitOverride };
 
       const resp = await fetch("/api/extension-checkout", {
         method: "POST",
@@ -405,82 +331,6 @@ function ExtendStayCombined({
           </div>
         )}
 
-        {/* Other units section */}
-        {vacantUnits.length > 0 && (
-          <div className="mb-6">
-            <h2 className="font-display text-lg text-ocean-900 mb-1">Or move to another unit</h2>
-            <p className="text-sm text-sand-400 mb-3">{discountPercent}% off · ${unitChangeCleaningFee} cleaning fee</p>
-            <div className="space-y-2 mb-4">
-              {vacantUnits.map((unit) => {
-                const isSelected = selectedUnitId === unit.propertyId;
-                const discounted = Math.round(unit.nightlyPrice * (1 - discountPercent / 100));
-                return (
-                  <button
-                    key={unit.propertyId}
-                    onClick={() => pickUnit(unit.propertyId)}
-                    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                      isSelected ? "border-ocean-500 bg-ocean-50 shadow-sm" : "border-sand-200 bg-white hover:border-ocean-300"
-                    }`}
-                  >
-                    <p className={`font-semibold ${isSelected ? "text-ocean-900" : "text-ocean-800"}`}>{unit.name}</p>
-                    <p className="text-ocean-500 text-sm mt-0.5">
-                      <span className="line-through text-sand-400 mr-2">${Math.round(unit.nightlyPrice)}/nt</span>
-                      <span className="text-evergreen-600 font-semibold">${discounted}/nt</span>
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Calendar for selected other unit */}
-            {selectedUnit && (
-              <div className="mt-1">
-                {otherAvailableDates.length > 0 ? (
-                  <>
-                    <p className="text-sm text-ocean-600 font-medium mb-2">Pick your new checkout date</p>
-                    <ExtendCalendar
-                      currentCheckout={currentCheckout}
-                      availableDates={otherAvailableDates}
-                      basePrice={selectedUnit.nightlyPrice}
-                      selectedDate={selectedOtherDate}
-                      onSelect={setSelectedOtherDate}
-                      viewMonth={otherViewMonth}
-                      viewYear={otherViewYear}
-                      setViewMonth={setOtherViewMonth}
-                      setViewYear={setOtherViewYear}
-                    />
-                  </>
-                ) : (
-                  <p className="text-sm text-sand-400 mb-4">Only 1 night available in this unit.</p>
-                )}
-
-                {otherPricing && selectedOtherDate && (
-                  <div className="bg-white border border-sand-200 rounded-xl p-5 shadow-sm">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-ocean-600">${otherPricing.perNight} × {otherPricing.nights} night{otherPricing.nights > 1 ? "s" : ""} — {selectedUnit.name}</span>
-                      <span className="text-ocean-900">${otherPricing.subtotal}</span>
-                    </div>
-                    {discountPercent > 0 && (
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-evergreen-700">Extension discount ({discountPercent}%)</span>
-                        <span className="text-evergreen-600 font-semibold">−${otherPricing.discount}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between items-center mb-3">
-                      <span className="text-ocean-600">Cleaning fee</span>
-                      <span className="text-ocean-900">${otherPricing.cleaningFee}</span>
-                    </div>
-                    <div className="border-t border-sand-200 pt-3 flex justify-between items-center">
-                      <span className="text-ocean-900 font-bold">Total</span>
-                      <span className="text-ocean-900 font-bold text-xl">${otherPricing.total}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 text-center">
             <p className="text-red-700 text-sm">{error}</p>
@@ -500,9 +350,7 @@ function ExtendStayCombined({
         </button>
 
         <p className="text-center text-ocean-400 text-xs mt-4 leading-relaxed">
-          {selectedUnit
-            ? "Switching units — a new door code will be texted to you."
-            : "No extra cleaning fee since you're already here. Your door code stays the same."}
+          No extra cleaning fee since you&apos;re already here. Your door code stays the same.
           {guestFirstName && <> Hi {guestFirstName}!</>}
         </p>
 
