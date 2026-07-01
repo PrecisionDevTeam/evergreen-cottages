@@ -315,6 +315,119 @@ export async function getPropertiesWithOverrides(city?: string) {
     });
 }
 
+// ── Availability search across all units ────────────────────────────────
+// Given a date range + minimum guests, returns which Pensacola units are
+// open for the whole stay, with per-stay pricing.
+//
+// Calendar convention (see CLAUDE.md): a calendar entry's date key = the
+// checkout date for that night. A stay checkIn→checkOut occupies the nights
+// keyed (checkIn, checkOut] — i.e. date > checkIn AND date <= checkOut.
+// A unit is considered unavailable only if one of those nights is explicitly
+// blocked (an entry exists with is_available !== 1). Missing entries are
+// treated as available, matching the property detail calendar behavior.
+export type AvailabilityResult = {
+  id: number;
+  available: boolean;
+  nights: number;
+  nightly: number;
+  subtotal: number;
+  cleaning: number;
+  total: number;
+};
+
+const CLEANING_FEE = 65;
+
+export async function searchAvailability(
+  checkIn: string,
+  checkOut: string,
+  minGuests: number = 1
+): Promise<{ nights: number; results: AvailabilityResult[] }> {
+  // Parse as UTC midnight so keys line up with Prisma @db.Date values.
+  const start = new Date(`${checkIn}T00:00:00.000Z`);
+  const end = new Date(`${checkOut}T00:00:00.000Z`);
+  const nights = Math.round((end.getTime() - start.getTime()) / 86_400_000);
+  if (isNaN(nights) || nights <= 0) return { nights: 0, results: [] };
+
+  const properties = await getPropertiesWithOverrides("Pensacola");
+
+  const listingIds = properties
+    .map((p) => p.hostaway_property_id)
+    .filter((id): id is string => Boolean(id));
+
+  // Window: date > checkIn AND date <= checkOut  →  gte checkIn+1, lte checkOut
+  const windowStart = new Date(start);
+  windowStart.setUTCDate(windowStart.getUTCDate() + 1);
+
+  const calendar = listingIds.length
+    ? await prisma.calendarDay.findMany({
+        where: {
+          hostaway_listing_id: { in: listingIds },
+          date: { gte: windowStart, lte: end },
+        },
+        select: {
+          hostaway_listing_id: true,
+          date: true,
+          is_available: true,
+          price: true,
+        },
+      })
+    : [];
+
+  // Group calendar entries by listing id.
+  const byListing = new Map<
+    string,
+    { blocked: boolean; priceByKey: Record<string, number> }
+  >();
+  for (const d of calendar) {
+    const id = d.hostaway_listing_id;
+    if (!id) continue;
+    const key =
+      d.date instanceof Date
+        ? d.date.toISOString().split("T")[0]
+        : String(d.date).split("T")[0];
+    let entry = byListing.get(id);
+    if (!entry) {
+      entry = { blocked: false, priceByKey: {} };
+      byListing.set(id, entry);
+    }
+    if (d.is_available !== 1) entry.blocked = true;
+    if (d.price) entry.priceByKey[key] = d.price;
+  }
+
+  // Precompute the window date keys once.
+  const windowKeys: string[] = [];
+  for (let i = 1; i <= nights; i++) {
+    const d = new Date(start);
+    d.setUTCDate(d.getUTCDate() + i);
+    windowKeys.push(d.toISOString().split("T")[0]);
+  }
+
+  const results: AvailabilityResult[] = [];
+  for (const p of properties) {
+    if ((p.person_capacity || 2) < minGuests) continue;
+    const entry = p.hostaway_property_id
+      ? byListing.get(p.hostaway_property_id)
+      : undefined;
+    const available = !(entry?.blocked ?? false);
+    const fallback = p.base_price || 65;
+    let subtotal = 0;
+    for (const key of windowKeys) {
+      subtotal += entry?.priceByKey[key] || fallback;
+    }
+    results.push({
+      id: p.id,
+      available,
+      nights,
+      nightly: Math.round(subtotal / nights),
+      subtotal,
+      cleaning: CLEANING_FEE,
+      total: subtotal + CLEANING_FEE,
+    });
+  }
+
+  return { nights, results };
+}
+
 export async function getPropertyWithOverride(id: number) {
   const property = await prisma.property.findUnique({
     where: { id },

@@ -10,12 +10,18 @@ type Props = {
   isFavorite?: boolean;
   onToggleFavorite?: (id: number) => void;
   recentBookings?: number;
+  availability?: { nights: number; nightly: number; total: number; checkIn?: string; checkOut?: string; guests?: number } | null;
 };
 
-export default function PropertyCard({ property, priority = false, comparing, onToggleCompare, isFavorite, onToggleFavorite, recentBookings }: Props) {
+export default function PropertyCard({ property, priority = false, comparing, onToggleCompare, isFavorite, onToggleFavorite, recentBookings, availability }: Props) {
+  const href =
+    availability?.checkIn && availability?.checkOut
+      ? `/properties/${property.id}?checkIn=${availability.checkIn}&checkOut=${availability.checkOut}${availability.guests ? `&guests=${availability.guests}` : ""}`
+      : `/properties/${property.id}`;
+
   return (
     <Link
-      href={`/properties/${property.id}`}
+      href={href}
       className="group block card-lift fade-in-up"
     >
       <div className="aspect-[3/2] bg-sand-200 relative overflow-hidden rounded-2xl">
@@ -29,13 +35,18 @@ export default function PropertyCard({ property, priority = false, comparing, on
 
         {/* Price badge */}
         <div className="absolute bottom-3 left-3 text-white">
-          <span className="text-xs text-white/70">from </span>
-          <span className="text-lg font-serif">${property.base_price || 65}</span>
+          {!availability && <span className="text-xs text-white/70">from </span>}
+          <span className="text-lg font-serif">${availability ? availability.nightly : property.base_price || 65}</span>
           <span className="text-xs text-white/70 ml-0.5">/night</span>
         </div>
 
         {/* Tags */}
         <div className="absolute top-3 left-3 flex gap-1.5">
+          {availability && (
+            <span className="bg-evergreen-500/90 text-white text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full font-semibold backdrop-blur-sm">
+              Available
+            </span>
+          )}
           {property.pets_allowed && (
             <span className="bg-ocean-500/90 text-white text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full font-semibold backdrop-blur-sm">
               Pets OK
@@ -104,7 +115,11 @@ export default function PropertyCard({ property, priority = false, comparing, on
             </>
           ) : null}
         </div>
-        {recentBookings ? (
+        {availability ? (
+          <p className="text-xs text-evergreen-600 font-medium mt-1.5">
+            ${availability.total} total for {availability.nights} night{availability.nights > 1 ? "s" : ""} + cleaning
+          </p>
+        ) : recentBookings ? (
           <p className="text-xs text-coral-500 font-medium mt-1.5">
             Popular this month
           </p>

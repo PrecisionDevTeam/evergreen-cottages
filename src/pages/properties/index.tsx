@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useRouter } from "next/router";
 import Layout from "../../components/Layout";
 import PropertyCard from "../../components/PropertyCard";
 import { getPropertiesWithOverrides, getRecentBookingCounts } from "../../lib/db";
@@ -7,7 +8,25 @@ import { useFavorites } from "../../lib/localStorage";
 
 type Props = { properties: Property[]; popularIds: number[] };
 
+type AvailabilityInfo = { id: number; nights: number; nightly: number; total: number };
+
 const MAX_COMPARE = 3;
+
+const todayKey = () => new Date().toISOString().split("T")[0];
+
+const fmtRange = (ci: string, co: string) => {
+  const opts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
+  const a = new Date(ci + "T12:00:00").toLocaleDateString("en-US", opts);
+  const b = new Date(co + "T12:00:00").toLocaleDateString("en-US", opts);
+  return `${a} – ${b}`;
+};
+
+const Spinner = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={`animate-spin ${className}`} fill="none" viewBox="0 0 24 24" aria-hidden="true">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+  </svg>
+);
 
 const PRICE_RANGES = [
   { key: "any", label: "Any Price", min: 0, max: Infinity },
@@ -17,6 +36,7 @@ const PRICE_RANGES = [
 ];
 
 const Properties = ({ properties, popularIds }: Props) => {
+  const router = useRouter();
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("name");
   const [priceRange, setPriceRange] = useState("any");
@@ -24,6 +44,73 @@ const Properties = ({ properties, popularIds }: Props) => {
   const [compareIds, setCompareIds] = useState<number[]>([]);
   const [showCompare, setShowCompare] = useState(false);
   const { isFavorite, toggleFavorite } = useFavorites();
+
+  // Availability search
+  const [checkIn, setCheckIn] = useState("");
+  const [checkOut, setCheckOut] = useState("");
+  const [searchGuests, setSearchGuests] = useState(1);
+  const [availLoading, setAvailLoading] = useState(false);
+  const [availError, setAvailError] = useState("");
+  // Active search results: map of property id → pricing, plus the searched context.
+  const [availResult, setAvailResult] = useState<{
+    checkIn: string;
+    checkOut: string;
+    nights: number;
+    guests: number;
+    map: Record<number, AvailabilityInfo>;
+  } | null>(null);
+
+  const runSearch = useCallback(async (ci: string, co: string, g: number) => {
+    if (!ci || !co) return;
+    if (co <= ci) {
+      setAvailError("Check-out must be after check-in.");
+      return;
+    }
+    setAvailLoading(true);
+    setAvailError("");
+    try {
+      const res = await fetch("/api/search-availability", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ checkIn: ci, checkOut: co, guests: g }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Search failed");
+      const map: Record<number, AvailabilityInfo> = {};
+      for (const r of data.results as AvailabilityInfo[]) map[r.id] = r;
+      setAvailResult({ checkIn: ci, checkOut: co, nights: data.nights, guests: data.guests, map });
+      setSort("price-low");
+    } catch (err) {
+      setAvailError(err instanceof Error ? err.message : "Could not check availability");
+      setAvailResult(null);
+    } finally {
+      setAvailLoading(false);
+    }
+  }, []);
+
+  // Auto-run search from query params (e.g. arriving from the home hero).
+  useEffect(() => {
+    if (!router.isReady) return;
+    const qCheckIn = typeof router.query.checkIn === "string" ? router.query.checkIn : "";
+    const qCheckOut = typeof router.query.checkOut === "string" ? router.query.checkOut : "";
+    const qGuests = typeof router.query.guests === "string" ? parseInt(router.query.guests, 10) : 1;
+    if (qCheckIn && qCheckOut) {
+      setCheckIn(qCheckIn);
+      setCheckOut(qCheckOut);
+      setSearchGuests(qGuests || 1);
+      runSearch(qCheckIn, qCheckOut, qGuests || 1);
+    }
+    // Only on first ready — subsequent searches are user-driven.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.isReady]);
+
+  const clearSearch = () => {
+    setCheckIn("");
+    setCheckOut("");
+    setSearchGuests(1);
+    setAvailResult(null);
+    setAvailError("");
+  };
 
   const toggleCompare = useCallback((id: number) => {
     setCompareIds((prev) =>
@@ -38,6 +125,11 @@ const Properties = ({ properties, popularIds }: Props) => {
 
   const filtered = useMemo(() => {
     let result = [...properties];
+
+    // Availability search — restrict to units open for the selected dates
+    if (availResult) {
+      result = result.filter((p) => availResult.map[p.id]);
+    }
 
     // Text search
     if (search.trim()) {
@@ -61,12 +153,14 @@ const Properties = ({ properties, popularIds }: Props) => {
       });
     }
 
-    if (sort === "price-low") result = [...result].sort((a, b) => (a.base_price || 0) - (b.base_price || 0));
-    if (sort === "price-high") result = [...result].sort((a, b) => (b.base_price || 0) - (a.base_price || 0));
+    const priceOf = (p: Property) =>
+      availResult ? availResult.map[p.id]?.total ?? p.base_price ?? 0 : p.base_price || 0;
+    if (sort === "price-low") result = [...result].sort((a, b) => priceOf(a) - priceOf(b));
+    if (sort === "price-high") result = [...result].sort((a, b) => priceOf(b) - priceOf(a));
     if (sort === "guests") result = [...result].sort((a, b) => (b.person_capacity || 0) - (a.person_capacity || 0));
     if (sort === "name") result = [...result].sort((a, b) => a.name.localeCompare(b.name));
     return result;
-  }, [properties, filter, sort, priceRange, search]);
+  }, [properties, filter, sort, priceRange, search, availResult]);
 
   const filters = [
     { key: "all", label: "All" },
@@ -81,7 +175,76 @@ const Properties = ({ properties, popularIds }: Props) => {
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-10">
           <p className="text-coral-500 text-xs uppercase tracking-[0.2em] font-semibold mb-2">Browse</p>
           <h1 className="text-4xl font-serif text-ocean-500">Pensacola Vacation Rentals</h1>
-          <p className="text-sand-500 mt-1">{filtered.length} vacation rentals in Pensacola, FL</p>
+          <p className="text-sand-500 mt-1">
+            {availResult
+              ? `${filtered.length} of ${properties.length} units available ${fmtRange(availResult.checkIn, availResult.checkOut)} for ${availResult.guests} guest${availResult.guests > 1 ? "s" : ""}`
+              : `${filtered.length} vacation rentals in Pensacola, FL`}
+          </p>
+
+          {/* Availability search — check all units at once */}
+          <div className="mt-6 bg-sand-50 border border-sand-200 rounded-2xl p-4 sm:p-5">
+            <p className="text-sm font-semibold text-ocean-600 mb-3">
+              Check every unit at once — pick your dates and party size
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+              <div className="flex-1">
+                <label htmlFor="ci" className="block text-xs text-sand-500 mb-1">Check-in</label>
+                <input
+                  id="ci"
+                  type="date"
+                  value={checkIn}
+                  min={todayKey()}
+                  onChange={(e) => { setCheckIn(e.target.value); if (checkOut && e.target.value >= checkOut) setCheckOut(""); }}
+                  className="w-full border border-sand-300 rounded-lg px-3 py-2 text-sm text-sand-700 bg-white focus:ring-2 focus:ring-ocean-500 focus:border-ocean-500 outline-none"
+                />
+              </div>
+              <div className="flex-1">
+                <label htmlFor="co" className="block text-xs text-sand-500 mb-1">Check-out</label>
+                <input
+                  id="co"
+                  type="date"
+                  value={checkOut}
+                  min={checkIn || todayKey()}
+                  onChange={(e) => setCheckOut(e.target.value)}
+                  className="w-full border border-sand-300 rounded-lg px-3 py-2 text-sm text-sand-700 bg-white focus:ring-2 focus:ring-ocean-500 focus:border-ocean-500 outline-none"
+                />
+              </div>
+              <div className="sm:w-32">
+                <label htmlFor="sg" className="block text-xs text-sand-500 mb-1">Guests</label>
+                <select
+                  id="sg"
+                  value={searchGuests}
+                  onChange={(e) => setSearchGuests(parseInt(e.target.value, 10))}
+                  className="w-full border border-sand-300 rounded-lg px-3 py-2 text-sm text-sand-700 bg-white focus:ring-2 focus:ring-ocean-500 outline-none"
+                >
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <option key={i + 1} value={i + 1}>{i + 1} guest{i > 0 ? "s" : ""}</option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={() => runSearch(checkIn, checkOut, searchGuests)}
+                disabled={!checkIn || !checkOut || availLoading}
+                className={`px-6 py-2 rounded-lg font-semibold text-sm transition-colors flex items-center justify-center gap-2 ${
+                  checkIn && checkOut && !availLoading
+                    ? "bg-ocean-500 text-white hover:bg-ocean-600"
+                    : "bg-sand-200 text-sand-400 cursor-not-allowed"
+                }`}
+              >
+                {availLoading && <Spinner />}
+                {availLoading ? "Checking…" : "Check availability"}
+              </button>
+              {availResult && (
+                <button
+                  onClick={clearSearch}
+                  className="px-4 py-2 rounded-lg text-sm text-sand-500 hover:text-ocean-500 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            {availError && <p className="text-xs text-coral-500 mt-2">{availError}</p>}
+          </div>
         </div>
       </div>
 
@@ -157,27 +320,55 @@ const Properties = ({ properties, popularIds }: Props) => {
       </div>
 
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-10">
-        {filtered.length === 0 ? (
+        {availLoading ? (
+          <div className="flex flex-col items-center justify-center py-24 text-ocean-500">
+            <Spinner className="w-8 h-8" />
+            <p className="text-sand-500 mt-4 text-sm">Checking availability across all units…</p>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-sand-400 text-lg font-serif">No properties match your filters.</p>
-            <button onClick={() => { setFilter("all"); setPriceRange("any"); setSearch(""); }} className="text-coral-500 font-medium mt-3 hover:underline">
-              Clear filters
-            </button>
+            <p className="text-sand-400 text-lg font-serif">
+              {availResult
+                ? `No units are available ${fmtRange(availResult.checkIn, availResult.checkOut)} for ${availResult.guests} guest${availResult.guests > 1 ? "s" : ""}.`
+                : "No properties match your filters."}
+            </p>
+            {availResult ? (
+              <div className="mt-3 flex flex-col items-center gap-2">
+                <button onClick={clearSearch} className="text-coral-500 font-medium hover:underline">
+                  Clear dates &amp; view all units
+                </button>
+                <a href="tel:+15108227060" className="text-sm text-ocean-500 hover:text-coral-500">
+                  Or call (510) 822-7060 — we may have options
+                </a>
+              </div>
+            ) : (
+              <button onClick={() => { setFilter("all"); setPriceRange("any"); setSearch(""); }} className="text-coral-500 font-medium mt-3 hover:underline">
+                Clear filters
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7 stagger">
-            {filtered.map((property, i) => (
-              <PropertyCard
-                key={property.id}
-                property={property}
-                priority={i < 6}
-                comparing={compareIds.includes(property.id)}
-                onToggleCompare={toggleCompare}
-                isFavorite={isFavorite(property.id)}
-                onToggleFavorite={toggleFavorite}
-                recentBookings={popularIds.includes(property.id) ? 1 : 0}
-              />
-            ))}
+            {filtered.map((property, i) => {
+              const info = availResult?.map[property.id];
+              return (
+                <PropertyCard
+                  key={property.id}
+                  property={property}
+                  priority={i < 6}
+                  comparing={compareIds.includes(property.id)}
+                  onToggleCompare={toggleCompare}
+                  isFavorite={isFavorite(property.id)}
+                  onToggleFavorite={toggleFavorite}
+                  recentBookings={popularIds.includes(property.id) ? 1 : 0}
+                  availability={
+                    info && availResult
+                      ? { nights: info.nights, nightly: info.nightly, total: info.total, checkIn: availResult.checkIn, checkOut: availResult.checkOut, guests: availResult.guests }
+                      : null
+                  }
+                />
+              );
+            })}
           </div>
         )}
       </div>

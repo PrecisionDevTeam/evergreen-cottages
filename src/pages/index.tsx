@@ -1,8 +1,92 @@
 import Link from "next/link";
+import { useRouter } from "next/router";
+import { useState } from "react";
 import Layout from "../components/Layout";
 import PropertyCard from "../components/PropertyCard";
 import { getPropertiesWithOverrides, getReviews, getWebsiteContent } from "../lib/db";
 import { Property, Review } from "../types";
+
+const todayKey = () => new Date().toISOString().split("T")[0];
+
+function HeroSearch({ propertyCount }: { propertyCount: number }) {
+  const router = useRouter();
+  const [checkIn, setCheckIn] = useState("");
+  const [checkOut, setCheckOut] = useState("");
+  const [guests, setGuests] = useState(1);
+  const [navigating, setNavigating] = useState(false);
+
+  const submit = () => {
+    setNavigating(true);
+    if (checkIn && checkOut && checkOut > checkIn) {
+      router.push(`/properties?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`);
+    } else {
+      router.push("/properties");
+    }
+  };
+
+  return (
+    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 max-w-xl fade-in-up" style={{ animationDelay: "0.25s" }}>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
+        <div>
+          <label htmlFor="hero-ci" className="block text-[11px] uppercase tracking-wider text-white/70 mb-1">Check-in</label>
+          <input
+            id="hero-ci"
+            type="date"
+            value={checkIn}
+            min={todayKey()}
+            onChange={(e) => { setCheckIn(e.target.value); if (checkOut && e.target.value >= checkOut) setCheckOut(""); }}
+            className="w-full rounded-lg px-2.5 py-2 text-sm text-ocean-700 bg-white/90 focus:ring-2 focus:ring-coral-400 outline-none"
+          />
+        </div>
+        <div>
+          <label htmlFor="hero-co" className="block text-[11px] uppercase tracking-wider text-white/70 mb-1">Check-out</label>
+          <input
+            id="hero-co"
+            type="date"
+            value={checkOut}
+            min={checkIn || todayKey()}
+            onChange={(e) => setCheckOut(e.target.value)}
+            className="w-full rounded-lg px-2.5 py-2 text-sm text-ocean-700 bg-white/90 focus:ring-2 focus:ring-coral-400 outline-none"
+          />
+        </div>
+        <div className="col-span-2 sm:col-span-1">
+          <label htmlFor="hero-g" className="block text-[11px] uppercase tracking-wider text-white/70 mb-1">Guests</label>
+          <select
+            id="hero-g"
+            value={guests}
+            onChange={(e) => setGuests(parseInt(e.target.value, 10))}
+            className="w-full rounded-lg px-2.5 py-2 text-sm text-ocean-700 bg-white/90 focus:ring-2 focus:ring-coral-400 outline-none"
+          >
+            {Array.from({ length: 12 }, (_, i) => (
+              <option key={i + 1} value={i + 1}>{i + 1} guest{i > 0 ? "s" : ""}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <button
+          onClick={submit}
+          disabled={navigating}
+          className="flex-1 bg-white text-ocean-600 px-6 py-3.5 rounded-xl font-semibold text-center hover:bg-sand-100 transition-all shadow-lg text-sm flex items-center justify-center gap-2 disabled:opacity-80"
+        >
+          {navigating && (
+            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          )}
+          {navigating ? "Searching…" : checkIn && checkOut ? "See available units" : `Browse all ${propertyCount} properties`}
+        </button>
+        <a
+          href="tel:+15108227060"
+          className="px-6 py-3.5 rounded-xl font-semibold text-center text-white border border-white/40 hover:bg-white/10 transition-all text-sm"
+        >
+          Call (510) 822-7060
+        </a>
+      </div>
+    </div>
+  );
+}
 
 type Hero = { headline: string; subtitle: string };
 
@@ -67,23 +151,8 @@ const Home = ({ properties, reviews, reviewCount, avgRating, hero }: Props) => {
             <p className="text-lg text-white/70 mb-10 leading-relaxed max-w-lg fade-in-up" style={{ animationDelay: '0.15s' }}>
               {hero.subtitle || "17 professionally managed cottages, minutes from the beach. Book direct and save 10-15% vs Airbnb — no platform fees."}
             </p>
-            {/* Quick search */}
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 max-w-xl fade-in-up" style={{ animationDelay: '0.25s' }}>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Link
-                  href="/properties"
-                  className="flex-1 bg-white text-ocean-600 px-6 py-3.5 rounded-xl font-semibold text-center hover:bg-sand-100 transition-all shadow-lg text-sm"
-                >
-                  Browse All {properties.length} Properties
-                </Link>
-                <a
-                  href="tel:+15108227060"
-                  className="px-6 py-3.5 rounded-xl font-semibold text-center text-white border border-white/40 hover:bg-white/10 transition-all text-sm"
-                >
-                  Call (510) 822-7060
-                </a>
-              </div>
-            </div>
+            {/* Quick search — check availability across all units */}
+            <HeroSearch propertyCount={properties.length} />
           </div>
         </div>
 

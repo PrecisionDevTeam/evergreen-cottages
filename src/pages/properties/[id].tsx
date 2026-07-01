@@ -1,4 +1,5 @@
 import { GetServerSideProps } from "next";
+import { useRouter } from "next/router";
 import { toast } from "../../lib/toast";
 import Image from "next/image";
 import Link from "next/link";
@@ -163,11 +164,27 @@ const PropertyDetail = ({ property, calendar, reviews, totalGuests, availableNig
   const [guestName, setGuestName] = useState("");
 
   const calendarRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   const { recentlyViewed, addViewed } = useRecentlyViewed();
 
   useEffect(() => {
     addViewed(property);
   }, [property.id, addViewed]);
+
+  // Pre-fill dates when arriving from the availability search.
+  useEffect(() => {
+    if (!router.isReady) return;
+    const qCi = typeof router.query.checkIn === "string" ? router.query.checkIn : "";
+    const qCo = typeof router.query.checkOut === "string" ? router.query.checkOut : "";
+    const qG = typeof router.query.guests === "string" ? parseInt(router.query.guests, 10) : 0;
+    const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+    if (dateRe.test(qCi) && dateRe.test(qCo) && qCo > qCi) {
+      setCheckIn(qCi);
+      setCheckOut(qCo);
+      if (qG > 0) setGuests(Math.min(qG, property.person_capacity || 2));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.isReady]);
 
   const otherRecent = recentlyViewed.filter((r) => r.id !== property.id);
 
