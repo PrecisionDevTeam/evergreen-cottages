@@ -275,6 +275,59 @@ export async function getWebsiteContent(key: WebsiteContentKey) {
   return row?.content_value ?? null;
 }
 
+// ── "From" price shown on cards ─────────────────────────────────────────
+// Hostaway controls nightly rates, so the card price comes from the synced
+// Hostaway calendar instead of the static base_price. Uses the lowest
+// bookable nightly rate in the next `days` days; if every night is blocked,
+// the lowest priced night; if the calendar has nothing, null.
+export async function getFromPriceMap(
+  listingIds: string[],
+  days: number = 30
+): Promise<Record<string, number>> {
+  if (listingIds.length === 0) return {};
+
+  const start = new Date();
+  start.setUTCHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + days);
+
+  const rows = await prisma.calendarDay.findMany({
+    where: {
+      hostaway_listing_id: { in: listingIds },
+      date: { gte: start, lt: end },
+      price: { gt: 0 },
+    },
+    select: { hostaway_listing_id: true, is_available: true, price: true },
+  });
+
+  const bookable: Record<string, number> = {};
+  const anyPriced: Record<string, number> = {};
+  for (const r of rows) {
+    const id = r.hostaway_listing_id;
+    const price = r.price;
+    if (!id || !price) continue;
+    if (anyPriced[id] === undefined || price < anyPriced[id]) anyPriced[id] = price;
+    if (r.is_available === 1 && (bookable[id] === undefined || price < bookable[id])) {
+      bookable[id] = price;
+    }
+  }
+
+  const map: Record<string, number> = {};
+  for (const id of Object.keys(anyPriced)) map[id] = bookable[id] ?? anyPriced[id];
+  return map;
+}
+
+// A manual website price wins only when it's a real number (> 0). A 0 used to
+// slip through `??` and show the $65 fallback on the card.
+function resolveDisplayPrice(
+  override: number | null | undefined,
+  calendarFrom: number | undefined,
+  base: number | null
+): number | null {
+  if (override && override > 0) return override;
+  return calendarFrom ?? base;
+}
+
 export async function getPropertiesWithOverrides(city?: string) {
   const where: Record<string, unknown> = {};
   if (city) where.city = city;
@@ -285,6 +338,12 @@ export async function getPropertiesWithOverrides(city?: string) {
     orderBy: { name: "asc" },
   });
 
+  const fromPrices = await getFromPriceMap(
+    properties
+      .map((p) => p.hostaway_property_id)
+      .filter((id): id is string => Boolean(id))
+  );
+
   return properties
     .filter((p) => {
       // Filter out hidden properties
@@ -294,15 +353,20 @@ export async function getPropertiesWithOverrides(city?: string) {
     })
     .map((p) => {
       const o = p.websiteOverride;
+      const price = resolveDisplayPrice(
+        o?.website_base_price,
+        p.hostaway_property_id ? fromPrices[p.hostaway_property_id] : undefined,
+        p.base_price
+      );
       return {
         ...p,
-        // Override name/description/price for website display
+        // Override name/description for website display; price follows Hostaway
         name: o?.website_name || p.name,
         displayName: o?.website_name || p.name,
         description: o?.website_description || p.description,
         displayDescription: o?.website_description || p.description,
-        base_price: o?.website_base_price ?? p.base_price,
-        displayPrice: o?.website_base_price ?? p.base_price,
+        base_price: price,
+        displayPrice: price,
         tags: o?.tags ?? [],
         images: (() => {
           const src = o?.website_images || p.listing_images;
@@ -442,14 +506,22 @@ export async function getPropertyWithOverride(id: number) {
   if (property.websiteOverride?.visible_on_website === false) return null;
 
   const o = property.websiteOverride;
+  const fromPrices = property.hostaway_property_id
+    ? await getFromPriceMap([property.hostaway_property_id])
+    : {};
+  const price = resolveDisplayPrice(
+    o?.website_base_price,
+    property.hostaway_property_id ? fromPrices[property.hostaway_property_id] : undefined,
+    property.base_price
+  );
   return {
     ...property,
     name: o?.website_name || property.name,
     displayName: o?.website_name || property.name,
     description: o?.website_description || property.description,
     displayDescription: o?.website_description || property.description,
-    base_price: o?.website_base_price ?? property.base_price,
-    displayPrice: o?.website_base_price ?? property.base_price,
+    base_price: price,
+    displayPrice: price,
     tags: o?.tags ?? [],
     images: (() => {
       const src = o?.website_images || property.listing_images;
