@@ -24,7 +24,7 @@ export default function PrecisionLayout({
   return (
     <div className="min-h-screen flex flex-col bg-sand-50 text-ocean-700 grain">
       <Head>
-        <title>{title} | Stay with Precision</title>
+        <title>{title + " | Stay with Precision"}</title>
         <meta name="description" content={description} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="canonical" href={"https://staywithprecision.com" + path} />
