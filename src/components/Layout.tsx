@@ -16,6 +16,7 @@ type Props = {
 };
 
 const navLinks = [
+  ...(process.env.NEXT_PUBLIC_RENTER_PORTAL_URL ? [{ href: process.env.NEXT_PUBLIC_RENTER_PORTAL_URL, label: "Guest login" }] : []),
   { href: "/properties", label: "Properties" },
   { href: "/services", label: "Services" },
   { href: "/shop", label: "Shop" },
