@@ -12,7 +12,7 @@ const securityHeaders = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' https://js.stripe.com",
       "frame-src https://js.stripe.com https://checkout.stripe.com https://www.openstreetmap.org",
-      "img-src 'self' data: https://hostaway-platform.s3.us-west-2.amazonaws.com https://images.unsplash.com",
+      "img-src 'self' data: https://hostaway-platform.s3.us-west-2.amazonaws.com https://images.unsplash.com https://assets.hospitable.com https://a0.muscache.com",
       "connect-src 'self' https://api.stripe.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",

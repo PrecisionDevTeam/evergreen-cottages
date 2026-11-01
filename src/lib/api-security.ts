@@ -4,6 +4,8 @@ const ALLOWED_ORIGINS = [
   "https://evergreencottagespensacola.com",
   "https://www.evergreencottagespensacola.com",
   "https://evergreen-cottages-production.up.railway.app",
+  "https://staywithprecision.com",
+  "https://www.staywithprecision.com",
 ];
 
 /**
@@ -12,8 +14,10 @@ const ALLOWED_ORIGINS = [
  */
 export function verifyOrigin(req: NextApiRequest, res: NextApiResponse): boolean {
   const origin = req.headers.origin || req.headers.referer || "";
-  const isAllowed = ALLOWED_ORIGINS.some((allowed) => origin.startsWith(allowed))
-    || /^http:\/\/localhost(:\d+)?/.test(origin);
+  let parsedOrigin = "";
+  try { parsedOrigin = new URL(origin).origin; } catch { /* reject malformed origins */ }
+  const isAllowed = ALLOWED_ORIGINS.includes(parsedOrigin)
+    || (process.env.NODE_ENV !== "production" && /^http:\/\/localhost(:\d+)?$/.test(parsedOrigin));
   if (!isAllowed) {
     res.status(403).json({ error: "Forbidden" });
     return false;
