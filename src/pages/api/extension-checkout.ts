@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import * as crypto from "crypto";
 import { getProperty, prisma } from "../../lib/db";
 import { verifyOrigin, rateLimit } from "../../lib/api-security";
+import { extensionSourceError } from "../../lib/extension-reservation";
 
 // @ts-ignore
 const stripe = new Stripe(process.env.STRIPE_API_KEY || "");
@@ -86,13 +87,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       where: { id: decoded.reservationId },
       include: { guest: true, property: { select: { id: true } } },
     });
+    const sourceError = extensionSourceError(origRes, decoded.guestId, checkIn);
+    if (sourceError) return res.status(409).json({ error: sourceError });
     resolvedEmail = origRes?.guest?.primary_email || undefined;
     origPropertyId = origRes?.property?.id ?? undefined;
     const first = origRes?.guest?.first_name || "";
     const last = origRes?.guest?.last_name || "";
     resolvedGuestName = [first, last].filter(Boolean).join(" ");
   } catch {
-    /* non-blocking */
+    return res.status(503).json({ error: "Unable to verify your original stay. Please try again." });
   }
 
   try {

@@ -47,7 +47,9 @@ async function createHostawayReservation(session: any): Promise<any> {
   const token = await getHostawayToken();
   await new Promise((r) => setTimeout(r, 1100));
 
-  const nameSource = customer.name || meta.guest_name || "Guest";
+  const nameSource = meta.type === "extension"
+    ? meta.guest_name || customer.name || "Guest"
+    : customer.name || meta.guest_name || "Guest";
   const nameParts = nameSource.split(" ");
   const firstName = nameParts[0] || "Guest";
   const lastName = nameParts.slice(1).join(" ") || "";
